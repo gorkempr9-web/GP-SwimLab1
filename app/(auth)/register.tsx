@@ -10,6 +10,8 @@ import { AuthField } from '@/components/AuthField';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { UserType } from '@/data/mockUser';
 import { useLocale } from '@/locales';
+import { registerWithInviteCode } from '@/services/auth';
+import { validateInviteCode } from '@/services/invitations';
 import { startEmailVerification } from '@/services/emailAuth';
 import { startPhoneVerification } from '@/services/phoneAuth';
 import { roleFromUserType, useSession } from '@/services/session';
@@ -21,9 +23,10 @@ const countryCodes = ['+90', '+1', '+44', '+49'];
 
 export default function RegisterScreen() {
   const { t } = useLocale();
-  const { setRole } = useSession();
+  const { setCurrentUserProfile } = useSession();
   const [fullName, setFullName] = useState('');
   const [club, setClub] = useState('');
+  const [childName, setChildName] = useState('');
   const [password, setPassword] = useState('');
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
   const [explicitConsent, setExplicitConsent] = useState(false);
@@ -36,19 +39,20 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [guardianPhone, setGuardianPhone] = useState('');
   const [guardianEmail, setGuardianEmail] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
 
   const athleteAge = Number(age);
   const isUnder18Athlete = userType === 'Sporcu' && age.trim() !== '' && !Number.isNaN(athleteAge) && athleteAge < 18;
 
   const validateBase = () => {
+    const invite = validateInviteCode(inviteCode);
+    if (!invite.valid) return invite.message;
     if (!fullName.trim()) return t('fullNameRequired');
     if (!email.trim() && !phoneNumber.trim()) return t('emailOrPhoneRequired');
     if (!password.trim()) return t('passwordRequired');
     if (password.trim().length < 6) return t('passwordMinLength');
-    if (!userType) return t('pleaseSelectUserType');
     if (!kvkkAccepted || !explicitConsent) return t('consentRequired');
-    if (isUnder18Athlete && (!guardianConsent || (!guardianPhone.trim() && !guardianEmail.trim()))) return t('guardianUnder18Required');
     return '';
   };
 
@@ -67,12 +71,32 @@ export default function RegisterScreen() {
       return;
     }
 
+    const registerResult = await registerWithInviteCode(
+      {
+        fullName,
+        role: roleFromUserType(userType),
+        club,
+        email,
+        phone: phoneNumber.trim() ? `${countryCode.trim()} ${phoneNumber.trim()}` : undefined,
+        childName,
+        guardianEmail,
+        guardianPhone,
+        specialty: userType === 'Antrenör' ? 'Yüzme antrenörü' : userType === 'Kulüp Yöneticisi' ? 'Kulüp operasyonları' : undefined,
+      },
+      inviteCode,
+    );
+
+    if (!registerResult.success) {
+      setError(registerResult.message);
+      return;
+    }
+
     const session =
       method === 'phone'
         ? await startPhoneVerification({ countryCode, phoneNumber, userType, guardianPhoneNumber: guardianPhone })
         : await startEmailVerification({ email, userType, guardianEmail });
 
-    setRole(roleFromUserType(userType));
+    setCurrentUserProfile(registerResult.user);
     setError('');
     router.push({ pathname: '/(auth)/otp', params: { method, verificationId: session.verificationId, target: session.target, maskedTarget: session.maskedTarget } });
   };
@@ -83,13 +107,22 @@ export default function RegisterScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboard}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <View style={styles.hero}>
-              <AppLogo size={110} showSlogan={true} />
+              <AppLogo size={90} showSlogan={true} />
             </View>
 
             <GlassCard style={styles.card}>
               <Text style={styles.cardTitle}>{t('accountInfo')}</Text>
+              <Text style={styles.pilotNote}>SwimLab şu anda pilot test sürümündedir. Veriler demo/test amaçlıdır.</Text>
+              <Text style={styles.label}>Kullanıcı tipi seç</Text>
+              <ChipGroup options={userTypes} value={userType} onChange={(value) => setUserType(value as UserType)} />
+              <View style={styles.inviteBox}>
+                <Text style={styles.inviteLabel}>Davet Kodu</Text>
+                <Text style={styles.inviteHelp}>Pilot test için size verilen davet kodunu girin.</Text>
+                <TextInput placeholder="SWIMLAB100" placeholderTextColor={colors.muted} value={inviteCode} onChangeText={(value) => setInviteCode(value.toUpperCase())} autoCapitalize="characters" style={styles.input} />
+              </View>
               <AuthField icon={User} placeholder={t('fullName')} value={fullName} onChangeText={setFullName} />
               <AuthField icon={Building2} placeholder={t('clubTeam')} value={club} onChangeText={setClub} />
+              {userType === 'Veli' ? <AuthField icon={User} placeholder="Çocuk adı soyadı" value={childName} onChangeText={setChildName} /> : null}
               <AuthField icon={Mail} placeholder={t('emailAddress')} keyboardType="email-address" value={email} onChangeText={setEmail} />
               <AuthField icon={Lock} placeholder={t('password')} secureTextEntry={true} value={password} onChangeText={setPassword} />
             </GlassCard>
@@ -104,9 +137,6 @@ export default function RegisterScreen() {
                 <MethodButton label={t('emailShort')} value="email" active={method === 'email'} onPress={setMethod} />
               </View>
 
-              <Text style={styles.label}>{t('userType')}</Text>
-              <ChipGroup options={userTypes} value={userType} onChange={(value) => setUserType(value as UserType)} />
-
               {userType === 'Sporcu' ? <TextInput placeholder={t('age')} placeholderTextColor={colors.muted} value={age} onChangeText={(value) => setAge(value.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" style={styles.input} /> : null}
 
               {method === 'phone' ? (
@@ -120,6 +150,7 @@ export default function RegisterScreen() {
 
               {isUnder18Athlete ? (
                 <>
+                  <Text style={styles.guardianInfo}>18 yaş altı sporcular için kulüp/antrenör gerekli durumlarda veli iletişim bilgisi isteyebilir.</Text>
                   <TextInput placeholder={t('guardianPhone')} placeholderTextColor={colors.muted} value={guardianPhone} onChangeText={setGuardianPhone} keyboardType="phone-pad" style={styles.input} />
                   <TextInput placeholder={t('guardianEmail')} placeholderTextColor={colors.muted} value={guardianEmail} onChangeText={setGuardianEmail} keyboardType="email-address" autoCapitalize="none" style={styles.input} />
                 </>
@@ -136,7 +167,7 @@ export default function RegisterScreen() {
               </View>
               <ConsentCheck checked={kvkkAccepted} title={t('kvkkDisclosure')} body={t('kvkkDisclosureText')} onPress={() => setKvkkAccepted((value) => !value)} />
               <ConsentCheck checked={explicitConsent} title={t('explicitConsent')} body={t('explicitConsentText')} onPress={() => setExplicitConsent((value) => !value)} />
-              {isUnder18Athlete ? <ConsentCheck checked={guardianConsent} title={t('guardianConsentUnder18')} body={t('guardianConsentUnder18Text')} onPress={() => setGuardianConsent((value) => !value)} /> : null}
+              {isUnder18Athlete ? <ConsentCheck checked={guardianConsent} title={t('guardianConsentUnder18')} body="Opsiyonel veli bilgilendirme onayı." onPress={() => setGuardianConsent((value) => !value)} /> : null}
               <Pressable onPress={() => router.push('/features/privacy')}>
                 <Text style={styles.privacyLink}>{t('openPrivacyPage')}</Text>
               </Pressable>
@@ -192,6 +223,10 @@ const styles = StyleSheet.create({
   card: { gap: spacing.md },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   cardTitle: { color: colors.text, fontWeight: '900', fontSize: 18 },
+  pilotNote: { color: colors.gold, fontWeight: '800', lineHeight: 20, backgroundColor: colors.goldSoft, borderRadius: 14, padding: spacing.md },
+  inviteBox: { gap: spacing.sm, borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, padding: spacing.md },
+  inviteLabel: { color: colors.text, fontWeight: '900', fontSize: 15 },
+  inviteHelp: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 19 },
   segmented: { flexDirection: 'row', borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: 4 },
   segment: { flex: 1, minHeight: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   segmentActive: { backgroundColor: colors.cyan },
@@ -205,6 +240,7 @@ const styles = StyleSheet.create({
   chipTextActive: { color: colors.text },
   input: { color: colors.text, backgroundColor: colors.surfaceSolid, borderRadius: 14, borderWidth: 1, borderColor: colors.border, minHeight: 50, paddingHorizontal: spacing.md, fontWeight: '800' },
   errorText: { color: colors.danger, fontWeight: '900' },
+  guardianInfo: { color: colors.gold, fontWeight: '800', lineHeight: 20, backgroundColor: colors.goldSoft, borderRadius: 14, padding: spacing.md },
   consentRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
   checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   checkboxChecked: { backgroundColor: colors.cyan, borderColor: colors.cyan },

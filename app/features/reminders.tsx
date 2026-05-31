@@ -5,16 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
 import { GlassCard } from '@/components/GlassCard';
 import { useLocale } from '@/locales';
-import {
-  cancelAllNotifications,
-  requestNotificationPermission,
-  scheduleClubAnnouncementReminder,
-  scheduleRaceCountdownReminder,
-  scheduleSleepReminder,
-  scheduleStretchingReminder,
-  scheduleTrainingReminder,
-  scheduleWaterReminder,
-} from '@/services/notifications';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 type ReminderId = 'training' | 'race' | 'water' | 'sleep' | 'stretching' | 'club';
@@ -42,7 +32,10 @@ export default function RemindersScreen() {
         description: t('trainingReminderDesc'),
         schedule: '17:00',
         icon: BellRing,
-        test: () => scheduleTrainingReminder({ title: t('trainingReminder'), body: t('trainingReminderDesc') }),
+        test: async () => {
+          const { scheduleTrainingReminder } = await import('@/services/notifications');
+          return scheduleTrainingReminder({ title: t('trainingReminder'), body: t('trainingReminderDesc') });
+        },
       },
       {
         id: 'race' as const,
@@ -50,7 +43,10 @@ export default function RemindersScreen() {
         description: t('raceCountdownReminderDesc'),
         schedule: '7g / 3g / 1g / sabah',
         icon: Trophy,
-        test: scheduleRaceCountdownReminder,
+        test: async () => {
+          const { scheduleRaceCountdownReminder } = await import('@/services/notifications');
+          return scheduleRaceCountdownReminder();
+        },
         countdown: ['7 gün kala', '3 gün kala', '1 gün kala', 'Yarış sabahı'],
       },
       {
@@ -59,7 +55,10 @@ export default function RemindersScreen() {
         description: t('waterReminderDesc'),
         schedule: '10:30 - 14:30 - 18:30',
         icon: Droplets,
-        test: () => scheduleWaterReminder({ title: t('waterReminder'), body: t('waterReminderDesc') }),
+        test: async () => {
+          const { scheduleWaterReminder } = await import('@/services/notifications');
+          return scheduleWaterReminder({ title: t('waterReminder'), body: t('waterReminderDesc') });
+        },
       },
       {
         id: 'sleep' as const,
@@ -67,7 +66,10 @@ export default function RemindersScreen() {
         description: t('sleepReminderDesc'),
         schedule: '22:00',
         icon: Moon,
-        test: () => scheduleSleepReminder({ title: t('sleepReminder'), body: t('sleepReminderDesc') }),
+        test: async () => {
+          const { scheduleSleepReminder } = await import('@/services/notifications');
+          return scheduleSleepReminder({ title: t('sleepReminder'), body: t('sleepReminderDesc') });
+        },
       },
       {
         id: 'stretching' as const,
@@ -75,7 +77,10 @@ export default function RemindersScreen() {
         description: t('stretchingReminderDesc'),
         schedule: '20:15',
         icon: StretchHorizontal,
-        test: () => scheduleStretchingReminder({ title: t('stretchingReminder'), body: t('stretchingReminderDesc') }),
+        test: async () => {
+          const { scheduleStretchingReminder } = await import('@/services/notifications');
+          return scheduleStretchingReminder({ title: t('stretchingReminder'), body: t('stretchingReminderDesc') });
+        },
       },
       {
         id: 'club' as const,
@@ -83,13 +88,17 @@ export default function RemindersScreen() {
         description: t('clubAnnouncementReminderDesc'),
         schedule: t('instantWhenUrgent'),
         icon: CalendarClock,
-        test: () => scheduleClubAnnouncementReminder({ title: t('clubAnnouncementReminder'), body: t('clubAnnouncementReminderDesc') }),
+        test: async () => {
+          const { scheduleClubAnnouncementReminder } = await import('@/services/notifications');
+          return scheduleClubAnnouncementReminder({ title: t('clubAnnouncementReminder'), body: t('clubAnnouncementReminderDesc') });
+        },
       },
     ],
     [t],
   );
 
   const handlePermission = async () => {
+    const { requestNotificationPermission } = await import('@/services/notifications');
     const result = await requestNotificationPermission();
     setPermissionGranted(result.granted);
     setMessage(result.granted ? t('notificationsEnabled') : t('notificationsDisabled'));
@@ -97,6 +106,7 @@ export default function RemindersScreen() {
 
   const handleTest = async (card: (typeof reminderCards)[number]) => {
     if (!permissionGranted) {
+      const { requestNotificationPermission } = await import('@/services/notifications');
       const result = await requestNotificationPermission();
       setPermissionGranted(result.granted);
       if (!result.granted) {
@@ -114,6 +124,7 @@ export default function RemindersScreen() {
   };
 
   const handleCancelAll = async () => {
+    const { cancelAllNotifications } = await import('@/services/notifications');
     await cancelAllNotifications();
     setActiveState({ training: false, race: false, water: false, sleep: false, stretching: false, club: false });
     setMessage(t('allNotificationsCancelled'));

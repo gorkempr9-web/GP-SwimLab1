@@ -41,3 +41,11 @@ export const roleAccessPolicies = {
     sensitivity: 'sensitive',
   },
 } as const;
+
+// Security roadmap for the Firebase-backed production build:
+// - Firestore security rules will enforce every read/write path.
+// - Role based access control will separate athlete, parent, coach, and club admin permissions.
+// - Minimal data collection will be the default for pilot and production users.
+// - PDF report access will require owner, parent, coach, or club-level authorization.
+// - Club data isolation will keep each club's athletes, rosters, reports, and announcements scoped.
+// - Parent/athlete permission checks will gate under-18 sharing and direct messaging.

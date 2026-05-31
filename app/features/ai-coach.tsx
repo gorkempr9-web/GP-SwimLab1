@@ -4,15 +4,16 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { GlassCard } from '@/components/GlassCard';
-import { mockAthlete } from '@/data/mockUser';
 import { useLocale } from '@/locales';
 import { AthleteCoachContext, CoachMessage, getCoachResponse } from '@/services/aiCoach';
+import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 const quickPrompts = ['Teknik Analiz', 'Yarış Hazırlığı', 'Sprint', 'Dayanıklılık', 'Recovery', 'Beslenme'];
 
 export default function AiCoachScreen() {
   const { t } = useLocale();
+  const { currentUser } = useSession();
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<CoachMessage[]>([
     {
@@ -25,12 +26,12 @@ export default function AiCoachScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const athleteContext: AthleteCoachContext = useMemo(() => ({
-    firstName: mockAthlete.firstName,
-    age: mockAthlete.age,
-    category: mockAthlete.category,
-    primaryStroke: '100m Serbest',
+    firstName: currentUser.firstName,
+    age: currentUser.age ?? '-',
+    category: currentUser.category ?? '-',
+    primaryStroke: currentUser.mainStroke ?? 'Serbest',
     pb: '56.84',
-  }), []);
+  }), [currentUser]);
 
   const handleAsk = async (override?: string) => {
     const trimmed = (override ?? question).trim();

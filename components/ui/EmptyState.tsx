@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
+import { AppLogo } from '@/components/AppLogo';
 import { colors, spacing } from '@/theme/tokens';
 
 export function EmptyState({ title, detail, icon: Icon }: { title: string; detail?: string; icon?: LucideIcon }) {
@@ -9,7 +10,7 @@ export function EmptyState({ title, detail, icon: Icon }: { title: string; detai
         <View style={styles.icon}>
           <Icon color={colors.cyan} size={24} />
         </View>
-      ) : null}
+      ) : <AppLogo compact={true} size={36} showTitle={false} />}
       <Text style={styles.title}>{title}</Text>
       {detail ? <Text style={styles.detail}>{detail}</Text> : null}
     </View>

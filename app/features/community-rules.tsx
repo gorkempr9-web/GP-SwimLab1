@@ -20,7 +20,7 @@ export default function CommunityRulesScreen() {
         <GlassCard style={styles.hero}>
           <ShieldCheck color={colors.cyan} size={42} />
           <Text style={styles.title}>Topluluk Kuralları</Text>
-          <Text style={styles.subtitle}>GP SwimLab sporcu forumu güvenli, saygılı ve performans odaklı bir topluluk olarak yönetilir.</Text>
+          <Text style={styles.subtitle}>SwimLab sporcu forumu güvenli, saygılı ve performans odaklı bir topluluk olarak yönetilir.</Text>
         </GlassCard>
 
         <GlassCard style={styles.warning}>

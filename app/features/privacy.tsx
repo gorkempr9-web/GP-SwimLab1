@@ -12,6 +12,14 @@ const privacyItems = [
   'Kullanıcı, verilerinin silinmesi için talep oluşturabilir.',
 ];
 
+const securityItems = [
+  'Hangi veriler tutulur? Hesap, kulüp, yarış, performans ve izin kayıtları.',
+  'Neden tutulur? Yarış takibi, raporlama, kulüp iletişimi ve güvenli erişim için.',
+  'Kimler görebilir? Sporcu, veli, antrenör ve kulüp rolleri kendi yetkileri kadar görür.',
+  'Silme talebi nasıl yapılır? Profil > Verilerimi Silme Talebi alanından mock talep oluşturulur.',
+  'Rıza geri çekme nasıl yapılır? KVKK/Gizlilik ayarlarından kulüp yöneticisi veya destek ekibine bildirilir.',
+];
+
 export default function PrivacyScreen() {
   return (
     <SafeAreaView style={styles.screen}>
@@ -32,6 +40,13 @@ export default function PrivacyScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Açık rıza özeti</Text>
           <Text style={styles.body}>Performans, yarış, rapor ve beslenme verileri uygulama içinde hizmet sunmak için işlenir. Kullanıcı izinlerini daha sonra profilinden yönetebilir.</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Güvenlik ve Veri Koruma</Text>
+          {securityItems.map((item) => (
+            <Text key={item} style={styles.item}>• {item}</Text>
+          ))}
         </View>
 
         <AppButton title="Verilerimi Silme Talebi" icon={Trash2} variant="secondary" />

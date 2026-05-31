@@ -1,20 +1,20 @@
 import { TextStyle } from 'react-native';
 
 export const colors = {
-  background: '#021526',
+  background: '#071626',
   backgroundDeep: '#020A14',
-  surface: 'rgba(7, 35, 61, 0.82)',
+  surface: 'rgba(7, 35, 61, 0.78)',
   surfaceSolid: '#07233D',
   surfaceSoft: '#0A2C48',
   glass: 'rgba(255, 255, 255, 0.07)',
-  cyan: '#21E6F3',
-  cyanSoft: 'rgba(33, 230, 243, 0.14)',
+  cyan: '#2EE7F5',
+  cyanSoft: 'rgba(46, 231, 245, 0.08)',
   teal: '#14B8A6',
   text: '#F8FCFF',
   muted: '#9BB4C8',
   mutedStrong: '#C6D6E2',
   border: 'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(33, 230, 243, 0.36)',
+  borderStrong: 'rgba(46, 231, 245, 0.22)',
   gold: '#FBBF24',
   goldSoft: 'rgba(251, 191, 36, 0.14)',
   danger: '#FB7185',
@@ -62,11 +62,11 @@ export const card = {
   backgroundColor: colors.surface,
   borderWidth: 1,
   borderColor: colors.border,
-  borderRadius: radii.lg,
+  borderRadius: radii.xl,
 };
 
 export const gradients = {
-  app: [colors.backgroundDeep, colors.background, '#052D45'] as const,
-  hero: ['rgba(12, 229, 232, 0.28)', 'rgba(8, 42, 68, 0.88)', 'rgba(251, 191, 36, 0.12)'] as const,
-  fallback: ['rgba(12, 229, 232, 0.2)', 'rgba(6, 31, 53, 0.92)'] as const,
+  app: [colors.backgroundDeep, colors.background, '#0A2740'] as const,
+  hero: ['rgba(46, 231, 245, 0.11)', 'rgba(8, 42, 68, 0.82)', 'rgba(35, 121, 255, 0.08)'] as const,
+  fallback: ['rgba(46, 231, 245, 0.08)', 'rgba(6, 31, 53, 0.9)'] as const,
 };

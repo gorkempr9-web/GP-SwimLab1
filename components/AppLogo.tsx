@@ -1,4 +1,4 @@
-import { Image, ImageStyle, StyleProp, StyleSheet, Text, View } from 'react-native';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { colors } from '@/theme/tokens';
 
 type AppLogoProps = {
@@ -6,21 +6,29 @@ type AppLogoProps = {
   size?: number;
   showTitle?: boolean;
   showSlogan?: boolean;
-  imageStyle?: StyleProp<ImageStyle>;
+  imageStyle?: StyleProp<ViewStyle>;
 };
 
-const logoSource = require('@/assets/logo/gpswimlab-logo.png');
+const swim = '#FFFFFF';
+const lab = '#19E7FF';
 
-export function AppLogo({ compact = false, size, showTitle = true, showSlogan = false, imageStyle }: AppLogoProps) {
-  const markSize = size ?? (compact ? 40 : 110);
+export function AppLogo({ compact = false, size, showTitle = true, showSlogan = true, imageStyle }: AppLogoProps) {
+  const markSize = size ?? (compact ? 22 : 34);
 
   return (
     <View style={[styles.wrap, compact && styles.wrapCompact]}>
-      <Image source={logoSource} resizeMode="contain" style={[styles.mark, { width: markSize, height: markSize }, imageStyle]} />
+      <View style={[styles.mark, { width: markSize, height: markSize * 0.72 }, imageStyle]}>
+        <View style={[styles.wave, { width: markSize * 0.72, top: markSize * 0.2 }]} />
+        <View style={[styles.wave, styles.waveSecond, { width: markSize * 0.72, top: markSize * 0.42 }]} />
+      </View>
+
       {showTitle ? (
-        <View style={compact ? styles.titleWrapCompact : styles.titleWrap}>
-          <Text style={[styles.title, compact && styles.titleCompact]}>GP SwimLab</Text>
-          {showSlogan ? <Text style={styles.slogan}>Train - Analyze - Perform</Text> : null}
+        <View style={styles.titleWrap}>
+          <Text style={[styles.title, compact && styles.titleCompact]} numberOfLines={1}>
+            <Text style={styles.swim}>Swim</Text>
+            <Text style={styles.lab}>Lab</Text>
+          </Text>
+          {showSlogan ? <Text style={[styles.slogan, compact && styles.sloganCompact]} numberOfLines={1}>Train • Race • Improve</Text> : null}
         </View>
       ) : null}
     </View>
@@ -28,17 +36,41 @@ export function AppLogo({ compact = false, size, showTitle = true, showSlogan = 
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: 10 },
-  wrapCompact: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  mark: {
-    shadowColor: colors.cyan,
-    shadowOpacity: 0.2,
-    shadowRadius: 14,
-    elevation: 6,
+  wrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    borderRadius: 18,
+    paddingHorizontal: 4,
+    paddingVertical: 3,
   },
-  titleWrap: { alignItems: 'center', gap: 4 },
-  titleWrapCompact: { alignItems: 'flex-start' },
-  title: { color: colors.text, fontWeight: '900', fontSize: 30, letterSpacing: 0 },
-  titleCompact: { fontSize: 15 },
-  slogan: { color: colors.cyan, fontWeight: '900', fontSize: 12, letterSpacing: 0 },
+  wrapCompact: {
+    gap: 5,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+  mark: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  wave: {
+    position: 'absolute',
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: lab,
+    transform: [{ rotate: '-8deg' }],
+  },
+  waveSecond: {
+    opacity: 0.72,
+    transform: [{ rotate: '8deg' }],
+  },
+  titleWrap: { alignItems: 'flex-start', justifyContent: 'center' },
+  title: { fontWeight: '900', fontSize: 28, letterSpacing: 0 },
+  titleCompact: { fontSize: 16 },
+  swim: { color: swim },
+  lab: { color: lab },
+  slogan: { color: colors.mutedStrong, fontWeight: '900', fontSize: 11, letterSpacing: 0, marginTop: 2 },
+  sloganCompact: { fontSize: 8 },
 });

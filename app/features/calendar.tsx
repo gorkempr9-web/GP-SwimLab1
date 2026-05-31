@@ -7,7 +7,6 @@ import { GlassCard } from '@/components/GlassCard';
 import { ClubGroup, ClubPriority } from '@/services/clubBoard';
 import { CalendarEventType, ClubCalendarEvent, createCalendarEvent, eventAccentColors, mockCalendarEvents, planEventReminder, weekDays } from '@/services/clubCalendar';
 import { canManageClub, useSession } from '@/services/session';
-import { scheduleTrainingReminder } from '@/services/notifications';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 type Visibility = 'Sporcular' | 'Veliler' | 'Sporcular + Veliler' | 'Sadece Antrenörler';
@@ -70,6 +69,7 @@ export default function CalendarScreen() {
     setEvents((current) => [newEvent, ...current]);
     setSelectedDate(date);
     if (remindBefore) {
+      const { scheduleTrainingReminder } = await import('@/services/notifications');
       await scheduleTrainingReminder({ title: 'Takvim hatırlatması', body: `${type} 1 saat sonra başlıyor.`, seconds: 2 });
     }
     setMessage(remindBefore ? 'Etkinlik oluşturuldu. 1 saat önce hatırlatma planlandı.' : 'Etkinlik oluşturuldu.');

@@ -28,24 +28,16 @@ export type AthleteProfile = {
     required: boolean;
     verified: boolean;
   };
-  achievements: Array<{
-    id: string;
-    title: string;
-    detail: string;
-  }>;
-  badges: Array<{
-    id: string;
-    title: string;
-    detail: string;
-  }>;
+  achievements: Array<{ id: string; title: string; detail: string }>;
+  badges: Array<{ id: string; title: string; detail: string }>;
 };
 
 export const mockAthlete: AthleteProfile = {
-  firstName: 'Deniz',
-  lastName: 'Arslan',
+  firstName: 'SwimLab',
+  lastName: 'Sporcu',
   age: '16',
   club: 'GP Aquatics',
-  coach: 'Mert Kaya',
+  coach: 'SwimLab Antrenör',
   city: 'İstanbul',
   category: '15-16 Yaş Milli Takım Aday',
   email: 'deniz@gpswimlab.demo',

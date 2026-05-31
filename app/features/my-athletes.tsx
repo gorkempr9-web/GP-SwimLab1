@@ -4,11 +4,13 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
 import { GlassCard } from '@/components/GlassCard';
+import { getRaceResultsForAthlete, rosterAthletes } from '@/services/clubCompetition';
 import { generateAthleteListPdf } from '@/services/pdfReports';
 import { canManageClub, roleLabel, useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 type AthleteStatus = 'Aktif' | 'Pasif';
+type DetailTab = 'Genel' | 'Devam' | 'Yüzme Yarışları' | 'Antrenör Notları';
 type AthleteFilter = 'Tüm sporcular' | 'Performans grubu' | 'Küçük yaş grubu' | 'Yarış takımı' | 'Aktif' | 'Pasif';
 
 type ManagedAthlete = {
@@ -157,17 +159,61 @@ function Action({ label, icon: Icon, onPress }: { label: string; icon: typeof Aw
 }
 
 function AthleteDetailModal({ athlete, onClose }: { athlete: ManagedAthlete | null; onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState<DetailTab>('Genel');
   if (!athlete) return null;
+  const rosterAthlete = rosterAthletes.find((item) => item.name === athlete.name);
+  const raceResults = getRaceResultsForAthlete(rosterAthlete?.id ?? 'ra-1');
+  const tabs: DetailTab[] = ['Genel', 'Devam', 'Yüzme Yarışları', 'Antrenör Notları'];
+
   return (
     <Modal transparent={true} visible={true} animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.sheet}>
           <Text style={styles.sheetTitle}>{athlete.name}</Text>
           <Text style={styles.meta}>{athlete.ageCategory} • {athlete.club} • {athlete.group}</Text>
-          <Text style={styles.resultText}>PB listesi: {athlete.lastPb}</Text>
-          <Text style={styles.meta}>Yarış geçmişi: {athlete.lastRace}</Text>
-          <Text style={styles.meta}>Antrenör notları: {athlete.notes.length ? athlete.notes.join(' ') : 'Henüz not yok.'}</Text>
-          <Text style={styles.meta}>Veli bilgisi: {athlete.guardianVerified ? 'Veli iletişimi doğrulandı' : 'Veli iletişimi eksik'}</Text>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabRow}>
+            {tabs.map((tab) => (
+              <Pressable key={tab} style={[styles.tabChip, activeTab === tab && styles.tabChipActive]} onPress={() => setActiveTab(tab)}>
+                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {activeTab === 'Genel' ? (
+            <View style={styles.detailSection}>
+              <Text style={styles.resultText}>PB listesi: {athlete.lastPb}</Text>
+              <Text style={styles.meta}>Veli bilgisi: {athlete.guardianVerified ? 'Veli iletişimi doğrulandı' : 'Veli iletişimi eksik'}</Text>
+              <Text style={styles.meta}>Durum: {athlete.status}</Text>
+            </View>
+          ) : null}
+
+          {activeTab === 'Devam' ? (
+            <View style={styles.detailSection}>
+              <Text style={styles.resultText}>Katılım: {athlete.attendance}</Text>
+              <Text style={styles.meta}>Son durum: Katıldı</Text>
+            </View>
+          ) : null}
+
+          {activeTab === 'Yüzme Yarışları' ? (
+            <View style={styles.detailSection}>
+              <Text style={styles.resultText}>Yüzme Yarışları</Text>
+              {raceResults.map((race) => (
+                <View key={race.id} style={styles.raceResultRow}>
+                  <Text style={styles.resultText}>{race.date} {race.competitionName}</Text>
+                  <Text style={styles.meta}>{race.distance}m {race.stroke} • {race.finalTime}</Text>
+                  {race.raceKind === 'relay' ? <Text style={styles.meta}>{race.relayType} • {race.teamName} • {race.relayOrder}. sporcu</Text> : null}
+                  <Text style={styles.meta}>Not: {race.coachNote || 'Kısa not yok.'}</Text>
+                </View>
+              ))}
+              {!raceResults.length ? <Text style={styles.meta}>Henüz yarış sonucu yok.</Text> : null}
+            </View>
+          ) : null}
+
+          {activeTab === 'Antrenör Notları' ? (
+            <View style={styles.detailSection}>
+              <Text style={styles.meta}>{athlete.notes.length ? athlete.notes.join(' ') : 'Henüz not yok.'}</Text>
+            </View>
+          ) : null}
           <Text style={styles.kvkk}>KVKK uyarısı: Sporcu özel bilgileri sadece yetkili kullanıcılarca görüntülenmelidir.</Text>
           <Pressable style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeText}>Kapat</Text>
@@ -210,6 +256,13 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
   sheet: { backgroundColor: colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: colors.borderStrong, padding: spacing.lg, gap: spacing.md },
   sheetTitle: { color: colors.text, fontWeight: '900', fontSize: 22 },
+  tabRow: { gap: spacing.sm, paddingRight: spacing.lg },
+  tabChip: { minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
+  tabChipActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
+  tabText: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
+  tabTextActive: { color: colors.background },
+  detailSection: { gap: spacing.sm },
+  raceResultRow: { borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.sm, gap: 3 },
   kvkk: { color: colors.gold, fontWeight: '800', lineHeight: 20 },
   closeButton: { minHeight: 48, borderRadius: 14, backgroundColor: colors.cyan, alignItems: 'center', justifyContent: 'center' },
   closeText: { color: colors.background, fontWeight: '900' },

@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { AppButton } from '@/components/AppButton';
+import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 const reportSections = [
@@ -17,7 +18,9 @@ const reportSections = [
 ];
 
 export default function ReportsScreen() {
+  const { currentUser } = useSession();
   const [message, setMessage] = useState('');
+  const fullName = `${currentUser.firstName} ${currentUser.lastName}`.trim();
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -32,13 +35,13 @@ export default function ReportsScreen() {
             <View style={styles.reportHeader}>
               <AppLogo size={40} showTitle={false} />
               <View>
-                <Text style={styles.reportTitle}>GP SwimLab Raporu</Text>
+                <Text style={styles.reportTitle}>SwimLab Raporu</Text>
                 <Text style={styles.reportDate}>Mock Önizleme • Mayıs 2026</Text>
               </View>
             </View>
 
             <View style={styles.summaryGrid}>
-              <SummaryItem label="Sporcu" value="Test Sporcu" />
+              <SummaryItem label="Sporcu" value={fullName || 'Profil bekleniyor'} />
               <SummaryItem label="50m Serbest" value="28.44" />
               <SummaryItem label="100m Serbest" value="1:02.35" />
               <SummaryItem label="Gelişim" value="+4.7%" />

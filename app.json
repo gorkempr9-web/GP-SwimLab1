@@ -1,16 +1,17 @@
 {
   "expo": {
-    "name": "GP SwimLab",
+    "name": "SwimLab",
     "slug": "gp-swimlab",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo/gpswimlab-logo.png",
+    "icon": "./assets/logo/swimlab-option4-icon.png",
     "scheme": "gpswimlab",
     "userInterfaceStyle": "dark",
+    "jsEngine": "hermes",
     "splash": {
-      "image": "./assets/logo/gpswimlab-logo.png",
+      "image": "./assets/logo/swimlab-option4-splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#031B2F"
+      "backgroundColor": "#071626"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,12 +20,13 @@
     "android": {
       "package": "com.gpswimlab.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo/gpswimlab-logo.png",
-        "backgroundColor": "#031B2F"
+        "foregroundImage": "./assets/logo/swimlab-option4-icon.png",
+        "backgroundColor": "#071626"
       }
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font"
     ],
     "extra": {
       "router": {},

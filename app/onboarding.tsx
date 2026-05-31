@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ShieldCheck } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
@@ -38,7 +37,7 @@ export default function OnboardingScreen() {
             </Pressable>
           </View>
           <View style={styles.privacyLine}>
-            <ShieldCheck color={colors.cyan} size={15} />
+            <Text style={styles.privacyIcon}>✓</Text>
             <Text style={styles.privacyText}>Güvenli sporcu verisi</Text>
           </View>
         </View>
@@ -57,5 +56,6 @@ const styles = StyleSheet.create({
   links: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.sm },
   link: { color: colors.cyan, fontWeight: '900', fontSize: 12 },
   privacyLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  privacyIcon: { color: colors.cyan, fontWeight: '900', fontSize: 14 },
   privacyText: { color: colors.muted, fontWeight: '800', fontSize: 12 },
 });

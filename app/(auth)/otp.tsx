@@ -6,11 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
 import { AppLogo } from '@/components/AppLogo';
 import { useLocale } from '@/locales';
+import { useSession } from '@/services/session';
 import { getMockCode, resendCode, VerificationMethod, verifyCode } from '@/services/verification';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 export default function OtpScreen() {
   const { t } = useLocale();
+  const { currentUser } = useSession();
   const params = useLocalSearchParams<{ verificationId?: string; method?: VerificationMethod; maskedTarget?: string; target?: string; maskedPhone?: string }>();
   const method: VerificationMethod = params.method === 'email' ? 'email' : 'phone';
   const Icon = method === 'email' ? Mail : Phone;
@@ -40,7 +42,7 @@ export default function OtpScreen() {
 
     if (result.success) {
       setMessage(method === 'email' ? t('emailVerified') : t('phoneVerified'));
-      router.replace('/(tabs)/dashboard');
+      router.replace(currentUser.profileCreated ? (currentUser.hasSeenAppGuide ? '/(tabs)/dashboard' : '/onboarding-guide') : '/(auth)/create-profile');
       return;
     }
 

@@ -1,19 +1,19 @@
 import { router } from 'expo-router';
-import { Award, Building2, CalendarClock, CheckCircle2, Edit3, LogOut, Medal, Settings, ShieldCheck, Trash2, Trophy, UserCircle, Users } from 'lucide-react-native';
+import { Award, Building2, CheckCircle2, LogOut, Settings, ShieldCheck, Trash2, Trophy, UserCircle, Users } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
+import { ClubLogo } from '@/components/ClubLogo';
 import { GlassCard } from '@/components/GlassCard';
-import { mockAthlete } from '@/data/mockUser';
 import { useLocale } from '@/locales';
-import { getEntriesForAthlete, getMeetEntries } from '@/services/meetEntries';
-import { roleLabel, useSession } from '@/services/session';
+import { canManageClub, CurrentUser, roleLabel, useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 export default function ProfileScreen() {
   const { t } = useLocale();
   const { currentUser, logout } = useSession();
-  const visibleMeetEntries = currentUser.role === 'parent' ? getMeetEntries() : getEntriesForAthlete('a1');
+  const fullName = getFullName(currentUser);
+  const isManager = canManageClub(currentUser.role);
 
   const handleLogout = () => {
     Alert.alert(t('logoutConfirmTitle'), t('logoutConfirmMessage'), [
@@ -34,75 +34,32 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <GlassCard style={styles.heroCard}>
           <View style={styles.avatar}>
-            <AppLogo size={80} showTitle={false} />
+            <AppLogo size={56} showTitle={false} />
           </View>
-          <Text style={styles.title}>{currentUser.firstName} {currentUser.lastName}</Text>
-          <Text style={styles.roleText}>{t('userType')}: {roleLabel(currentUser.role)}</Text>
-          <Text style={styles.subtitle}>{mockAthlete.club} • {mockAthlete.category}</Text>
+          <Text style={styles.title}>{fullName}</Text>
+          <Text style={styles.roleText}>Rol: {roleLabel(currentUser.role)}</Text>
+          <ClubLogo club={currentUser.club} size={38} />
+          {currentUser.role === 'parent' ? <Text style={styles.subtitle}>Çocuğu: {currentUser.childName ?? 'Çocuk sporcu'}</Text> : null}
           <View style={styles.verifyRow}>
-            <Badge label="Telefon doğrulandı" />
-            <Badge label="E-posta doğrulandı" />
+            <Badge label={currentUser.phone ? 'Telefon doğrulandı' : 'Telefon bekliyor'} />
+            <Badge label={currentUser.email ? 'E-posta doğrulandı' : 'E-posta bekliyor'} />
           </View>
         </GlassCard>
 
-        <GlassCard style={styles.infoCard}>
-          <View style={styles.summaryHeader}>
-            <Edit3 color={colors.cyan} size={22} />
-            <Text style={styles.cardTitle}>Sporcu Bilgileri</Text>
-          </View>
-          {[
-            ['Ad Soyad', `${currentUser.firstName} ${currentUser.lastName}`],
-            ['Yaş', mockAthlete.age],
-            ['Kulüp', mockAthlete.club],
-            ['Antrenör', mockAthlete.coach],
-            ['Şehir', mockAthlete.city],
-            ['Kategori', mockAthlete.category],
-          ].map(([label, value]) => (
-            <View key={label} style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{label}</Text>
-              <Text style={styles.infoValue} numberOfLines={1}>{value}</Text>
-            </View>
-          ))}
-        </GlassCard>
+        {isManager ? (
+          <CoachProfile fullName={fullName} role={roleLabel(currentUser.role)} club={currentUser.club ?? 'GP Aquatics'} specialty={currentUser.specialty ?? '-'} />
+        ) : (
+          <AthleteOrParentProfile currentUser={currentUser} />
+        )}
 
-        <GlassCard style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <Award color={colors.cyan} size={22} />
-            <Text style={styles.cardTitle}>{t('achievementsBadges')}</Text>
-          </View>
-          <View style={styles.badgeGrid}>
-            {mockAthlete.badges.slice(0, 2).map((badge) => (
-              <View key={badge.id} style={styles.miniBadge}>
-                <Medal color={colors.gold} size={19} />
-                <Text style={styles.miniBadgeTitle}>{badge.title}</Text>
-                <Text style={styles.miniBadgeText}>{badge.detail}</Text>
-              </View>
-            ))}
-          </View>
-        </GlassCard>
-
-        <ProfileRow icon={Trophy} title={t('lastPb')} detail="100m Serbest • 56.84" onPress={() => router.push('/(tabs)/races')} />
-        <ProfileRow icon={Building2} title={t('club')} detail={`${mockAthlete.club} • ${mockAthlete.coach}`} />
-        {(currentUser.role === 'athlete' || currentUser.role === 'parent') && visibleMeetEntries.length > 0 ? (
-          <GlassCard style={styles.meetCard}>
-            <View style={styles.summaryHeader}>
-              <CalendarClock color={colors.cyan} size={22} />
-              <Text style={styles.cardTitle}>{currentUser.role === 'parent' ? 'Sporcunun Yarışları' : 'Gireceğim Yarışlar'}</Text>
-            </View>
-            {visibleMeetEntries.map((entry) => (
-              <View key={entry.id} style={styles.meetRow}>
-                <Text style={styles.meetTitle}>{currentUser.role === 'parent' ? `${entry.athleteName} • ` : ''}{entry.competitionName}</Text>
-                <Text style={styles.meetDetail}>{entry.date} • {entry.relayEvent || `${entry.distance} ${entry.stroke}`} • {entry.eventType === 'team' ? 'Takım' : 'Ferdi'}</Text>
-                <Text style={styles.meetDetail}>Seri {entry.heat || 'Henüz açıklanmadı'} / Kulvar {entry.lane || 'Henüz açıklanmadı'} • PB {entry.pb || '-'}</Text>
-                {entry.coachNote ? <Text style={styles.meetNote}>Not: {entry.coachNote}</Text> : null}
-              </View>
-            ))}
-          </GlassCard>
-        ) : null}
+        <ProfileRow icon={UserCircle} title="Profili Düzenle" detail="Bilgileri güncelle ve kaydet" onPress={() => router.push('/(auth)/create-profile')} />
+        <ProfileRow icon={Building2} title="Kulüp Bağlantısı" detail={currentUser.club ?? 'GP Aquatics'} />
         <ProfileRow icon={ShieldCheck} title={t('privacy')} detail={t('privacySettingsDetail')} onPress={() => router.push('/features/privacy')} />
-        <ProfileRow icon={Users} title="Veli iletişim bilgisi" detail="veli@gpswimlab.demo / +90 555 000 00 00" />
-        <ProfileRow icon={Users} title="Topluluk Kuralları" detail="Güvenli başarı paylaşımı ve moderasyon" onPress={() => router.push('/features/community-rules')} />
+        <ProfileRow icon={ShieldCheck} title="Güvenlik Merkezi" detail="Güvenli Hesap • Telefon + E-posta doğrulandı" onPress={() => router.push('/features/security-center')} />
+        {currentUser.role === 'parent' ? <ProfileRow icon={Users} title="Veli görünümü" detail={`Sadece ${currentUser.childName ?? 'çocuğunuz'} verileri görüntülenir`} /> : null}
+        <ProfileRow icon={Users} title="Veli iletişim bilgisi" detail={getGuardianDetail(currentUser)} />
         <ProfileRow icon={Trash2} title={t('deleteData')} detail="KVKK kapsamında talep oluştur" />
+        <ProfileRow icon={UserCircle} title="Uygulama Tanıtımını Tekrar Gör" detail="İlk kullanım rehberini yeniden aç" onPress={() => router.push('/onboarding-guide')} />
         <ProfileRow icon={Settings} title={t('settings')} detail={t('settingsDetail')} onPress={() => router.push('/features/settings')} />
 
         <Pressable style={styles.logoutButton} onPress={handleLogout}>
@@ -114,6 +71,60 @@ export default function ProfileScreen() {
         </Pressable>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function CoachProfile({ fullName, role, club, specialty }: { fullName: string; role: string; club: string; specialty: string }) {
+  const rows = [
+    ['Ad Soyad', fullName],
+    ['Rol', role],
+    ['Kulüp', club],
+    ['Branş / uzmanlık', specialty],
+    ['Sorumlu sporcu sayısı', '24'],
+    ['Aktif yarış listeleri', '3'],
+    ['İletişim doğrulama durumu', 'Telefon + e-posta doğrulandı'],
+    ['Kulüp bağlantısı', 'Aktif'],
+  ];
+
+  return (
+    <GlassCard style={styles.infoCard}>
+      <View style={styles.summaryHeader}>
+        <UserCircle color={colors.cyan} size={22} />
+        <Text style={styles.cardTitle}>{role === 'Kulüp Yöneticisi' ? 'Kulüp Yöneticisi Bilgileri' : 'Antrenör Bilgileri'}</Text>
+      </View>
+      {rows.map(([label, value]) => <InfoRow key={label} label={label} value={value} />)}
+    </GlassCard>
+  );
+}
+
+function AthleteOrParentProfile({ currentUser }: { currentUser: CurrentUser }) {
+  const isParent = currentUser.role === 'parent';
+  const athleteName = isParent ? currentUser.childName ?? 'Çocuk sporcu' : getFullName(currentUser);
+
+  return (
+    <>
+      <GlassCard style={styles.infoCard}>
+        <View style={styles.summaryHeader}>
+          <Award color={colors.cyan} size={22} />
+          <Text style={styles.cardTitle}>{isParent ? 'Çocuk Sporcu Bilgileri' : 'Sporcu Bilgileri'}</Text>
+        </View>
+        {isParent ? <InfoRow label="Veli" value={getFullName(currentUser)} /> : null}
+        <InfoRow label="Sporcu" value={athleteName} />
+        <InfoRow label="Kulüp" value={currentUser.club ?? 'GP Aquatics'} />
+        <InfoRow label="E-posta" value={currentUser.email ?? '-'} />
+        <InfoRow label="Telefon" value={currentUser.phone ?? '-'} />
+      </GlassCard>
+      <ProfileRow icon={Trophy} title={isParent ? 'Çocuğumun Yarışları' : 'Yarışlarım'} detail="Geçmiş yarışlar ve PB kayıtları" onPress={() => router.push('/(tabs)/races')} />
+    </>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue} numberOfLines={1}>{value}</Text>
+    </View>
   );
 }
 
@@ -140,40 +151,39 @@ function Badge({ label }: { label: string }) {
   );
 }
 
+function getFullName(user: CurrentUser) {
+  return `${user.firstName} ${user.lastName}`.trim();
+}
+
+function getGuardianDetail(user: CurrentUser) {
+  if (user.role === 'parent') return `${getFullName(user)} • ${user.phone ?? user.email ?? 'İletişim bekliyor'}`;
+  return user.guardianName ?? user.guardianPhone ?? user.guardianEmail ?? 'Veli bilgisi eklenmedi';
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: 110, gap: spacing.md },
-  heroCard: { alignItems: 'center', gap: spacing.sm },
-  avatar: { width: 104, height: 104, borderRadius: 32, backgroundColor: colors.surfaceSolid, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.borderStrong },
+  heroCard: { alignItems: 'center', gap: spacing.sm, borderColor: colors.borderStrong },
+  avatar: { width: 84, height: 84, borderRadius: 28, backgroundColor: colors.surfaceSolid, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.borderStrong },
   title: { ...typography.h1, color: colors.text, textAlign: 'center', marginTop: spacing.sm },
   roleText: { color: colors.gold, fontWeight: '900', textAlign: 'center' },
   subtitle: { color: colors.mutedStrong, textAlign: 'center', fontWeight: '800' },
   verifyRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, paddingHorizontal: spacing.sm, paddingVertical: 6 },
   badgeText: { color: colors.text, fontWeight: '900', fontSize: 11 },
-  summaryCard: { gap: spacing.md },
   infoCard: { gap: spacing.sm },
   infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm },
   infoLabel: { color: colors.muted, fontWeight: '800' },
   infoValue: { color: colors.text, fontWeight: '900', flex: 1, textAlign: 'right' },
   summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   cardTitle: { color: colors.text, fontWeight: '900', fontSize: 17 },
-  badgeGrid: { flexDirection: 'row', gap: spacing.sm },
-  miniBadge: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md, gap: 5 },
-  miniBadgeTitle: { color: colors.text, fontWeight: '900' },
-  miniBadgeText: { color: colors.muted, fontWeight: '700', lineHeight: 18 },
-  meetCard: { gap: spacing.md },
-  meetRow: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md },
-  meetTitle: { color: colors.text, fontWeight: '900' },
-  meetDetail: { color: colors.mutedStrong, fontWeight: '800', marginTop: 4 },
-  meetNote: { color: colors.muted, fontWeight: '700', marginTop: 5, lineHeight: 18 },
-  rowButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: spacing.md },
+  rowButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, borderColor: colors.borderStrong, padding: spacing.md },
   pressed: { opacity: 0.82 },
-  rowIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: { width: 44, height: 44, borderRadius: 16, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
   rowCopy: { flex: 1 },
   rowTitle: { color: colors.text, fontWeight: '900', fontSize: 16 },
   rowDetail: { color: colors.muted, fontWeight: '700', marginTop: 3 },
-  logoutButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.dangerSoft, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(251, 113, 133, 0.42)', padding: spacing.md },
+  logoutButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.dangerSoft, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(251, 113, 133, 0.42)', padding: spacing.md },
   logoutCopy: { flex: 1 },
   logoutTitle: { color: colors.danger, fontWeight: '900', fontSize: 16 },
   logoutDetail: { color: colors.mutedStrong, fontWeight: '700', marginTop: 3 },

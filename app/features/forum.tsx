@@ -4,20 +4,21 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
 import { GlassCard } from '@/components/GlassCard';
-import { mockAthlete } from '@/data/mockUser';
 import { ModerationMode, moderateText } from '@/services/moderation';
+import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 const shareTypes = ['Yeni PB', 'Yarış Sonucu', 'Madalya', 'Kürsü', 'Kulüp Başarısı', 'Ayın Sporcusu'];
 const quickComments = ['Tebrikler', 'Harika yarış', 'Güzel gelişim', 'Devam et'];
 
 const initialWallItems = [
-  { id: 'w1', athlete: 'Deniz Arslan', type: 'Yeni PB', detail: '100m Serbest • 56.84', likes: 24 },
-  { id: 'w2', athlete: 'Ece Yılmaz', type: 'Kürsü', detail: '50m Kelebek • 28.02 • 2.lik', likes: 18 },
+  { id: 'w1', athlete: 'SwimLab Sporcusu', type: 'Yeni PB', detail: '100m Serbest • 56.84', likes: 24 },
+  { id: 'w2', athlete: 'Kulüp Sporcusu', type: 'Kürsü', detail: '50m Kelebek • 28.02 • 2.lik', likes: 18 },
   { id: 'w3', athlete: 'GP Aquatics', type: 'Kulüp Başarısı', detail: '28 PB paylaşımı • 1840 puan', likes: 31 },
 ];
 
 export default function ForumScreen() {
+  const { currentUser } = useSession();
   const [mode, setMode] = useState<ModerationMode>('block');
   const [shareType, setShareType] = useState(shareTypes[0]);
   const [achievementTitle, setAchievementTitle] = useState('100m Serbest PB');
@@ -36,7 +37,7 @@ export default function ForumScreen() {
     }
 
     setWarning('');
-    setPreview(mode === 'censor' ? result.sanitized : `${mockAthlete.firstName} ${mockAthlete.lastName}\n${shareType}\n${achievementTitle} • ${achievementBody}`);
+    setPreview(mode === 'censor' ? result.sanitized : `${currentUser.firstName} ${currentUser.lastName}\n${shareType}\n${achievementTitle} • ${achievementBody}`);
   };
 
   return (
@@ -51,7 +52,7 @@ export default function ForumScreen() {
           </View>
           <View style={styles.wallBody}>
             <Text style={styles.wallType}>Ayın Sporcusu</Text>
-            <Text style={styles.wallTitle} numberOfLines={1}>Deniz Arslan</Text>
+            <Text style={styles.wallTitle} numberOfLines={1}>{currentUser.firstName} {currentUser.lastName}</Text>
             <Text style={styles.wallMeta} numberOfLines={2}>100m Serbest PB • 56.84 • Marmara Cup hazırlığı</Text>
           </View>
         </GlassCard>

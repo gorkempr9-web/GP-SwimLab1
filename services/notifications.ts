@@ -1,16 +1,8 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 const channelId = 'gp-swimlab-reminders';
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+let notificationsModule: typeof import('expo-notifications') | null = null;
+let handlerConfigured = false;
 
 type ReminderOptions = {
   title?: string;
@@ -18,19 +10,45 @@ type ReminderOptions = {
   seconds?: number;
 };
 
+async function getNotifications() {
+  if (notificationsModule) return notificationsModule;
+  notificationsModule = await import('expo-notifications');
+  return notificationsModule;
+}
+
+async function configureNotificationHandler() {
+  if (handlerConfigured) return;
+  const Notifications = await getNotifications();
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+
+  handlerConfigured = true;
+}
+
 async function ensureAndroidChannel() {
   if (Platform.OS !== 'android') {
     return;
   }
 
+  const Notifications = await getNotifications();
   await Notifications.setNotificationChannelAsync(channelId, {
-    name: 'GP SwimLab Reminders',
+    name: 'SwimLab Reminders',
     importance: Notifications.AndroidImportance.DEFAULT,
     sound: 'default',
   });
 }
 
 export async function requestNotificationPermission() {
+  const Notifications = await getNotifications();
+  await configureNotificationHandler();
+
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) {
     await ensureAndroidChannel();
@@ -46,6 +64,8 @@ export async function requestNotificationPermission() {
 }
 
 async function scheduleLocalReminder(kind: string, fallbackTitle: string, fallbackBody: string, options: ReminderOptions = {}) {
+  const Notifications = await getNotifications();
+  await configureNotificationHandler();
   await ensureAndroidChannel();
 
   return Notifications.scheduleNotificationAsync({
@@ -105,6 +125,7 @@ export function scheduleStretchingReminder(options?: ReminderOptions) {
   return scheduleLocalReminder('stretching', 'Stretching hatırlatması', 'Kısa mobilite ve esneme rutinini tamamla.', options);
 }
 
-export function cancelAllNotifications() {
+export async function cancelAllNotifications() {
+  const Notifications = await getNotifications();
   return Notifications.cancelAllScheduledNotificationsAsync();
 }
