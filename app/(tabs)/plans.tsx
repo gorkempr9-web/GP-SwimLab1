@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
+import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
 import { SetBuilder } from '@/components/training/SetBuilder';
 import { useLocale } from '@/locales';
@@ -75,40 +76,42 @@ export default function PlansScreen() {
           </>
         ) : null}
 
-        <View style={styles.summaryRow}>
-          <SummaryCard label="Haftalık Plan" value={String(plans.length)} />
-          <SummaryCard label="Bugün" value={plans[0] ? statusLabel(plans[0].statusByAthlete.a1?.status ?? 'planned') : '-'} />
-          <SummaryCard label="PDF" value="Hazır" />
-        </View>
+        {plans.length ? (
+          <>
+            <View style={styles.summaryRow}>
+              <SummaryCard label="Haftalık Plan" value={String(plans.length)} />
+              <SummaryCard label="Bugün" value={plans[0] ? statusLabel(plans[0].statusByAthlete.a1?.status ?? 'planned') : '-'} />
+              <SummaryCard label="PDF" value="Hazır" />
+            </View>
 
-        <View style={styles.pdfRow}>
-          <AppButton title={t('trainingPlanPdf')} icon={FileText} variant="secondary" onPress={handlePdf} />
-          <AppButton title="Haftalık Plan PDF" icon={FileText} variant="secondary" onPress={handlePdf} />
-        </View>
+            <View style={styles.pdfRow}>
+              <AppButton title={t('trainingPlanPdf')} icon={FileText} variant="secondary" onPress={handlePdf} />
+              <AppButton title="Haftalık Plan PDF" icon={FileText} variant="secondary" onPress={handlePdf} />
+            </View>
 
-        <Text style={styles.sectionTitle}>{t('weeklyPlan')}</Text>
-        {plansByDay.map(({ day, plans: dayPlans }) => (
-          <GlassCard key={day} style={styles.dayCard}>
-            <Text style={styles.dayTitle}>{day}</Text>
-            {dayPlans.length ? (
-              dayPlans.map((plan) => (
-                <TrainingPlanCard
-                  key={plan.planId}
-                  plan={plan}
-                  expanded={expandedId === plan.planId}
-                  canEdit={canEdit}
-                  isAthlete={isAthlete}
-                  isParent={isParent}
-                  onToggle={() => setExpandedId(expandedId === plan.planId ? null : plan.planId)}
-                  onRefresh={refresh}
-                  onMessage={setMessage}
-                />
-              ))
-            ) : (
-              <Text style={styles.emptyText}>Planlı antrenman yok.</Text>
-            )}
-          </GlassCard>
-        ))}
+            <Text style={styles.sectionTitle}>{t('weeklyPlan')}</Text>
+            {plansByDay.map(({ day, plans: dayPlans }) => dayPlans.length ? (
+              <GlassCard key={day} style={styles.dayCard}>
+                <Text style={styles.dayTitle}>{day}</Text>
+                {dayPlans.map((plan) => (
+                  <TrainingPlanCard
+                    key={plan.planId}
+                    plan={plan}
+                    expanded={expandedId === plan.planId}
+                    canEdit={canEdit}
+                    isAthlete={isAthlete}
+                    isParent={isParent}
+                    onToggle={() => setExpandedId(expandedId === plan.planId ? null : plan.planId)}
+                    onRefresh={refresh}
+                    onMessage={setMessage}
+                  />
+                ))}
+              </GlassCard>
+            ) : null)}
+          </>
+        ) : (
+          <EmptyState title="Henüz antrenman planı yok" detail={canEdit ? 'İlk planı oluşturmak için Yeni Antrenman Planı butonunu kullan.' : 'Antrenör plan eklediğinde burada görünecek.'} icon={Dumbbell} tone={colors.coral} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );

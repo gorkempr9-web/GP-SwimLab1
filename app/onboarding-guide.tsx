@@ -1,4 +1,4 @@
-import { LinearGradient } from 'expo-linear-gradient';
+﻿import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { CalendarDays, ChevronLeft, ChevronRight, Dumbbell, Lock, Megaphone, Trophy, Users } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -6,62 +6,64 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { GlassCard } from '@/components/GlassCard';
+import { useLocale } from '@/locales';
 import { CurrentUser, useSession } from '@/services/session';
 import { colors, spacing } from '@/theme/tokens';
 
 const guideSlides = [
   {
     icon: Trophy,
-    title: "SwimLab'e Hoş Geldin",
-    description: 'Yarış, antrenman, kulüp ve sporcu takibini tek yerden yönet.',
+    titleKey: 'appGuideWelcome',
+    descriptionKey: 'appGuideWelcomeDesc',
     mockTitle: 'Tek panel',
     mockRows: ['Yarış', 'Antrenman', 'Kulüp'],
   },
   {
     icon: CalendarDays,
-    title: 'Yarışlarını Takip Et',
-    description: 'Yaklaşan yarışları, geçmiş dereceleri ve PB gelişimini gör.',
-    mockTitle: 'Marmara Cup',
+    titleKey: 'appGuideRaceTracking',
+    descriptionKey: 'appGuideRaceTrackingDesc',
+    mockTitle: 'Yarış takibi',
     mockRows: ['50m Serbest', 'Yeni PB', '18 gün kaldı'],
   },
   {
     icon: Users,
-    title: 'Antrenör ve Kulüp Yönetimi',
-    description: 'Antrenörler yarış listesi hazırlayabilir, canlı sonuç girebilir ve sporcu gelişimini takip edebilir.',
+    titleKey: 'appGuideClubManagement',
+    descriptionKey: 'appGuideClubManagementDesc',
     mockTitle: 'Canlı giriş',
     mockRows: ['Sporcu seç', 'Derece gir', 'PB kontrol'],
   },
   {
     icon: Megaphone,
-    title: 'Kulüp Panosu ve Takvim',
-    description: 'Duyurular, antrenman saatleri, TYF takvimi ve kulüp etkinliklerini takip et.',
+    titleKey: 'appGuideClubCalendar',
+    descriptionKey: 'appGuideClubCalendarDesc',
     mockTitle: 'Bugün',
     mockRows: ['18:00 Antrenman', 'TYF resmi yarış', 'Acil duyuru'],
   },
   {
     icon: Dumbbell,
-    title: 'Özel Ders ve Uygun Saatler',
-    description: 'Antrenörlerin uygun saatlerini gör, özel ders talebi gönder veya kendi uygunluğunu yönet.',
+    titleKey: 'appGuidePrivateLessons',
+    descriptionKey: 'appGuidePrivateLessonsDesc',
     mockTitle: 'Uygun saatler',
     mockRows: ['Pzt 16:00', 'Cum 18:30', 'Talep gönder'],
   },
   {
     icon: Lock,
-    title: 'Gizlilik ve Güvenlik',
-    description: 'Veli, sporcu, antrenör ve kulüp rolleri ayrı tutulur. Her kullanıcı sadece yetkili olduğu alanları görür.',
+    titleKey: 'appGuidePrivacy',
+    descriptionKey: 'appGuidePrivacyDesc',
     mockTitle: 'Rol bazlı erişim',
     mockRows: ['Sporcu', 'Veli', 'Antrenör'],
   },
-];
+] as const;
 
 export default function OnboardingGuideScreen() {
   const { currentUser, setCurrentUserProfile } = useSession();
+  const { t } = useLocale();
   const [index, setIndex] = useState(0);
   const slide = guideSlides[index];
   const Icon = slide.icon;
   const isFirst = index === 0;
   const isLast = index === guideSlides.length - 1;
-  const roleNote = useMemo(() => getRoleNote(currentUser), [currentUser]);
+  const roleNote = useMemo(() => getRoleNote(currentUser, t), [currentUser, t]);
 
   const finishGuide = () => {
     setCurrentUserProfile({ ...currentUser, hasSeenAppGuide: true });
@@ -74,7 +76,7 @@ export default function OnboardingGuideScreen() {
         <View style={styles.header}>
           <AppLogo size={44} showSlogan={false} />
           <Pressable style={styles.skipButton} onPress={finishGuide}>
-            <Text style={styles.skipText}>Atla</Text>
+            <Text style={styles.skipText}>{t('skip')}</Text>
           </Pressable>
         </View>
 
@@ -82,8 +84,8 @@ export default function OnboardingGuideScreen() {
           <View style={styles.iconOrb}>
             <Icon color={colors.cyan} size={42} />
           </View>
-          <Text style={styles.title}>{slide.title}</Text>
-          <Text style={styles.description}>{slide.description}</Text>
+          <Text style={styles.title}>{t(slide.titleKey)}</Text>
+          <Text style={styles.description}>{t(slide.descriptionKey)}</Text>
 
           <View style={styles.mockup}>
             <View style={styles.mockHeader}>
@@ -103,18 +105,18 @@ export default function OnboardingGuideScreen() {
 
         <View style={styles.dots}>
           {guideSlides.map((item, itemIndex) => (
-            <View key={item.title} style={[styles.dot, itemIndex === index && styles.dotActive]} />
+            <View key={item.titleKey} style={[styles.dot, itemIndex === index && styles.dotActive]} />
           ))}
         </View>
 
         <View style={styles.footer}>
           <Pressable style={[styles.secondaryButton, isFirst && styles.disabledButton]} onPress={() => setIndex((value) => Math.max(0, value - 1))} disabled={isFirst}>
             <ChevronLeft color={isFirst ? colors.muted : colors.text} size={18} />
-            <Text style={[styles.secondaryText, isFirst && styles.disabledText]}>Geri</Text>
+            <Text style={[styles.secondaryText, isFirst && styles.disabledText]}>{t('back')}</Text>
           </Pressable>
 
           <Pressable style={styles.primaryButton} onPress={isLast ? finishGuide : () => setIndex((value) => value + 1)}>
-            <Text style={styles.primaryText}>{isLast ? "SwimLab'i Kullanmaya Başla" : 'İleri'}</Text>
+            <Text style={styles.primaryText}>{isLast ? t('appGuideStartUsing') : t('next')}</Text>
             {!isLast ? <ChevronRight color={colors.background} size={18} /> : null}
           </Pressable>
         </View>
@@ -123,11 +125,11 @@ export default function OnboardingGuideScreen() {
   );
 }
 
-function getRoleNote(user: CurrentUser) {
-  if (user.role === 'parent') return 'Çocuğunun yarışlarını ve kulüp duyurularını takip et.';
-  if (user.role === 'coach') return 'Yarış listesi, canlı sonuç ve özel ders takvimini yönet.';
-  if (user.role === 'club_admin') return 'Kulüp panosu, takvim ve yarış operasyonunu yönet.';
-  return 'Derecelerini ve yarışlarını takip et.';
+function getRoleNote(user: CurrentUser, t: ReturnType<typeof useLocale>['t']) {
+  if (user.role === 'parent') return t('appGuideParentNote');
+  if (user.role === 'coach') return t('appGuideCoachNote');
+  if (user.role === 'club_admin') return t('appGuideClubAdminNote');
+  return t('appGuideAthleteNote');
 }
 
 const styles = StyleSheet.create({
@@ -159,3 +161,4 @@ const styles = StyleSheet.create({
   primaryButton: { flex: 1, minHeight: 50, borderRadius: 17, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   primaryText: { color: colors.background, fontWeight: '900', textAlign: 'center' },
 });
+

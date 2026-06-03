@@ -64,29 +64,13 @@ function buildMockAnswer(question: string, topic: CoachTopic, context?: AthleteC
     return `${profileHint}Yarış planında ilk bölüm kontrollü, orta bölüm ritimli, son 15 m güçlü bitiş olmalı. 100m serbest için ikinci 50 m split farkını +1.5 saniye içinde tutmayı hedefle.`;
   }
 
-  if (normalized.includes('beslenme') || normalized.includes('su') || normalized.includes('protein')) {
-    return `${profileHint}Yarış veya sert antrenman gününde ana öğünü 3-4 saat önce planla. Antrenman sonrası 20-25 g protein, karbonhidrat ve elektrolit ekle; idrar rengini hidrasyon kontrolü için takip et.`;
-  }
-
-  if (normalized.includes('omuz') || normalized.includes('aşil') || normalized.includes('ağrı')) {
-    return `${profileHint}Ağrı artıyorsa yükü düşür ve antrenöre bildir. Omuz için düşük dirençli dış rotasyon, skapula aktivasyonu ve 8 dakikalık mobilite rutini ekle; ağrı keskinse sağlık uzmanına danış.`;
-  }
-
-  if (normalized.includes('recovery') || normalized.includes('toparlanma') || normalized.includes('yorgun')) {
-    return `${profileHint}Bugün recovery odaklı git: 15-20 dk düşük yoğunluk, 8 dk mobilite, yeterli sıvı ve erken uyku. Bir sonraki sert sette nabız ve his skorunu takip et.`;
-  }
-
-  if (normalized.includes('mental') || normalized.includes('heyecan') || normalized.includes('odak')) {
-    return `${profileHint}Yarış öncesi 3 nefes döngüsü, kısa hedef cümlesi ve ilk 15 m planına odaklan. Sonuç yerine uygulanabilir iki teknik ipucunu düşün: çıkış ve ritim.`;
-  }
-
   const byTopic: Record<CoachTopic, string> = {
-    Teknik: 'Teknik cevap: 6x50 drill + 4x25 kontrollü tempo ile hatayı izole et. Her tekrarda tek odak seç ve video varsa baş/kalça hizasını kontrol et.',
+    Teknik: 'Teknik cevap: 6x50 drill + 4x25 kontrollü tempo ile hatayı izole et. Her tekrarda tek odak seç.',
     Yarış: 'Yarış cevabı: Isınmada 2 kısa race pace tekrar yap, ilk bölümde acele etme ve son 15 m için kulaç ritmini sabitle.',
     Antrenman: 'Antrenman cevabı: Bugün 8x50 orta tempo + 6x25 sprint ekle. Kalite düşerse dinlenmeyi 15 saniye uzat.',
-    Recovery: 'Recovery cevabı: 10 dk mobilite, düşük yoğunluklu yüzme ve uyku takibi ekle. Yorgunluk yüksekse sprint hacmini azalt.',
+    Recovery: 'Recovery cevabı: 10 dk mobilite, düşük yoğunluklu yüzme ve uyku takibi ekle.',
     Beslenme: 'Beslenme cevabı: Antrenman sonrası karbonhidrat + protein kombinasyonu ve elektrolit planı uygula.',
-    'Mental hazırlık': 'Mental hazırlık cevabı: Yarış planını 3 kısa anahtara indir: çıkış, ritim, bitiriş. Her birini görselleştir.',
+    'Mental hazırlık': 'Mental hazırlık cevabı: Yarış planını 3 kısa anahtara indir: çıkış, ritim, bitiriş.',
     'Sakatlık önleme': 'Sakatlık önleme cevabı: Ağrı sinyallerini takip et, omuz ve ayak bileği mobilitesini ihmal etme, keskin ağrıda yükü durdur.',
   };
 

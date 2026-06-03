@@ -1,7 +1,8 @@
-import { BarChart3, Lock, Search } from 'lucide-react-native';
+import { BarChart3, Lock, Search, Users } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
 import { getPublicAthleteProfiles } from '@/services/clubCompetition';
 import { canManageClub, useSession } from '@/services/session';
@@ -17,22 +18,30 @@ export default function SearchScreen() {
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Search color={colors.cyan} size={28} />
+          <Search color={colors.coral} size={28} />
           <View style={styles.headerCopy}>
-            <Text style={styles.title}>Ara</Text>
-            <Text style={styles.subtitle}>Herkese açık derece profillerinde sporcu adı veya soyadı ara.</Text>
+            <Text style={styles.title}>Sporcu Ara</Text>
+            <Text style={styles.subtitle}>Kulüpler arası derece araması yalnız herkese açık performans bilgilerini gösterir.</Text>
           </View>
         </View>
 
         <View style={styles.searchBox}>
-          <Search color={colors.cyan} size={18} />
+          <Search color={colors.coral} size={18} />
           <TextInput value={query} onChangeText={setQuery} placeholder="Sporcu adı veya soyadı ara" placeholderTextColor={colors.muted} style={styles.searchInput} />
         </View>
 
         <View style={styles.privacyNote}>
           <Lock color={colors.gold} size={16} />
-          <Text style={styles.privacyText}>Telefon, mail, veli, sağlık, beslenme ve özel antrenör notları gösterilmez.</Text>
+          <Text style={styles.privacyText}>Telefon, e-posta, veli bilgisi, sağlık verisi, beslenme bilgisi ve özel antrenör notları gösterilmez.</Text>
         </View>
+
+        {profiles.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="Arama sonucu yok"
+            detail={query.trim() ? 'Bu arama için herkese açık derece profili bulunamadı.' : 'Sporcu adı veya soyadı yazarak herkese açık derece profillerini arayabilirsin.'}
+          />
+        ) : null}
 
         {profiles.map((profile) => (
           <GlassCard key={profile.id} style={styles.card}>
@@ -50,7 +59,7 @@ export default function SearchScreen() {
             </View>
             {profile.results.slice(0, 3).map((result) => (
               <View key={result.id} style={styles.resultRow}>
-                <BarChart3 color={colors.cyan} size={16} />
+                <BarChart3 color={colors.coral} size={16} />
                 <Text style={styles.resultText}>{result.date} • {result.eventName} • {result.finalTime}{result.isPB ? ' • Yeni PB' : ''}</Text>
               </View>
             ))}
@@ -80,13 +89,13 @@ const styles = StyleSheet.create({
   subtitle: { color: colors.muted, fontWeight: '700', marginTop: 4, lineHeight: 21 },
   searchBox: { minHeight: 48, borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   searchInput: { flex: 1, color: colors.text, fontWeight: '800' },
-  privacyNote: { flexDirection: 'row', gap: spacing.sm, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.3)', backgroundColor: colors.goldSoft, padding: spacing.md },
+  privacyNote: { flexDirection: 'row', gap: spacing.sm, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(194, 65, 12, 0.22)', backgroundColor: colors.goldSoft, padding: spacing.md },
   privacyText: { color: colors.mutedStrong, fontWeight: '800', flex: 1, lineHeight: 19 },
   card: { gap: spacing.md },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, alignItems: 'flex-start' },
   name: { color: colors.text, fontWeight: '900', fontSize: 18 },
   meta: { color: colors.mutedStrong, fontWeight: '800', marginTop: 4 },
-  publicBadge: { color: colors.cyan, fontWeight: '900', backgroundColor: colors.cyanSoft, borderRadius: 999, paddingHorizontal: spacing.sm, paddingVertical: 6, fontSize: 10, maxWidth: 128, textAlign: 'center' },
+  publicBadge: { color: colors.coral, fontWeight: '900', backgroundColor: colors.coralSoft, borderRadius: 999, paddingHorizontal: spacing.sm, paddingVertical: 6, fontSize: 10, maxWidth: 128, textAlign: 'center' },
   statRow: { flexDirection: 'row', gap: spacing.sm },
   miniStat: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, padding: spacing.sm },
   miniLabel: { color: colors.muted, fontWeight: '900', fontSize: 11 },

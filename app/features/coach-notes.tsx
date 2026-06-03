@@ -1,4 +1,4 @@
-import { NotebookPen } from 'lucide-react-native';
+﻿import { NotebookPen } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,13 +7,7 @@ import { colors, spacing, typography } from '@/theme/tokens';
 
 const tabs = ['Teknik', 'Start', 'Dönüş', 'Su altı', 'Tempo', 'Psikoloji', 'Beslenme', 'Sakatlık', 'Hedef'];
 
-const notes = [
-  { id: 'n1', athlete: 'Deniz', race: 'Marmara Cup', week: 'Bu hafta', category: 'Start', title: 'START', body: 'Patlayıcı. İlk 15m güçlü.' },
-  { id: 'n2', athlete: 'Deniz', race: 'Marmara Cup', week: 'Bu hafta', category: 'Dönüş', title: 'TURN', body: 'Sol dönüş yavaş.' },
-  { id: 'n3', athlete: 'Deniz', race: 'Marmara Cup', week: 'Bu hafta', category: 'Su altı', title: 'UNDERWATER', body: '8m iyi.' },
-  { id: 'n4', athlete: 'Deniz', race: 'Marmara Cup', week: 'Bu hafta', category: 'Hedef', title: 'GOAL', body: '50 SF <27.00' },
-  { id: 'n5', athlete: 'Ayşe', race: 'Kulüp Ligi', week: 'Gelecek hafta', category: 'Tempo', title: 'TEMPO', body: 'Son 15m ritim korunmalı.' },
-];
+const notes: Array<{ id: string; athlete: string; race: string; week: string; category: string; title: string; body: string }> = [];
 
 export default function CoachNotesScreen() {
   const [activeTab, setActiveTab] = useState('Teknik');
@@ -30,7 +24,7 @@ export default function CoachNotesScreen() {
           <NotebookPen color={colors.cyan} size={28} />
           <View>
             <Text style={styles.title}>Antrenör Not Defteri</Text>
-            <Text style={styles.subtitle}>Sporcu, yarış, hafta ve kategori filtresi.</Text>
+            <Text style={styles.subtitle}>Sporcu, yarış?, hafta ve kategori filtresi.</Text>
           </View>
         </View>
 
@@ -53,7 +47,7 @@ export default function CoachNotesScreen() {
         {visibleNotes.map((note) => (
           <GlassCard key={note.id} style={styles.card}>
             <Text style={styles.athlete}>{note.athlete}</Text>
-            <Text style={styles.meta}>{note.race} • {note.week} • {note.category}</Text>
+            <Text style={styles.meta}>{note.race} ? {note.week}  •  {note.category}</Text>
             <Text style={styles.noteTitle}>{note.title}</Text>
             <Text style={styles.noteBody}>{note.body}</Text>
           </GlassCard>
@@ -83,3 +77,4 @@ const styles = StyleSheet.create({
   noteBody: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 21 },
   empty: { color: colors.muted, fontWeight: '800', textAlign: 'center', padding: spacing.lg },
 });
+

@@ -21,30 +21,7 @@ export type MeetEntry = {
   isNewPb?: boolean;
 };
 
-let savedMeetEntries: MeetEntry[] = [
-  {
-    id: 'seed-a1-100-free',
-    meetId: 'meet-marmara-cup',
-    competitionName: 'Marmara Cup',
-    date: '02.06.2026',
-    poolType: '50m Uzun Kulvar',
-    athleteId: 'a1',
-    athleteName: 'Deniz Arslan',
-    eventType: 'individual',
-    distance: '100m',
-    stroke: 'Serbest',
-    relayEvent: '',
-    seedTime: '56.84',
-    pb: '56.84',
-    heat: '3',
-    lane: '5',
-    coachNote: 'Son 25m temposuna dikkat.',
-    status: 'planned',
-    resultTime: '',
-    splits: [],
-    isNewPb: false,
-  },
-];
+let savedMeetEntries: MeetEntry[] = [];
 
 export function getMeetEntries() {
   return savedMeetEntries;

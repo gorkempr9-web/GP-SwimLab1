@@ -18,6 +18,9 @@ export type UserProfileInput = {
   guardianPhone: string;
   guardianEmail: string;
   role: CurrentUser['role'];
+  kvkkAccepted?: boolean;
+  explicitConsentAccepted?: boolean;
+  consentAcceptedAt?: string;
 };
 
 const profileStorageKey = 'gp-swimlab-user-profile';
@@ -89,6 +92,9 @@ function buildProfile(baseUser: CurrentUser, input: UserProfileInput): CurrentUs
     guardianName: input.guardianName.trim() || undefined,
     guardianPhone: input.guardianPhone.trim() || undefined,
     guardianEmail: input.guardianEmail.trim() || undefined,
+    kvkkAccepted: input.kvkkAccepted ?? baseUser.kvkkAccepted,
+    explicitConsentAccepted: input.explicitConsentAccepted ?? baseUser.explicitConsentAccepted,
+    consentAcceptedAt: input.consentAcceptedAt ?? baseUser.consentAcceptedAt,
     specialty: input.role === 'coach' ? input.mainStroke.trim() || baseUser.specialty : baseUser.specialty,
     profileCreated: true,
   };

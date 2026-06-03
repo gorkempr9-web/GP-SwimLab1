@@ -17,7 +17,11 @@ export function ClubLogo({ club = 'GP Aquatics', size = 42, showName = true, onP
         {profile.logoUri ? (
           <Image source={{ uri: profile.logoUri }} style={styles.image} />
         ) : (
-          <Text style={[styles.logoText, { fontSize: Math.max(13, size * 0.34) }]}>{profile.logoLabel}</Text>
+          <View style={styles.fallbackMark}>
+            <View style={[styles.wave, { width: size * 0.52 }]} />
+            <View style={[styles.wave, styles.waveSecond, { width: size * 0.52 }]} />
+            <Text style={[styles.logoText, { fontSize: Math.max(11, size * 0.22) }]}>{profile.logoLabel}</Text>
+          </View>
         )}
       </View>
       {showName ? <Text style={styles.name} numberOfLines={1}>{profile.name}</Text> : null}
@@ -42,6 +46,9 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
   },
   image: { width: '100%', height: '100%' },
+  fallbackMark: { alignItems: 'center', justifyContent: 'center', gap: 2 },
+  wave: { height: 3, borderRadius: 999, backgroundColor: colors.cyan, transform: [{ rotate: '-8deg' }] },
+  waveSecond: { opacity: 0.62, transform: [{ rotate: '8deg' }] },
   logoText: { color: colors.cyan, fontWeight: '900' },
   name: { color: colors.text, fontWeight: '900', flexShrink: 1 },
 });

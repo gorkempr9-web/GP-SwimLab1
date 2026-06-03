@@ -91,14 +91,18 @@ export default function RegisterScreen() {
       return;
     }
 
-    const session =
-      method === 'phone'
-        ? await startPhoneVerification({ countryCode, phoneNumber, userType, guardianPhoneNumber: guardianPhone })
-        : await startEmailVerification({ email, userType, guardianEmail });
+    try {
+      const session =
+        method === 'phone'
+          ? await startPhoneVerification({ countryCode, phoneNumber, userType, guardianPhoneNumber: guardianPhone })
+          : await startEmailVerification({ email, userType, guardianEmail });
 
-    setCurrentUserProfile(registerResult.user);
-    setError('');
-    router.push({ pathname: '/(auth)/otp', params: { method, verificationId: session.verificationId, target: session.target, maskedTarget: session.maskedTarget } });
+      setCurrentUserProfile(registerResult.user);
+      setError('');
+      router.push({ pathname: '/(auth)/otp', params: { method, verificationId: session.verificationId, target: session.target, maskedTarget: session.maskedTarget } });
+    } catch (otpError) {
+      setError(otpError instanceof Error ? otpError.message : 'Doğrulama servisi henüz aktif değil. Lütfen yönetici ile iletişime geçin.');
+    }
   };
 
   return (

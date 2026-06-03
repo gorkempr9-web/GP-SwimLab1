@@ -1,4 +1,4 @@
-import { Ban, Heart, Medal, Plus, ShieldAlert, ShieldCheck, Star } from 'lucide-react-native';
+﻿import { Ban, Heart, Medal, Plus, ShieldAlert, ShieldCheck, Star } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,8 +12,8 @@ const shareTypes = ['Yeni PB', 'Yarış Sonucu', 'Madalya', 'Kürsü', 'Kulüp B
 const quickComments = ['Tebrikler', 'Harika yarış', 'Güzel gelişim', 'Devam et'];
 
 const initialWallItems = [
-  { id: 'w1', athlete: 'SwimLab Sporcusu', type: 'Yeni PB', detail: '100m Serbest • 56.84', likes: 24 },
-  { id: 'w2', athlete: 'Kulüp Sporcusu', type: 'Kürsü', detail: '50m Kelebek • 28.02 • 2.lik', likes: 18 },
+  { id: 'w1', athlete: 'SwimLab Sporcusu', type: 'Yeni PB', detail: '100m Serbest ⬢ 56.84', likes: 24 },
+  { id: 'w2', athlete: 'Kulüp Sporcusu', type: 'Kürsü', detail: '50m Kelebek ⬢ 28.02 ⬢ 2.lik', likes: 18 },
   { id: 'w3', athlete: 'GP Aquatics', type: 'Kulüp Başarısı', detail: '28 PB paylaşımı • 1840 puan', likes: 31 },
 ];
 
@@ -37,23 +37,23 @@ export default function ForumScreen() {
     }
 
     setWarning('');
-    setPreview(mode === 'censor' ? result.sanitized : `${currentUser.firstName} ${currentUser.lastName}\n${shareType}\n${achievementTitle} • ${achievementBody}`);
+    setPreview(mode === 'censor' ? result.sanitized : `${currentUser.firstName} ${currentUser.lastName}\n${shareType}\n${achievementTitle}  •  ${achievementBody}`);
   };
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Başarı Duvarı</Text>
-        <Text style={styles.subtitle}>Serbest sohbet yok. Sadece kontrollü başarı paylaşımları var.</Text>
+        <Text style={styles.title}>BaÇar? Duvar?</Text>
+        <Text style={styles.subtitle}>Serbest sohbet yok. Sadece kontroll? baÇar? payla??mlar? var.</Text>
 
         <GlassCard style={styles.athleteOfMonth}>
           <View style={styles.wallIcon}>
             <Star color={colors.gold} size={24} />
           </View>
           <View style={styles.wallBody}>
-            <Text style={styles.wallType}>Ayın Sporcusu</Text>
+            <Text style={styles.wallType}>Ay?n Sporcusu</Text>
             <Text style={styles.wallTitle} numberOfLines={1}>{currentUser.firstName} {currentUser.lastName}</Text>
-            <Text style={styles.wallMeta} numberOfLines={2}>100m Serbest PB • 56.84 • Marmara Cup hazırlığı</Text>
+            <Text style={styles.wallMeta} numberOfLines={2}>100m Serbest PB ? 56.84 ? Yarış etkinliği hazırlığı</Text>
           </View>
         </GlassCard>
 
@@ -100,7 +100,7 @@ export default function ForumScreen() {
           <AppButton title="Moderasyonla Kontrol Et" icon={Plus} onPress={handleCreateAchievement} />
         </GlassCard>
 
-        <Text style={styles.sectionTitle}>PB, Madalya ve Kulüp Başarıları</Text>
+        <Text style={styles.sectionTitle}>PB, Madalya ve Kulüp BaÇar?lar?</Text>
         {initialWallItems.map((item) => (
           <GlassCard key={item.id} style={styles.wallCard}>
             <View style={styles.wallIcon}>
@@ -127,7 +127,7 @@ export default function ForumScreen() {
 
         <GlassCard style={styles.noticeCard}>
           <Ban color={colors.danger} size={22} />
-          <Text style={styles.noticeText}>Uzun forum sohbeti, direkt mesaj ve serbest yorum alanı kapalıdır.</Text>
+          <Text style={styles.noticeText}>Uzun forum sohbeti, direkt mesaj ve serbest yorum alan? kapal?d?r.</Text>
         </GlassCard>
       </ScrollView>
     </SafeAreaView>
@@ -185,3 +185,5 @@ const styles = StyleSheet.create({
   noticeCard: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, backgroundColor: colors.dangerSoft },
   noticeText: { flex: 1, color: colors.text, lineHeight: 21, fontWeight: '700' },
 });
+
+

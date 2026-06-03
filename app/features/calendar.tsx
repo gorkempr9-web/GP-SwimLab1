@@ -63,7 +63,7 @@ export default function CalendarScreen() {
       group,
       description: description.trim() || 'Etkinlik açıklaması',
       priority,
-      coach: currentUser.role === 'club_admin' ? 'Kulüp Yönetimi' : 'Görkem Pınar',
+      coach: currentUser.role === 'club_admin' ? 'Kulüp Yönetimi' : 'G?rkem Pınar',
     });
 
     setEvents((current) => [newEvent, ...current]);
@@ -117,7 +117,7 @@ export default function CalendarScreen() {
                 <DropdownField label="Görünürlük" value={visibility} onPress={() => setSheet({ title: 'Görünürlük seç', options: visibilities, selected: visibility, onSelect: (value) => setVisibility(value as Visibility) })} />
                 <View style={styles.reminderToggle}>
                   <View>
-                    <Text style={styles.reminderToggleTitle}>1 saat önce hatırlat</Text>
+                    <Text style={styles.reminderToggleTitle}>1 saat Önce hatırlat</Text>
                     <Text style={styles.reminderToggleText}>İsteğe bağlı local bildirim</Text>
                   </View>
                   <Switch
@@ -222,7 +222,7 @@ function EventCard({ event, onReminder }: { event: ClubCalendarEvent; onReminder
       <Text style={styles.eventDescription}>{event.description}</Text>
       <Pressable style={styles.reminderButton} onPress={onReminder}>
         <CheckCircle2 color={colors.cyan} size={16} />
-        <Text style={styles.reminderText}>1 saat önce hatırlat</Text>
+        <Text style={styles.reminderText}>1 saat Önce hatırlat</Text>
       </Pressable>
     </View>
   );

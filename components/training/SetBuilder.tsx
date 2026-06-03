@@ -90,7 +90,7 @@ export function SetBuilder({
         <Text style={styles.previewLabel}>Önizleme</Text>
         <Text style={styles.previewText}>{formatTrainingSet(previewSet)}</Text>
       </View>
-      <AppButton title={editingId ? 'Seti Güncelle' : 'Set Ekle'} icon={Plus} onPress={addSet} />
+      <AppButton title={editingId ? 'Seti GÖncelle' : 'Set Ekle'} icon={Plus} onPress={addSet} />
 
       {sets.map((set, index) => (
         <View key={set.id} style={styles.setRow}>

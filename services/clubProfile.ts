@@ -1,4 +1,4 @@
-export type ClubProfile = {
+﻿export type ClubProfile = {
   id: string;
   name: string;
   logoLabel: string;
@@ -36,6 +36,11 @@ export type PrivateLessonAd = {
 
 let mockClubLogoUri: string | undefined;
 
+export const mockClubProfiles: ClubProfile[] = [
+  { id: 'mev-koleji', name: 'MEV Koleji', logoLabel: 'MEV', clubCode: 'GP-MEV001', totalAthletes: 96, totalCoaches: 6, totalParents: 72 },
+  { id: 'bcsk', name: 'Başkent Çankaya Spor Kulübü', logoLabel: 'BCSK', clubCode: 'GP-BCSK001', totalAthletes: 84, totalCoaches: 5, totalParents: 61 },
+];
+
 export const defaultClubProfile: ClubProfile = {
   id: 'gp-aquatics',
   name: 'GP Aquatics',
@@ -47,9 +52,10 @@ export const defaultClubProfile: ClubProfile = {
 };
 
 export function getClubProfile(clubName = 'GP Aquatics'): ClubProfile {
+  const profile = mockClubProfiles.find((club) => club.name === clubName) ?? defaultClubProfile;
   return {
-    ...defaultClubProfile,
-    name: clubName,
+    ...profile,
+    name: clubName || profile.name,
     logoUri: mockClubLogoUri,
   };
 }
@@ -85,7 +91,7 @@ export const clubAds: ClubAd[] = [
 export const privateLessonAds: PrivateLessonAd[] = [
   {
     id: 'pl-1',
-    coachName: 'Mert Kaya',
+    coachName: 'SwimLab Antrenör',
     club: 'GP Aquatics',
     branch: 'Serbest teknik ve start',
     level: '11-16 yaş performans',
@@ -97,3 +103,4 @@ export const privateLessonAds: PrivateLessonAd[] = [
     public: true,
   },
 ];
+

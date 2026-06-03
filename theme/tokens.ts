@@ -1,25 +1,35 @@
 import { TextStyle } from 'react-native';
+import { palette } from '@/theme/colors';
 
 export const colors = {
-  background: '#071626',
-  backgroundDeep: '#020A14',
-  surface: 'rgba(7, 35, 61, 0.78)',
-  surfaceSolid: '#07233D',
-  surfaceSoft: '#0A2C48',
-  glass: 'rgba(255, 255, 255, 0.07)',
-  cyan: '#2EE7F5',
-  cyanSoft: 'rgba(46, 231, 245, 0.08)',
-  teal: '#14B8A6',
-  text: '#F8FCFF',
-  muted: '#9BB4C8',
-  mutedStrong: '#C6D6E2',
-  border: 'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(46, 231, 245, 0.22)',
-  gold: '#FBBF24',
+  background: palette.navy900,
+  backgroundDeep: palette.navy950,
+  surface: palette.card,
+  surfaceSolid: palette.cardSolid,
+  surfaceSoft: '#F1F5F9',
+  glass: 'rgba(255, 255, 255, 0.72)',
+  cyan: palette.cyan,
+  cyanSoft: 'rgba(56, 189, 248, 0.14)',
+  blue: palette.sportBlue,
+  blueSoft: 'rgba(56, 189, 248, 0.14)',
+  info: '#38BDF8',
+  infoSoft: 'rgba(56, 189, 248, 0.14)',
+  coral: palette.coral,
+  coralSoft: 'rgba(249, 115, 22, 0.13)',
+  violet: palette.violet,
+  violetSoft: 'rgba(139, 92, 246, 0.13)',
+  teal: '#0F766E',
+  text: palette.text,
+  muted: palette.muted,
+  mutedStrong: '#475569',
+  border: 'rgba(30, 58, 95, 0.10)',
+  borderStrong: 'rgba(30, 58, 95, 0.14)',
+  gold: palette.gold,
   goldSoft: 'rgba(251, 191, 36, 0.14)',
-  danger: '#FB7185',
-  dangerSoft: 'rgba(251, 113, 133, 0.11)',
-  success: '#34D399',
+  danger: palette.danger,
+  dangerSoft: 'rgba(239, 68, 68, 0.12)',
+  success: palette.success,
+  successSoft: 'rgba(34, 197, 94, 0.13)',
 };
 
 export const spacing = {
@@ -61,12 +71,12 @@ export const radii = {
 export const card = {
   backgroundColor: colors.surface,
   borderWidth: 1,
-  borderColor: colors.border,
+  borderColor: colors.borderStrong,
   borderRadius: radii.xl,
 };
 
 export const gradients = {
-  app: [colors.backgroundDeep, colors.background, '#0A2740'] as const,
-  hero: ['rgba(46, 231, 245, 0.11)', 'rgba(8, 42, 68, 0.82)', 'rgba(35, 121, 255, 0.08)'] as const,
-  fallback: ['rgba(46, 231, 245, 0.08)', 'rgba(6, 31, 53, 0.9)'] as const,
+  app: [colors.background, '#EFF6FF', '#F8FAFC'] as const,
+  hero: ['rgba(56, 189, 248, 0.18)', '#FFFFFF', 'rgba(139, 92, 246, 0.10)'] as const,
+  fallback: ['rgba(56, 189, 248, 0.10)', '#FFFFFF', 'rgba(248, 250, 252, 0.96)'] as const,
 };

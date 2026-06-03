@@ -1,4 +1,4 @@
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+﻿import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Check, ChevronDown, ClipboardList, Edit3, FileText, Plus, ShieldAlert, StickyNote, Trash2, UserCircle, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -39,13 +39,7 @@ type DraftRace = {
   coachNote: string;
 };
 
-const clubAthletes: ClubAthlete[] = [
-  { id: 'a1', name: 'Deniz Arslan', ageCategory: '15-16 yaş', club: 'GP Aquatics', group: 'Yarış takımı', lastRaceTime: '56.84', pb: '56.84' },
-  { id: 'a2', name: 'Ece Yılmaz', ageCategory: '13 yaş', club: 'GP Aquatics', group: 'Performans grubu', lastRaceTime: '31.20', pb: '31.20' },
-  { id: 'a3', name: 'Mert Kaya', ageCategory: '16-18 yaş', club: 'GP Aquatics', group: 'Performans grubu', lastRaceTime: '2:18.90', pb: '2:18.90' },
-  { id: 'a4', name: 'Zeynep Demir', ageCategory: '14-15 yaş', club: 'GP Aquatics', group: 'Küçük yaş grubu', lastRaceTime: '1:18.40', pb: '1:18.40' },
-  { id: 'a5', name: 'Arda Koç', ageCategory: '12-13 yaş', club: 'GP Aquatics', group: 'Küçük yaş grubu' },
-];
+const clubAthletes: ClubAthlete[] = [];
 
 const strokes: Stroke[] = ['Serbest', 'Sırtüstü', 'Kurbağalama', 'Kelebek', 'Karışık'];
 const distanceByStroke: Record<Stroke, string[]> = {
@@ -79,7 +73,7 @@ const emptyRace = (athlete: ClubAthlete): DraftRace => ({
 export default function CoachMeetManagerScreen() {
   const { currentUser } = useSession();
   const canManage = canManageClub(currentUser.role);
-  const [competitionName, setCompetitionName] = useState('Marmara Cup');
+  const [competitionName, setCompetitionName] = useState('');
   const [date, setDate] = useState('02.06.2026');
   const [poolType, setPoolType] = useState('50m Uzun Kulvar');
   const [races, setRaces] = useState<DraftRace[]>([]);
@@ -272,7 +266,7 @@ export default function CoachMeetManagerScreen() {
               </View>
               <View style={styles.athleteCopy}>
                 <Text style={styles.athleteName}>{athlete.name}</Text>
-                <Text style={styles.meta}>{athlete.ageCategory} • {athlete.club}</Text>
+                <Text style={styles.meta}>{athlete.ageCategory}  •  {athlete.club}</Text>
                 <Text style={styles.meta}>{athlete.group}</Text>
                 <Text style={styles.pbLine}>PB / Son derece: {athlete.pb || athlete.lastRaceTime || '-'}</Text>
               </View>
@@ -288,8 +282,8 @@ export default function CoachMeetManagerScreen() {
                   <Text style={[styles.raceRowTitle, race.eventType === 'team' && styles.teamRaceChip]}>
                     {race.eventType === 'team' ? 'Takım' : 'Ferdi'} | {race.eventType === 'team' ? race.relayEvent : `${race.distance} ${race.stroke}`}
                   </Text>
-                  <Text style={styles.raceRowMeta}>Seri: {race.heat || 'Bekleniyor'} • Kulvar: {race.lane || 'Bekleniyor'}</Text>
-                  <Text style={styles.raceRowMeta}>PB {race.pb || '-'} • Son derece {race.seedTime || '-'}</Text>
+                  <Text style={styles.raceRowMeta}>Seri: {race.heat || 'Bekleniyor'}  •  Kulvar: {race.lane || 'Bekleniyor'}</Text>
+                  <Text style={styles.raceRowMeta}>PB {race.pb || '-'}  •  Son derece {race.seedTime || '-'}</Text>
                   {race.coachNote ? <Text style={styles.raceNote}>Not: {race.coachNote}</Text> : null}
                 </View>
                 <View style={styles.rowActions}>
@@ -528,7 +522,7 @@ function LiveEntryRow({
         <View style={styles.liveCopy}>
           <Text style={styles.liveName}>{entry.athleteName}</Text>
           <Text style={styles.liveEvent}>{eventName}</Text>
-          <Text style={styles.liveMeta}>Seri {entry.heat || 'Bekleniyor'} • Kulvar {entry.lane || 'Bekleniyor'} • PB {entry.pb || '-'}</Text>
+          <Text style={styles.liveMeta}>Seri {entry.heat || 'Bekleniyor'}  •  Kulvar {entry.lane || 'Bekleniyor'}  •  PB {entry.pb || '-'}</Text>
         </View>
         <View style={[styles.statusPill, entry.status === 'completed' && styles.statusDone, entry.status !== 'planned' && entry.status !== 'completed' && styles.statusWarn]}>
           <Text style={styles.statusText}>{entry.status === 'completed' ? 'Yüzdü' : entry.status === 'dq' ? 'DQ' : entry.status === 'dns' ? 'DNS' : 'Bekliyor'}</Text>
@@ -681,3 +675,5 @@ const styles = StyleSheet.create({
   chipText: { color: colors.muted, fontWeight: '900' },
   chipTextActive: { color: colors.text },
 });
+
+

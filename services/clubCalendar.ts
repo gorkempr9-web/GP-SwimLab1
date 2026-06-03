@@ -1,4 +1,4 @@
-import { ClubGroup, ClubPriority } from './clubBoard';
+﻿import { ClubGroup, ClubPriority } from './clubBoard';
 
 export type CalendarEventType = 'Antrenman' | 'Yarış' | 'Kamp' | 'Ölçüm Günü' | 'Veli Toplantısı' | 'Dinlenme Günü';
 
@@ -30,12 +30,7 @@ export const eventAccentColors: Record<CalendarEventType | 'Acil', string> = {
 
 export const weekDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
 
-export const mockCalendarEvents: ClubCalendarEvent[] = [
-  { id: 'cal-1', title: 'Sprint tempo', type: 'Antrenman', date: '20.05.2026', day: 'Pazartesi', startTime: '17:30', endTime: '19:00', location: 'Ana Havuz', group: 'Performans Grubu', description: 'Race pace ve start çalışması.', priority: 'Normal', coach: 'Görkem Pınar', seenByMe: false },
-  { id: 'cal-2', title: 'Marmara Cup', type: 'Yarış', date: '23.05.2026', day: 'Perşembe', startTime: '09:00', endTime: '18:00', location: 'Olimpik Havuz', group: 'Tüm Kulüp', description: 'Yarış günü programı.', priority: 'Önemli', coach: 'Görkem Pınar', seenByMe: true },
-  { id: 'cal-3', title: 'Laktat ölçüm günü', type: 'Ölçüm Günü', date: '25.05.2026', day: 'Cumartesi', startTime: '16:00', endTime: '18:00', location: 'Performans Lab', group: 'Performans Grubu', description: 'Sezon ortası ölçüm.', priority: 'Normal', coach: 'Ekip', seenByMe: false },
-  { id: 'cal-4', title: 'Recovery', type: 'Dinlenme Günü', date: '26.05.2026', day: 'Pazar', startTime: 'Tüm gün', endTime: '-', location: 'Ev', group: 'Tüm Kulüp', description: 'Mobilite ve uyku takibi.', priority: 'Normal', coach: 'Görkem Pınar', seenByMe: false },
-];
+export const mockCalendarEvents: ClubCalendarEvent[] = [];
 
 export async function createCalendarEvent(event: Omit<ClubCalendarEvent, 'id' | 'seenByMe'>) {
   return {
@@ -48,3 +43,6 @@ export async function createCalendarEvent(event: Omit<ClubCalendarEvent, 'id' | 
 export async function planEventReminder() {
   return 'Bu etkinlik için hatırlatma planlandı.';
 }
+
+
+

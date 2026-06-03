@@ -1,4 +1,4 @@
-export type ClubPriority = 'normal' | 'important' | 'emergency';
+﻿export type ClubPriority = 'normal' | 'important' | 'emergency';
 export type NotificationMode = 'push' | 'inApp';
 export type ClubBoardCategory = string;
 export type CompetitionStatus = string;
@@ -205,46 +205,24 @@ export const selectLabel = 'Seçiniz';
 
 export const strokeDistances: Record<string, string[]> = {
   Serbest: ['50', '100', '200', '400', '800', '1500'],
-  Sırtüstü: ['50', '100', '200'],
+  'Sırtüstü': ['50', '100', '200'],
   Kurbağalama: ['50', '100', '200'],
   Kelebek: ['50', '100', '200'],
   Karışık: ['100', '200', '400'],
 };
 
-export const athletePBs: AthletePB[] = [
-  { id: 'pb-deniz-50-free-50', athleteId: 'ra-1', stroke: 'Serbest', distance: '50', poolType: '50m', time: '32.23' },
-  { id: 'pb-deniz-100-free-50', athleteId: 'ra-1', stroke: 'Serbest', distance: '100', poolType: '50m', time: '1:10.44' },
-  { id: 'pb-deniz-200-free-50', athleteId: 'ra-1', stroke: 'Serbest', distance: '200', poolType: '50m', time: '2:38.90' },
-  { id: 'pb-deniz-50-back-50', athleteId: 'ra-1', stroke: 'Sırtüstü', distance: '50', poolType: '50m', time: '36.10' },
-  { id: 'pb-ece-50-fly-50', athleteId: 'ra-2', stroke: 'Kelebek', distance: '50', poolType: '50m', time: '34.55' },
-  { id: 'pb-ece-100-fly-50', athleteId: 'ra-2', stroke: 'Kelebek', distance: '100', poolType: '50m', time: '1:18.20' },
-];
+export const athletePBs: AthletePB[] = [];
 
-export const clubBoardItems: ClubBoardItem[] = [
-  { id: 'board-1', title: 'GP Aquatics Yaz Kampı', description: '14 günlük yüksek performans kampı', category: 'Kamp', date: '10.06.2026', club: 'GP Aquatics', publisher: 'Kulüp Yönetimi', seenUsers: ['Deniz', 'Ece'], priority: 'important', notification: ['push', 'inApp'] },
-  { id: 'board-2', title: 'Antrenman saat değişikliği', description: 'Performans grup antrenmanı 18:00 olarak güncellendi.', category: 'Takvim', date: '24.05.2026', club: 'GP Aquatics', publisher: 'Baş Antrenör', seenUsers: ['Deniz', 'Mert'], priority: 'normal', notification: ['inApp'] },
-  { id: 'board-3', title: 'Marmara Cup toplantısı', description: 'Yarış kafilesi ve seans planı paylaşılacak.', category: 'Yarışlar', date: '25.05.2026', club: 'GP Aquatics', publisher: 'Yarış Koordinatörü', seenUsers: ['Deniz'], priority: 'emergency', notification: ['push', 'inApp'] },
-  { id: 'board-4', title: 'Veli bilgilendirmesi', description: 'KVKK ve yarış günü izin formları kontrol edilecek.', category: 'Duyurular', date: '26.05.2026', club: 'GP Aquatics', publisher: 'Kulüp Sekreterliği', seenUsers: ['Veli: Ece'], priority: 'important', notification: ['inApp'] },
-];
+export const clubBoardItems: ClubBoardItem[] = [];
 
 export const clubAnnouncements = clubBoardItems.filter((item) => item.category === 'Duyurular');
 export const emergencyAlerts = clubBoardItems.filter((item) => item.priority === 'emergency');
 
-export const clubCalendarItems: ClubCalendarItem[] = [
-  { id: 'cc-1', type: 'antrenman', title: 'Race pace', date: '24.05.2026', time: '18:00', place: '50m havuz', lane: 'Kulvar 3-6', group: 'Performans grup' },
-  { id: 'cc-2', type: 'yarış', title: 'Marmara Cup', date: '26.05.2026', time: '08:00', place: 'Olimpik havuz', lane: 'Kulvar 1-8', group: 'Yarış takımı' },
-  { id: 'cc-3', type: 'kamp', title: 'Yaz kampı', date: '10.06.2026', time: '09:30', place: 'Kamp havuzu', lane: 'Kulvar 2-7', group: 'Performans grup' },
-  { id: 'cc-4', type: 'veli toplantısı', title: 'Marmara Cup veli toplantısı', date: '25.05.2026', time: '20:00', place: 'Kulüp salonu', lane: '-', group: 'Veliler' },
-  { id: 'cc-5', type: 'beslenme görüşmesi', title: 'Yarış haftası beslenme', date: '23.05.2026', time: '19:00', place: 'Online', lane: '-', group: 'Yarış takımı' },
-];
+export const clubCalendarItems: ClubCalendarItem[] = [];
 
 export const clubCalendarEvents = clubCalendarItems;
 
-export const competitions: Competition[] = [
-  { id: 'comp-1', name: 'Marmara Cup', city: 'İstanbul', poolType: '50m', startDate: '26 Mayıs', endDate: '28 Mayıs', warmupTime: '08:00', session: 'Sabah seansı', club: 'GP Aquatics', status: 'yaklaşıyor' },
-  { id: 'comp-2', name: 'Bölge Şampiyonası', city: 'Bursa', poolType: '25m', startDate: '12 Haziran', endDate: '14 Haziran', warmupTime: '09:00', session: 'Öğleden sonra', club: 'GP Aquatics', status: 'aktif' },
-  { id: 'comp-3', name: 'Kulüp Ligi', city: 'İzmir', poolType: '50m', startDate: '05 Mayıs', endDate: '06 Mayıs', warmupTime: '07:45', session: 'Final', club: 'GP Aquatics', status: 'tamamlandı' },
-];
+export const competitions: Competition[] = [];
 
 export const rosterEvents = ['50 SF', '100 SF', '200 IM', '50 Fly', '100 Back', '200 Breast'];
 export const relayRaceOptions = [
@@ -259,46 +237,9 @@ export const relayRaceOptions = [
   '4x100m Karma Karışık Bayrak',
 ];
 
-export const rosterAthletes: RosterAthlete[] = [
-  { id: 'ra-1', name: 'Deniz Arslan', age: '15', club: 'GP Aquatics', group: 'Yarış Grubu', coach: 'Görkem Pınar', attendance: '96%', attendanceStatus: 'Katıldı', lastPb: '100 SF 56.84', upcomingRace: 'Marmara Cup', lane: '4', heat: '2', day: '1. Gün', session: 'Sabah Seansı', events: { '50 SF': true, '100 SF': true, '200 IM': false, '50 Fly': true, '100 Back': false, '200 Breast': false } },
-  { id: 'ra-2', name: 'Ece Yılmaz', age: '14', club: 'GP Aquatics', group: 'Performans Grubu', coach: 'Ece Koç', attendance: '91%', attendanceStatus: 'Geç Kaldı', lastPb: '50 Fly 28.02', upcomingRace: 'Marmara Cup', lane: '5', heat: 'Final', day: '1. Gün', session: 'Sabah Seansı', events: { '50 SF': false, '100 SF': true, '200 IM': true, '50 Fly': true, '100 Back': false, '200 Breast': false } },
-  { id: 'ra-3', name: 'Mert Kaya', age: '16', club: 'GP Aquatics', group: 'Masters', coach: 'Görkem Pınar', attendance: '88%', attendanceStatus: 'Raporlu', lastPb: '200 IM 2:18.90', upcomingRace: 'Bölge Şampiyonası', lane: '3', heat: '1', day: '2. Gün', session: 'Akşam Seansı', events: { '50 SF': true, '100 SF': false, '200 IM': true, '50 Fly': false, '100 Back': true, '200 Breast': true } },
-  { id: 'ra-4', name: 'Zeynep Demir', age: '15', club: 'GP Aquatics', group: 'Küçük Yaş', coach: 'Ece Koç', attendance: '84%', attendanceStatus: 'Katıldı', lastPb: '100 Breast 1:18.40', upcomingRace: 'Marmara Cup', lane: '6', heat: '3', day: '2. Gün', session: 'Sabah Seansı', events: { '50 SF': false, '100 SF': false, '200 IM': false, '50 Fly': false, '100 Back': false, '200 Breast': true } },
-];
+export const rosterAthletes: RosterAthlete[] = [];
 
-let competitionRostersState: CompetitionRosterEntry[] = [
-  { id: 'entry-1', athleteId: 'ra-1', athleteName: 'Deniz Arslan', raceDay: '1. Gün', session: 'Sabah Seansı', heat: '2', lane: '4', estimatedTime: '09:10', distance: '50', stroke: 'Serbest', poolType: '50m', pb: '32.90', targetTime: '32.20' },
-  { id: 'entry-2', athleteId: 'ra-1', athleteName: 'Deniz Arslan', raceDay: '1. Gün', session: 'Akşam Seansı', heat: '3', lane: '5', estimatedTime: '10:20', distance: '100', stroke: 'Serbest', poolType: '50m', pb: '56.84', targetTime: '55.90' },
-  { id: 'entry-3', athleteId: 'ra-1', athleteName: 'Deniz Arslan', raceDay: '2. Gün', session: 'Akşam Seansı', heat: '1', lane: '5', estimatedTime: '18:10', distance: '200', stroke: 'Karışık', poolType: '50m', pb: '2:18.90', targetTime: '2:17.50' },
-  { id: 'entry-4', athleteId: 'ra-2', athleteName: 'Ece Yılmaz', raceDay: '1. Gün', session: 'Sabah Seansı', heat: 'Final', lane: '5', estimatedTime: '09:40', distance: '50', stroke: 'Kelebek', poolType: '50m', pb: '28.02', targetTime: '27.80' },
-  { id: 'entry-5', athleteId: 'ra-3', athleteName: 'Mert Kaya', raceDay: '2. Gün', session: 'Akşam Seansı', heat: '1', lane: '3', estimatedTime: '17:20', distance: '200', stroke: 'Karışık', poolType: '50m', pb: '2:18.90', targetTime: '2:17.80' },
-  { id: 'entry-6', athleteId: 'ra-4', athleteName: 'Zeynep Demir', raceDay: '2. Gün', session: 'Sabah Seansı', heat: '3', lane: '6', estimatedTime: '11:10', distance: '200', stroke: 'Kurbağalama', poolType: '50m', pb: '2:52.40', targetTime: '2:50.90' },
-  {
-    id: 'entry-relay-1',
-    athleteId: 'relay-team-1',
-    athleteName: 'SwimLab A Takımı',
-    raceKind: 'relay',
-    raceDay: '2. Gün',
-    session: 'Akşam Seansı',
-    heat: '3',
-    lane: '5',
-    estimatedTime: '18:40',
-    distance: '4x100',
-    stroke: 'Serbest Bayrak',
-    poolType: '50m',
-    pb: '3:59.20',
-    targetTime: '3:58.00',
-    relayType: '4x100m Serbest Bayrak',
-    teamName: 'SwimLab A Takımı',
-    teamCategory: 'Açık Yaş Erkek',
-    relayAthletes: [
-      { athleteId: 'ra-1', athleteName: 'Deniz Arslan', order: 1 },
-      { athleteId: 'ra-3', athleteName: 'Mert Kaya', order: 2 },
-      { athleteId: 'ra-2', athleteName: 'Ece Yılmaz', order: 3 },
-      { athleteId: 'ra-4', athleteName: 'Zeynep Demir', order: 4 },
-    ],
-  },
-];
+let competitionRostersState: CompetitionRosterEntry[] = [];
 
 let liveRaceQueueState: LiveRaceEntry[] = competitionRostersState.map(rosterEntryToLiveRace);
 
@@ -312,8 +253,8 @@ export function getCompetitionRosterEntries() {
 
 export function getPreparedRosterGroups(): PreparedRosterGroup[] {
   const grouped = competitionRostersState.reduce<Record<string, CompetitionRosterEntry[]>>((acc, entry) => {
-    const competitionName = entry.competitionName ?? 'Marmara Cup';
-    const date = entry.competitionDate ?? '20.02.2026';
+    const competitionName = entry.competitionName ?? 'Yarış adı bekleniyor';
+    const date = entry.competitionDate ?? 'Tarih bekleniyor';
     const key = `${date}-${competitionName}`;
     acc[key] = [...(acc[key] ?? []), entry];
     return acc;
@@ -321,15 +262,15 @@ export function getPreparedRosterGroups(): PreparedRosterGroup[] {
 
   return Object.entries(grouped).map(([key, entries]) => {
     const first = entries[0];
-    const competitionName = first.competitionName ?? 'Marmara Cup';
-    const date = first.competitionDate ?? '20.02.2026';
+    const competitionName = first.competitionName ?? 'Yarış adı bekleniyor';
+    const date = first.competitionDate ?? 'Tarih bekleniyor';
     const athleteIds = new Set(entries.flatMap((entry) => entry.raceKind === 'relay' ? entry.relayAthletes?.map((athlete) => athlete.athleteId) ?? [] : [entry.athleteId]));
     return {
       key,
       title: `${date} ${competitionName} Yarış Listesi`,
       competitionName,
       date,
-      location: first.location ?? 'İstanbul',
+      location: first.location ?? '-',
       entries,
       totalAthletes: athleteIds.size,
       totalStarts: entries.length,
@@ -386,10 +327,7 @@ export function updateLiveRaceQueueEntry(id: string, patch: Partial<LiveRaceEntr
   return getLiveRaceQueue();
 }
 
-let athleteRaceHistoryState: AthleteRaceResult[] = [
-  { id: 'result-1', athleteId: 'ra-1', athleteName: 'Deniz Arslan', competitionName: 'Kulüp Ligi', date: '12.05.2026', raceDay: '1. Gün', location: 'İstanbul', poolType: '25m', session: 'Sabah Seansı', eventName: '100 SF', distance: '100', stroke: 'SF', heat: '2', lane: '4', finalTime: '57.40', splits: ['27.80', '57.40'], coachNote: 'Çıkış güçlü, son 25m ritim korunmalı.', isPB: false, status: 'Geçerli', createdByCoachId: 'coach-1', createdAt: '2026-05-12T09:20:00.000Z' },
-  { id: 'result-2', athleteId: 'ra-1', athleteName: 'Deniz Arslan', competitionName: 'Marmara Hazırlık', date: '18.05.2026', raceDay: '1. Gün', location: 'İstanbul', poolType: '50m', session: 'Akşam Seansı', eventName: '50 SF', distance: '50', stroke: 'SF', heat: '1', lane: '4', finalTime: '27.30', splits: ['27.30'], coachNote: 'Yeni PB, finish iyi.', isPB: true, status: 'Geçerli', createdByCoachId: 'coach-1', createdAt: '2026-05-18T18:20:00.000Z' },
-];
+let athleteRaceHistoryState: AthleteRaceResult[] = [];
 
 export function getAthleteRaceHistory(athleteId = 'ra-1') {
   return athleteRaceHistoryState.filter((result) => result.athleteId === athleteId);
@@ -443,10 +381,10 @@ export function saveLiveRaceResult(entry: LiveRaceEntry) {
     const relayAthletes = entry.relayAthletes ?? roster?.relayAthletes ?? [];
     const eventName = entry.relayType ?? roster?.relayType ?? entry.event;
     const resultBase = {
-      competitionName: entry.competitionName ?? 'Marmara Cup',
-      date: entry.date ?? roster?.competitionDate ?? '10.05.2026',
+      competitionName: entry.competitionName ?? 'Yarış adı bekleniyor',
+      date: entry.date ?? roster?.competitionDate ?? '-',
       raceDay: roster?.raceDay ?? entry.raceDay ?? '1. Gün',
-      location: entry.location ?? roster?.location ?? 'İstanbul',
+      location: entry.location ?? roster?.location ?? '-',
       poolType: roster?.poolType ?? entry.poolType ?? '50m',
       session: roster?.session ?? entry.session ?? 'Sabah Seansı',
       eventName,
@@ -499,10 +437,10 @@ export function saveLiveRaceResult(entry: LiveRaceEntry) {
     id: `result-${Date.now()}`,
     athleteId,
     athleteName: roster?.athleteName ?? entry.athlete,
-    competitionName: entry.competitionName ?? 'Marmara Cup',
-    date: entry.date ?? roster?.competitionDate ?? '10.05.2026',
+    competitionName: entry.competitionName ?? 'Yarış adı bekleniyor',
+    date: entry.date ?? roster?.competitionDate ?? '-',
     raceDay: roster?.raceDay ?? entry.raceDay ?? '1. Gün',
-    location: entry.location ?? roster?.location ?? 'İstanbul',
+    location: entry.location ?? roster?.location ?? '-',
     poolType,
     session: roster?.session ?? entry.session ?? 'Sabah Seansı',
     eventName,
@@ -551,9 +489,9 @@ function rosterEntryToLiveRace(entry: CompetitionRosterEntry): LiveRaceEntry {
     athleteId: entry.athleteId,
     athlete: entry.athleteName,
     raceKind: entry.raceKind ?? 'individual',
-    competitionName: entry.competitionName ?? 'Marmara Cup',
-    date: entry.competitionDate ?? '10.05.2026',
-    location: entry.location ?? 'İstanbul',
+    competitionName: entry.competitionName ?? 'Yarış adı bekleniyor',
+    date: entry.competitionDate ?? '-',
+    location: entry.location ?? '-',
     poolType: entry.poolType,
     distance: entry.distance,
     stroke: entry.stroke,
@@ -588,24 +526,16 @@ export const coachAthletes: CoachAthlete[] = rosterAthletes.map((athlete) => ({
   age: athlete.age ?? '-',
   club: athlete.club ?? 'GP Aquatics',
   group: athlete.group ?? 'Performans Grubu',
-  coach: athlete.coach ?? 'Görkem Pınar',
+  coach: athlete.coach ?? 'Antrenör bilgisi yok',
   lastAttendance: athlete.attendance ?? '90%',
   attendanceStatus: athlete.attendanceStatus ?? 'Katıldı',
   lastPb: athlete.lastPb ?? '-',
   upcomingRace: athlete.upcomingRace ?? '-',
 }));
 
-export const attendanceRecords: AttendanceRecord[] = [
-  { id: 'att-1', date: '22.05.2026', group: 'Yarış Grubu', athlete: 'Deniz Arslan', status: 'Katıldı', note: 'Tamamladı' },
-  { id: 'att-2', date: '22.05.2026', group: 'Performans Grubu', athlete: 'Ece Yılmaz', status: 'Geç Kaldı', note: '10 dk geç' },
-  { id: 'att-3', date: '22.05.2026', group: 'Masters', athlete: 'Mert Kaya', status: 'Raporlu', note: 'Sağlık raporu' },
-];
+export const attendanceRecords: AttendanceRecord[] = [];
 
-export const raceDayItems = [
-  { id: 'rd-1', time: '08:00', athlete: 'Takım', event: 'Isınma', lane: '-', heat: '-', status: 'hazır' },
-  { id: 'rd-2', time: '09:10', athlete: 'Deniz', event: '100 SF', lane: '4', heat: '2', status: 'PB' },
-  { id: 'rd-3', time: '09:40', athlete: 'Ece', event: '50 Fly', lane: '5', heat: 'Final', status: 'madalya' },
-];
+export const raceDayItems: Array<{ id: string; time: string; athlete: string; event: string; lane: string; heat: string; status: string }> = [];
 
 export function summarizeRoster(athletes: RosterAthlete[]) {
   const totalRaces = athletes.reduce((sum, athlete) => sum + Object.values(athlete.events).filter(Boolean).length, 0);

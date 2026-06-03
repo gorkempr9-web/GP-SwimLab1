@@ -113,6 +113,7 @@ export async function registerWithInviteCode(userData: RegisterUserData, inviteC
     role: invite.role,
     club: invite.clubName,
     groupName: invite.groupName,
+    inviteCode: invite.code,
     email: userData.email?.trim() || undefined,
     phone: userData.phone?.trim() || undefined,
     childName: userData.childName?.trim() || undefined,
@@ -122,6 +123,9 @@ export async function registerWithInviteCode(userData: RegisterUserData, inviteC
     specialty: userData.specialty?.trim() || undefined,
     hasSeenAppGuide: false,
     profileCreated: false,
+    kvkkAccepted: true,
+    explicitConsentAccepted: true,
+    consentAcceptedAt: new Date().toISOString(),
   };
 
   return { success: true, user };

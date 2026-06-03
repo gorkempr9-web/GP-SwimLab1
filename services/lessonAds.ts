@@ -1,4 +1,4 @@
-export type LessonAdVisibility = 'Tüm kullanıcılar' | 'Sadece kulüp üyeleri' | 'Sadece veliler';
+﻿export type LessonAdVisibility = 'Tüm kullanıcılar' | 'Sadece kulüp üyeleri' | 'Sadece veliler';
 export type LessonAdStatus = 'active' | 'passive';
 
 export type LessonAd = {
@@ -31,7 +31,7 @@ const lessonAds: LessonAd[] = [
     id: 'lesson-1',
     title: 'Sprint Teknik ve Start Grubu',
     coachId: 'coach-mert',
-    coachName: 'Mert Kaya',
+    coachName: 'SwimLab Antrenör',
     clubId: 'gp-aquatics',
     clubName: 'GP Aquatics',
     branch: 'Start/Dönüş',
@@ -95,3 +95,4 @@ export function requestLessonContact(id: string, requesterId: string) {
   contactRequests.push(request);
   return request;
 }
+

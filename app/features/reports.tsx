@@ -1,9 +1,10 @@
-import { Download, FileText, Send, ShieldAlert } from 'lucide-react-native';
+﻿import { Download, FileText, Send, ShieldAlert } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { AppButton } from '@/components/AppButton';
+import { ScoreInfoButton, ScoreInfoType } from '@/components/ScoreInfoButton';
 import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
@@ -27,7 +28,7 @@ export default function ReportsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View>
           <Text style={styles.title}>PDF Rapor</Text>
-          <Text style={styles.subtitle}>Premium performans raporu önizlemesi</Text>
+          <Text style={styles.subtitle}>Premium performans raporu Önizlemesi</Text>
         </View>
 
         <View style={styles.previewShell}>
@@ -36,16 +37,18 @@ export default function ReportsScreen() {
               <AppLogo size={40} showTitle={false} />
               <View>
                 <Text style={styles.reportTitle}>SwimLab Raporu</Text>
-                <Text style={styles.reportDate}>Mock Önizleme • Mayıs 2026</Text>
+                <Text style={styles.reportDate}>Mock Önizleme ? Mayıs 2026</Text>
               </View>
             </View>
 
             <View style={styles.summaryGrid}>
               <SummaryItem label="Sporcu" value={fullName || 'Profil bekleniyor'} />
-              <SummaryItem label="50m Serbest" value="28.44" />
-              <SummaryItem label="100m Serbest" value="1:02.35" />
-              <SummaryItem label="Gelişim" value="+4.7%" />
-              <SummaryItem label="Hazırlık Skoru" value="87" />
+              <SummaryItem label="Yarış derecesi" value="-" />
+              <SummaryItem label="PB" value="-" />
+              <SummaryItem label="FINA" value="-" hint="Dünya derecelerine göre performans puanı" infoType="fina" />
+              <SummaryItem label="Rudolph" value="-" hint="Yaş grubu performans değerlendirme puanı" infoType="rudolph" />
+              <SummaryItem label="Gelişim" value="-" />
+              <SummaryItem label="Hazırlık Skoru" value="-" />
             </View>
 
             <View style={styles.sectionList}>
@@ -76,11 +79,15 @@ export default function ReportsScreen() {
   );
 }
 
-function SummaryItem({ label, value }: { label: string; value: string }) {
+function SummaryItem({ label, value, hint, infoType }: { label: string; value: string; hint?: string; infoType?: ScoreInfoType }) {
   return (
     <View style={styles.summaryItem}>
-      <Text style={styles.summaryLabel}>{label}</Text>
+      <View style={styles.summaryLabelRow}>
+        <Text style={styles.summaryLabel}>{label}</Text>
+        {infoType ? <ScoreInfoButton type={infoType} /> : null}
+      </View>
       <Text style={styles.summaryValue}>{value}</Text>
+      {hint ? <Text style={styles.summaryHint}>{hint}</Text> : null}
     </View>
   );
 }
@@ -113,9 +120,11 @@ const styles = StyleSheet.create({
   reportTitle: { color: colors.background, fontWeight: '900', fontSize: 21 },
   reportDate: { color: '#476173', marginTop: 4, fontWeight: '700' },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  summaryItem: { width: '48%', minHeight: 72, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(2,21,38,0.10)', backgroundColor: '#EEF7FA', padding: spacing.md, justifyContent: 'space-between' },
+  summaryItem: { width: '48%', minHeight: 86, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(2,21,38,0.10)', backgroundColor: '#EEF7FA', padding: spacing.md, justifyContent: 'space-between', gap: 5 },
+  summaryLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs },
   summaryLabel: { color: '#476173', fontWeight: '800', fontSize: 12 },
   summaryValue: { color: colors.background, fontWeight: '900', fontSize: 18 },
+  summaryHint: { color: '#476173', fontWeight: '700', fontSize: 10, lineHeight: 14 },
   sectionList: { gap: spacing.sm },
   sectionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 30 },
   dot: { width: 8, height: 8, borderRadius: 999, backgroundColor: colors.cyan },
@@ -125,3 +134,4 @@ const styles = StyleSheet.create({
   message: { color: colors.cyan, fontWeight: '900', textAlign: 'center', backgroundColor: colors.cyanSoft, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, padding: spacing.md },
   actions: { gap: spacing.md },
 });
+

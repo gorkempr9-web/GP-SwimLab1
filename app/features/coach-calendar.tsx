@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+﻿import { useLocalSearchParams } from 'expo-router';
 import { CalendarDays, Check, Clock, Lock, Plus, Send, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -55,7 +55,7 @@ export default function CoachCalendarScreen() {
 
     createCoachCalendarEvent({
       coachId,
-      coachName: 'Mert Kaya',
+      coachName: 'SwimLab Antrenör',
       type,
       title: title.trim(),
       date,
@@ -75,7 +75,7 @@ export default function CoachCalendarScreen() {
   const handleBlock = () => {
     blockCoachTime({
       coachId,
-      coachName: 'Mert Kaya',
+      coachName: 'SwimLab Antrenör',
       title: title.trim() || 'Uygun değil',
       date,
       startTime,
@@ -147,7 +147,7 @@ export default function CoachCalendarScreen() {
             <View style={styles.availabilityTop}>
               <View>
                 <Text style={styles.dayTitle}>{item.dayOfWeek}</Text>
-                <Text style={styles.dayMeta}>{item.isAvailable ? `${item.startTime} - ${item.endTime} • ${item.location}` : 'Kapalı'}</Text>
+                <Text style={styles.dayMeta}>{item.isAvailable ? `${item.startTime} - ${item.endTime}  •  ${item.location}` : 'Kapalı'}</Text>
               </View>
               <Text style={[styles.slotStatus, item.isAvailable ? styles.available : styles.closed]}>{item.isAvailable ? 'Uygun' : 'Uygun değil'}</Text>
             </View>
@@ -176,9 +176,9 @@ export default function CoachCalendarScreen() {
             <Text style={styles.cardTitle}>{event.title}</Text>
             <View style={styles.eventLine}>
               <Clock color={colors.cyan} size={15} />
-              <Text style={styles.eventMeta}>{event.date} • {event.startTime} - {event.endTime}</Text>
+              <Text style={styles.eventMeta}>{event.date}  •  {event.startTime} - {event.endTime}</Text>
             </View>
-            <Text style={styles.eventMeta}>{event.location} • {event.groupName ?? event.visibility}</Text>
+            <Text style={styles.eventMeta}>{event.location}  •  {event.groupName ?? event.visibility}</Text>
             {event.note ? <Text style={styles.note}>{event.note}</Text> : null}
           </GlassCard>
         ))}
@@ -187,7 +187,7 @@ export default function CoachCalendarScreen() {
           <>
             <Text style={styles.sectionTitle}>Gelen talepler</Text>
             {requests.map((request) => (
-              <Text key={request.id} style={styles.requestRow}>{request.requestedDate} • {request.requestedTime} • {request.status}</Text>
+              <Text key={request.id} style={styles.requestRow}>{request.requestedDate}  •  {request.requestedTime}  •  {request.status}</Text>
             ))}
           </>
         ) : null}

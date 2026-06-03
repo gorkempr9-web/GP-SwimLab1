@@ -22,8 +22,8 @@ export default function TyfPortalScreen() {
             <ShieldCheck color={colors.gold} size={30} />
           </View>
           <View style={styles.headerCopy}>
-            <Text style={styles.title}>TYF Takvimi ve Portal</Text>
-            <Text style={styles.subtitle}>Resmi TYF sayfalarına güvenli yönlendirme.</Text>
+            <Text style={styles.title}>TYF Panelleri</Text>
+            <Text style={styles.subtitle}>Resmi TYF portal, takvim, sonuç ve baraj bağlantıları.</Text>
           </View>
         </View>
 
@@ -46,7 +46,7 @@ export default function TyfPortalScreen() {
               <Text style={styles.linkDescription}>{link.description}</Text>
               <Text style={styles.domain}>{link.url.replace('https://', '')}</Text>
             </View>
-            <Globe2 color={colors.cyan} size={22} />
+            <Globe2 color={colors.coral} size={22} />
           </Pressable>
         ))}
       </ScrollView>
@@ -58,11 +58,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 110 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  headerIcon: { width: 58, height: 58, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.38)', backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' },
+  headerIcon: { width: 58, height: 58, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(194, 65, 12, 0.24)', backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' },
   headerCopy: { flex: 1 },
   title: { ...typography.h1, color: colors.text },
   subtitle: { color: colors.muted, fontWeight: '800', marginTop: 4 },
-  warningCard: { gap: spacing.sm, borderColor: 'rgba(251, 191, 36, 0.42)', backgroundColor: colors.goldSoft },
+  warningCard: { gap: spacing.sm, borderColor: 'rgba(194, 65, 12, 0.24)', backgroundColor: colors.goldSoft },
   warningTitle: { color: colors.gold, fontWeight: '900', fontSize: 18 },
   warningText: { color: colors.text, fontWeight: '800', lineHeight: 22 },
   securityCard: { gap: spacing.xs },
@@ -73,5 +73,5 @@ const styles = StyleSheet.create({
   linkCopy: { flex: 1 },
   linkTitle: { color: colors.text, fontWeight: '900', fontSize: 17 },
   linkDescription: { color: colors.mutedStrong, fontWeight: '700', lineHeight: 19, marginTop: 4 },
-  domain: { color: colors.cyan, fontWeight: '900', marginTop: 6 },
+  domain: { color: colors.coral, fontWeight: '900', marginTop: 6 },
 });

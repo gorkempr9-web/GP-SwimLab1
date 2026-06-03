@@ -19,7 +19,7 @@ export default function LiveRaceTimerScreen() {
   const params = useLocalSearchParams<{ athleteId?: string; competitionName?: string; distance?: string; stroke?: string; poolType?: '25m' | '50m' }>();
   const { currentUser } = useSession();
   const [athleteId, setAthleteId] = useState(params.athleteId ?? rosterAthletes[0]?.id ?? 'ra-1');
-  const [competitionName, setCompetitionName] = useState(params.competitionName ?? 'Marmara Cup');
+  const [competitionName, setCompetitionName] = useState(params.competitionName ?? '');
   const [distance, setDistance] = useState(params.distance ?? '100');
   const [stroke, setStroke] = useState(params.stroke ?? 'Serbest');
   const [poolType, setPoolType] = useState<'25m' | '50m'>(params.poolType ?? '50m');
@@ -107,7 +107,7 @@ export default function LiveRaceTimerScreen() {
       const entry: LiveRaceEntry = {
         id: `timer-${Date.now()}`,
         athleteId,
-        athlete: selectedAthlete?.name ?? 'SwimLab Sporcu',
+        athlete: selectedAthlete?.name ?? 'İsimsiz Sporcu',
         raceKind: 'individual',
         competitionName,
         date: new Date().toLocaleDateString('tr-TR'),

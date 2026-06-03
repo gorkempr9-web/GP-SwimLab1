@@ -1,4 +1,4 @@
-import { Clock3, MapPin, Trophy } from 'lucide-react-native';
+﻿import { Clock3, MapPin, Trophy } from 'lucide-react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/GlassCard';
@@ -46,7 +46,7 @@ function CompetitionCard({ competition }: { competition: Competition }) {
       </View>
       <View style={styles.footer}>
         <Clock3 color={colors.cyan} size={16} />
-        <Text style={styles.footerText}>Örnek: Marmara Cup • İstanbul • 50m • 26 Mayıs • 08:00</Text>
+        <Text style={styles.footerText}>Örnek: Yarış etkinliği ? İstanbul ? 50m ? 26 Mayıs ? 08:00</Text>
       </View>
     </GlassCard>
   );
@@ -81,3 +81,5 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm },
   footerText: { color: colors.mutedStrong, fontWeight: '800', flex: 1 },
 });
+
+

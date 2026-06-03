@@ -1,0 +1,17 @@
+export const palette = {
+  navy950: '#EAF2F8',
+  navy900: '#F8FAFC',
+  navy800: '#FFFFFF',
+  card: '#FFFFFF',
+  cardSolid: '#FFFFFF',
+  cyan: '#38BDF8',
+  cyanAlt: '#0EA5E9',
+  sportBlue: '#38BDF8',
+  coral: '#F97316',
+  violet: '#8B5CF6',
+  gold: '#C2410C',
+  danger: '#EF4444',
+  success: '#22C55E',
+  text: '#1E3A5F',
+  muted: '#64748B',
+};

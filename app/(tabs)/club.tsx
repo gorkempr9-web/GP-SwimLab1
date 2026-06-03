@@ -1,25 +1,24 @@
-import { router } from 'expo-router';
-import { BarChart3, BellRing, Building2, CalendarDays, Clock, FileText, LucideIcon, Megaphone, Plus, Trophy, Users } from 'lucide-react-native';
+﻿import { router } from 'expo-router';
+import { BarChart3, BellRing, Building2, CalendarDays, FileText, LucideIcon, Megaphone, Plus, Trophy, Users } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActionCard } from '@/components/ActionCard';
 import { AppLogo } from '@/components/AppLogo';
+import { ClubBadge } from '@/components/ClubBadge';
 import { ClubLogo } from '@/components/ClubLogo';
 import { GlassCard } from '@/components/GlassCard';
+import { GradientBadge } from '@/components/GradientBadge';
 import { canManageClub, useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
-const clubModules: Array<{ title: string; detail: string; route: string; icon: LucideIcon; managerOnly?: boolean }> = [
-  { title: 'Pano', detail: 'Duyuru, kamp ve acil bildirim', route: '/features/club-board', icon: Building2 },
-  { title: 'Takvim', detail: 'Haftalık ve aylık kulüp planı', route: '/features/club-calendar', icon: CalendarDays },
-  { title: 'TYF Takvimi ve Portal', detail: 'Resmi TYF linklerine yönlendirme', route: '/features/tyf-portal', icon: CalendarDays },
-  { title: 'Yarış Listesi', detail: 'Sporcu, branş, seri ve kulvar', route: '/features/competition-roster', icon: Trophy, managerOnly: true },
-  { title: 'Canlı Giriş', detail: 'Bekleyen yarış derece girişi', route: '/features/live-race', icon: BellRing, managerOnly: true },
-  { title: 'Sporcularım', detail: 'Sporcu atama ve takip', route: '/features/my-athletes', icon: BarChart3, managerOnly: true },
-  { title: 'Raporlar', detail: 'PDF, mail ve pano paylaşımı', route: '/features/competition-report', icon: FileText },
-  { title: 'Kulüp Reklam Paneli', detail: 'Sponsor ve kampanya kartları', route: '/features/club-ads', icon: Megaphone },
-  { title: 'Özel Ders İlanları', detail: 'Antrenör ders ilanları ve talepler', route: '/features/private-lessons', icon: Users },
-  { title: 'Antrenör Takvimi', detail: 'Uygunluk ve özel ders saatleri', route: '/features/coach-calendar', icon: Clock },
-];
+const clubModules: Array<{ title: string; detail: string; route: string; icon: LucideIcon; tone: string; managerOnly?: boolean }> = [
+  { title: 'Pano', detail: 'Duyuru, kamp ve acil bildirim', route: '/features/club-board', icon: Building2, tone: colors.cyan },
+  { title: 'Takvim', detail: 'Haftalık ve aylık kulüp planı', route: '/features/club-calendar', icon: CalendarDays, tone: colors.blue },
+  { title: 'TYF Panelleri', detail: 'Resmi TYF portal, takvim, sonuç ve baraj bağlantıları', route: '/features/tyf-portal', icon: CalendarDays, tone: colors.gold },
+  { title: 'Yarış Listesi', detail: 'Sporcu, branş, seri ve kulvar', route: '/features/competition-roster', icon: Trophy, tone: colors.gold, managerOnly: true },  { title: 'Sporcularım', detail: 'Sporcu atama ve takip', route: '/features/my-athletes', icon: BarChart3, tone: colors.success, managerOnly: true },
+  { title: 'Raporlar', detail: 'PDF, mail ve pano paylaşımı', route: '/features/competition-report', icon: FileText, tone: colors.teal },
+  { title: 'Reklam Paneli', detail: 'Sponsor ve kampanya kartları', route: '/features/club-ads', icon: Megaphone, tone: colors.violet },
+  { title: 'Özel Ders', detail: 'İlanlar ve ders talepleri', route: '/features/private-lessons', icon: Users, tone: colors.blue },];
 
 export default function ClubScreen() {
   const { currentUser } = useSession();
@@ -33,27 +32,44 @@ export default function ClubScreen() {
           <AppLogo compact={true} size={26} />
           <ClubLogo club={currentUser.club} size={42} />
         </View>
-        <Text style={styles.title}>Kulüp</Text>
-        <Text style={styles.subtitle}>SwimLab kulüp, antrenör ve yarış yönetim merkezi.</Text>
+
+        <GlassCard style={styles.clubHero} tone={colors.coral}>
+          <ClubBadge club={currentUser.club} city={currentUser.city ?? 'Ankara'} />
+          <Text style={styles.title}>Kulüp</Text>
+          <Text style={styles.subtitle}>Kulüp, antrenör ve yarış yönetimi için sade merkez.</Text>
+          <View style={styles.statsRow}>            <GradientBadge label={canUseManagement ? 'Yönetim aktif' : 'Görüntüleme'} tone={canUseManagement ? colors.success : colors.blue} />
+          </View>
+        </GlassCard>
 
         {canUseManagement ? (
           <Pressable style={styles.logoUpload} onPress={() => router.push('/features/club-ads')}>
-            <Plus color={colors.cyan} size={18} />
+            <Plus color={colors.coral} size={18} />
             <Text style={styles.logoUploadText}>Kulüp logosu ve reklam alanını düzenle</Text>
           </Pressable>
         ) : null}
 
         <View style={styles.grid}>
-          {visibleModules.map((module) => <ClubModule key={module.title} {...module} />)}
+          {visibleModules.map((module) => (
+            <ActionCard
+              key={module.title}
+              title={module.title}
+              detail={module.detail}
+              icon={module.icon}
+              tone={module.tone}
+              width="48%"
+              onPress={() => router.push(module.route as never)}
+            />
+          ))}
         </View>
+
         {canUseManagement ? (
           <>
             <Pressable style={styles.rosterButton} onPress={() => router.push('/features/competition-center')}>
-              <Trophy color={colors.background} size={18} />
+              <Trophy color="#FFFFFF" size={18} />
               <Text style={styles.rosterText}>Yarış Yönetimi</Text>
             </Pressable>
             <Pressable style={styles.rosterButtonSecondary} onPress={() => router.push('/features/race-day-board')}>
-              <BellRing color={colors.cyan} size={18} />
+              <BellRing color={colors.coral} size={18} />
               <Text style={styles.rosterTextSecondary}>Yarış Günü Panosu</Text>
             </Pressable>
           </>
@@ -63,37 +79,53 @@ export default function ClubScreen() {
   );
 }
 
-function ClubModule({ title, detail, route, icon: Icon }: { title: string; detail: string; route: string; icon: LucideIcon }) {
-  return (
-    <Pressable style={({ pressed }) => [styles.pressable, pressed && styles.pressed]} onPress={() => router.push(route)}>
-      <GlassCard style={styles.card}>
-        <View style={styles.iconBox}>
-          <Icon color={colors.cyan} size={24} />
-        </View>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <Text style={styles.detail}>{detail}</Text>
-      </GlassCard>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 110 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  clubHero: { gap: spacing.sm },
   title: { ...typography.h1, color: colors.text },
-  subtitle: { color: colors.muted, fontWeight: '700', lineHeight: 21 },
-  logoUpload: { minHeight: 48, borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
+  subtitle: { color: colors.mutedStrong, fontWeight: '700', lineHeight: 21 },
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  logoUpload: {
+    minHeight: 48,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(249, 115, 22, 0.24)',
+    backgroundColor: colors.coralSoft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
   logoUploadText: { color: colors.text, fontWeight: '900' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  pressable: { width: '48%' },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
-  card: { minHeight: 148, gap: spacing.sm },
-  iconBox: { width: 44, height: 44, borderRadius: 15, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { color: colors.text, fontWeight: '900', fontSize: 17 },
-  detail: { color: colors.muted, fontWeight: '700', lineHeight: 19 },
-  rosterButton: { minHeight: 50, borderRadius: 16, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  rosterText: { color: colors.background, fontWeight: '900' },
-  rosterButtonSecondary: { minHeight: 50, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  rosterButton: {
+    minHeight: 50,
+    borderRadius: 18,
+    backgroundColor: colors.coral,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    shadowColor: colors.coral,
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  rosterText: { color: '#FFFFFF', fontWeight: '900' },
+  rosterButtonSecondary: {
+    minHeight: 50,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(249, 115, 22, 0.24)',
+    backgroundColor: colors.surfaceSolid,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
   rosterTextSecondary: { color: colors.text, fontWeight: '900' },
 });
+

@@ -1,4 +1,4 @@
-import { LinearGradient } from 'expo-linear-gradient';
+﻿import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Check, ShieldCheck, User } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -32,8 +32,8 @@ export default function CreateProfileScreen() {
   const [guardianPhone, setGuardianPhone] = useState(currentUser.guardianPhone ?? '');
   const [guardianEmail, setGuardianEmail] = useState(currentUser.guardianEmail ?? '');
   const [userType, setUserType] = useState(labelFromRole(currentUser.role));
-  const [kvkkAccepted, setKvkkAccepted] = useState(Boolean(currentUser.profileCreated));
-  const [explicitConsent, setExplicitConsent] = useState(Boolean(currentUser.profileCreated));
+  const [kvkkAccepted, setKvkkAccepted] = useState(Boolean(currentUser.kvkkAccepted || currentUser.profileCreated));
+  const [explicitConsent, setExplicitConsent] = useState(Boolean(currentUser.explicitConsentAccepted || currentUser.profileCreated));
   const [guardianConsent, setGuardianConsent] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
@@ -42,6 +42,7 @@ export default function CreateProfileScreen() {
   const age = useMemo(() => calculateAge(birthYear), [birthYear]);
   const isUnder18 = age !== null && age < 18;
   const role = roleFromUserType(userType);
+  const hasInviteMatch = Boolean(currentUser.inviteCode);
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !birthYear.trim() || !club.trim()) {
@@ -70,6 +71,9 @@ export default function CreateProfileScreen() {
       guardianPhone,
       guardianEmail,
       role: role as UserRole,
+      kvkkAccepted: true,
+      explicitConsentAccepted: true,
+      consentAcceptedAt: currentUser.consentAcceptedAt ?? new Date().toISOString(),
     };
     const profile = currentUser.profileCreated ? await updateProfile(currentUser, payload) : await createProfile(currentUser, payload);
     setCurrentUserProfile(profile);
@@ -103,16 +107,23 @@ export default function CreateProfileScreen() {
             <GlassCard style={styles.card}>
               <Text style={styles.cardTitle}>Kullanıcı tipi</Text>
               <ChipGroup options={userTypes} value={userType} onChange={setUserType} />
-              <View style={styles.inviteBox}>
-                <Text style={styles.label}>Davet Kodum Var</Text>
-                <View style={styles.inviteRow}>
-                  <TextInput placeholder="GP-MEV001" placeholderTextColor={colors.muted} value={inviteCode} onChangeText={(value) => setInviteCode(value.toUpperCase())} autoCapitalize="characters" style={[styles.input, styles.inviteInput]} />
-                  <Pressable style={styles.applyCodeButton} onPress={handleJoinByCode}>
-                    <Text style={styles.applyCodeText}>Eşleştir</Text>
-                  </Pressable>
+              {hasInviteMatch ? (
+                <View style={styles.inviteBox}>
+                  <Text style={styles.label}>Davet kodu eşleşti</Text>
+                  <Text style={styles.inviteMessage}>{currentUser.inviteCode} • {currentUser.club ?? 'Kulüp seçilmedi'}{currentUser.groupName ? ` • ${currentUser.groupName}` : ''}</Text>
                 </View>
-                {inviteMessage ? <Text style={styles.inviteMessage}>{inviteMessage}</Text> : null}
-              </View>
+              ) : (
+                <View style={styles.inviteBox}>
+                  <Text style={styles.label}>Davet Kodum Var</Text>
+                  <View style={styles.inviteRow}>
+                    <TextInput placeholder="GP-MEV001" placeholderTextColor={colors.muted} value={inviteCode} onChangeText={(value) => setInviteCode(value.toUpperCase())} autoCapitalize="characters" style={[styles.input, styles.inviteInput]} />
+                    <Pressable style={styles.applyCodeButton} onPress={handleJoinByCode}>
+                      <Text style={styles.applyCodeText}>Eşleştir</Text>
+                    </Pressable>
+                  </View>
+                  {inviteMessage ? <Text style={styles.inviteMessage}>{inviteMessage}</Text> : null}
+                </View>
+              )}
               <Input label="Ad" value={firstName} onChangeText={setFirstName} />
               <Input label="Soyad" value={lastName} onChangeText={setLastName} />
               <Input label="Doğum yılı" value={birthYear} onChangeText={(value) => setBirthYear(value.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" />
@@ -141,15 +152,17 @@ export default function CreateProfileScreen() {
               {isUnder18 ? <Text style={styles.warningText}>18 yaş altı sporcular için kulüp/antrenör gerekli durumlarda veli iletişim bilgisi isteyebilir.</Text> : null}
             </GlassCard>
 
-            <GlassCard style={styles.card}>
-              <View style={styles.cardHeader}>
-                <ShieldCheck color={colors.cyan} size={22} />
-                <Text style={styles.cardTitle}>KVKK ve onaylar</Text>
-              </View>
-              <ConsentCheck checked={kvkkAccepted} title="KVKK Aydınlatma Metni" onPress={() => setKvkkAccepted((value) => !value)} />
-              <ConsentCheck checked={explicitConsent} title="Açık Rıza" onPress={() => setExplicitConsent((value) => !value)} />
-              {isUnder18 ? <ConsentCheck checked={guardianConsent} title="Veli Onayı (opsiyonel)" onPress={() => setGuardianConsent((value) => !value)} /> : null}
-            </GlassCard>
+            {!currentUser.kvkkAccepted || !currentUser.explicitConsentAccepted ? (
+              <GlassCard style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <ShieldCheck color={colors.cyan} size={22} />
+                  <Text style={styles.cardTitle}>KVKK ve onaylar</Text>
+                </View>
+                <ConsentCheck checked={kvkkAccepted} title="KVKK Aydınlatma Metni" onPress={() => setKvkkAccepted((value) => !value)} />
+                <ConsentCheck checked={explicitConsent} title="Açık Rıza" onPress={() => setExplicitConsent((value) => !value)} />
+                {isUnder18 ? <ConsentCheck checked={guardianConsent} title="Veli Onayı (opsiyonel)" onPress={() => setGuardianConsent((value) => !value)} /> : null}
+              </GlassCard>
+            ) : null}
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -231,3 +244,5 @@ const styles = StyleSheet.create({
   saveButton: { minHeight: 52, borderRadius: 18, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   saveText: { color: colors.background, fontWeight: '900', fontSize: 16 },
 });
+
+

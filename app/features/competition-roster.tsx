@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
+import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
 import {
   getAthletePB,
@@ -37,14 +38,14 @@ export default function CompetitionRosterScreen() {
   const { currentUser } = useSession();
   const [groups, setGroups] = useState(() => getPreparedRosterGroups());
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [competitionName, setCompetitionName] = useState(params.raceTitle ?? 'Ankara Bölge Şampiyonası');
-  const [competitionDate, setCompetitionDate] = useState(params.raceDate ?? '20.02.2026');
-  const [location, setLocation] = useState(params.source === 'TYF' ? 'Ankara' : 'İstanbul');
-  const [athleteId, setAthleteId] = useState('ra-1');
+  const [competitionName, setCompetitionName] = useState(params.raceTitle ?? '');
+  const [competitionDate, setCompetitionDate] = useState(params.raceDate ?? '');
+  const [location, setLocation] = useState('');
+  const [athleteId, setAthleteId] = useState(rosterAthletes[0]?.id ?? '');
   const [athleteSearch, setAthleteSearch] = useState('');
   const [raceKind, setRaceKind] = useState('Bireysel Yarış');
   const [stroke, setStroke] = useState('Serbest');
-  const [selectedDistances, setSelectedDistances] = useState<string[]>(['50']);
+  const [selectedDistances, setSelectedDistances] = useState<string[]>([]);
   const [poolType, setPoolType] = useState<'25m' | '50m'>(params.poolType ?? '50m');
   const [raceDay, setRaceDay] = useState<RaceDay>(selectLabel);
   const [session, setSession] = useState<RaceSession>(selectLabel);
@@ -52,21 +53,17 @@ export default function CompetitionRosterScreen() {
   const [lane, setLane] = useState(selectLabel);
   const [estimatedTime, setEstimatedTime] = useState('');
   const [targetTimes, setTargetTimes] = useState<Record<string, string>>({});
-  const [relayType, setRelayType] = useState(relayRaceOptions[1]);
-  const [teamName, setTeamName] = useState('SwimLab A Takımı');
+  const [relayType, setRelayType] = useState(relayRaceOptions[0] ?? '4x50m Serbest Bayrak');
+  const [teamName, setTeamName] = useState('');
   const [teamCategory, setTeamCategory] = useState('Açık Yaş');
-  const [relayAthleteIds, setRelayAthleteIds] = useState(['ra-1', 'ra-3', 'ra-2', 'ra-4']);
+  const [relayAthleteIds, setRelayAthleteIds] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [sheet, setSheet] = useState<SheetState>(null);
   const [distanceSheetOpen, setDistanceSheetOpen] = useState(false);
 
   const canEdit = canManageClub(currentUser.role);
-  const selectedAthlete = rosterAthletes.find((athlete) => athlete.id === athleteId) ?? rosterAthletes[0];
+  const selectedAthlete = rosterAthletes.find((athlete) => athlete.id === athleteId);
   const distanceOptions = strokeDistances[stroke] ?? [];
-  const selectedPbRows = selectedDistances.map((distance) => ({
-    distance,
-    pb: getAthletePB({ athleteId, stroke, distance, poolType }),
-  }));
   const athleteOptions = useMemo(() => {
     const normalized = athleteSearch.trim().toLocaleLowerCase('tr');
     return rosterAthletes.filter((athlete) => !normalized || athlete.name.toLocaleLowerCase('tr').includes(normalized));
@@ -99,16 +96,20 @@ export default function CompetitionRosterScreen() {
         return;
       }
       const relayAthletes = relayAthleteIds.map((id, index) => {
-        const athlete = rosterAthletes.find((item) => item.id === id) ?? rosterAthletes[0];
-        return { athleteId: athlete.id, athleteName: athlete.name, order: index + 1, reserve: index > 3 };
+        const athlete = rosterAthletes.find((item) => item.id === id);
+        return { athleteId: athlete?.id ?? id, athleteName: athlete?.name ?? 'İsimsiz Sporcu', order: index + 1, reserve: index > 3 };
       });
-      const saved = saveRelayRosterEntry({ competitionName, competitionDate, location, raceDay, session, heat, lane, estimatedTime, poolType, relayType, teamName, teamCategory, relayAthletes });
+      const saved = saveRelayRosterEntry({ competitionName, competitionDate, location, raceDay, session, heat, lane, estimatedTime, poolType, relayType, teamName: teamName || 'İsimsiz Takım', teamCategory, relayAthletes });
       refreshGroups();
-      setMessage(`${saved.teamName} - ${saved.relayType} Canlı Giriş bekleyen listesine eklendi.`);
+      setMessage(`${saved.teamName ?? 'İsimsiz Takım'} canlı sonuç bekleyen listesine eklendi.`);
       return;
     }
 
-    if (!selectedAthlete?.id || !stroke || selectedDistances.length < 1) {
+    if (!selectedAthlete?.id) {
+      setMessage('Henüz sporcu eklenmedi.');
+      return;
+    }
+    if (selectedDistances.length < 1) {
       setMessage('En az 1 mesafe seçmelisiniz.');
       return;
     }
@@ -117,8 +118,8 @@ export default function CompetitionRosterScreen() {
       competitionName,
       competitionDate,
       location,
-      athleteId,
-      athleteName: selectedAthlete.name,
+      athleteId: selectedAthlete.id,
+      athleteName: selectedAthlete.name ?? 'İsimsiz Sporcu',
       raceKind: 'individual',
       raceDay,
       session,
@@ -128,25 +129,23 @@ export default function CompetitionRosterScreen() {
       distance,
       stroke,
       poolType,
-      pb: getAthletePB({ athleteId, stroke, distance, poolType }) ?? noPb,
+      pb: getAthletePB({ athleteId: selectedAthlete.id, stroke, distance, poolType }) ?? noPb,
       targetTime: targetTimes[distance] || '-',
     }));
     refreshGroups();
-    setMessage(`${selectedAthlete.name} için ${savedEntries.length} yarış Canlı Giriş bekleyen listesine eklendi.`);
+    setMessage(`${selectedAthlete.name ?? 'İsimsiz Sporcu'} için ${savedEntries.length} yarış canlı sonuç bekleyen listesine eklendi.`);
   };
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Yarış Listesi Hazırla</Text>
-        <Text style={styles.subtitle}>Sade form ile yarış başlığı oluştur, sporcu/branş ekle ve Canlı Giriş akışına gönder.</Text>
-
-        <AppButton title="Canli Kronometre" icon={Plus} variant="secondary" onPress={() => router.push('/features/live-race-timer')} />
+        <Text style={styles.subtitle}>Takım listesi, canlı sonuç girişi ve rapor akışını tek yarış merkezi altında yönetin.</Text>
 
         {params.source === 'TYF' ? (
           <GlassCard style={styles.officialCard}>
-            <Text style={styles.officialLabel}>TYF Resmi Takvim</Text>
-            <Text style={styles.officialTitle}>{params.raceTitle ?? 'Resmi Yarış'}</Text>
+            <Text style={styles.officialLabel}>TYF Panelleri</Text>
+            <Text style={styles.officialTitle}>{params.raceTitle ?? 'Yarış seçilmedi'}</Text>
             <Text style={styles.officialMeta}>{params.raceDate ?? '-'} • {params.poolType ?? poolType} • Yarış Listesi Hazırla</Text>
           </GlassCard>
         ) : null}
@@ -154,71 +153,65 @@ export default function CompetitionRosterScreen() {
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
         <GlassCard style={styles.form}>
-          <Text style={styles.blockTitle}>A) Yarış Bilgileri</Text>
+          <Text style={styles.blockTitle}>Yarış Bilgileri</Text>
           <TextInput value={competitionName} onChangeText={setCompetitionName} placeholder="Yarış adı" placeholderTextColor={colors.muted} style={styles.input} />
           <TextInput value={competitionDate} onChangeText={setCompetitionDate} placeholder="Tarih" placeholderTextColor={colors.muted} style={styles.input} />
           <TextInput value={location} onChangeText={setLocation} placeholder="Yer" placeholderTextColor={colors.muted} style={styles.input} />
           <SelectField label="Havuz tipi" value={poolType} onPress={() => setSheet({ title: 'Havuz tipi', options: poolTypes, selected: poolType, onSelect: (value) => setPoolType(value as '25m' | '50m') })} />
 
-          <Text style={styles.blockTitle}>B) Sporcu Seç</Text>
-          <View style={styles.searchBox}>
-            <Search color={colors.cyan} size={17} />
-            <TextInput value={athleteSearch} onChangeText={setAthleteSearch} placeholder="Sporcu adı veya soyadı ara" placeholderTextColor={colors.muted} style={styles.searchInput} />
-          </View>
-          <SelectField label="Sporcu" value={selectedAthlete.name} onPress={() => setSheet({ title: 'Sporcu seç', options: athleteOptions.map((athlete) => athlete.name), selected: selectedAthlete.name, onSelect: (value) => setAthleteId(rosterAthletes.find((athlete) => athlete.name === value)?.id ?? athleteId) })} />
+          <Text style={styles.blockTitle}>Sporcu Seç</Text>
+          {rosterAthletes.length === 0 ? (
+            <EmptyState title="Henüz sporcu eklenmedi." detail="Kulüp sporcuları eklendiğinde yarış listesi buradan hazırlanacak." icon={Search} tone={colors.coral} />
+          ) : (
+            <>
+              <View style={styles.searchBox}>
+                <Search color={colors.coral} size={17} />
+                <TextInput value={athleteSearch} onChangeText={setAthleteSearch} placeholder="Sporcu adı veya soyadı ara" placeholderTextColor={colors.muted} style={styles.searchInput} />
+              </View>
+              <SelectField label="Sporcu" value={selectedAthlete?.name ?? 'İsimsiz Sporcu'} onPress={() => setSheet({ title: 'Sporcu seç', options: athleteOptions.map((athlete) => athlete.name ?? 'İsimsiz Sporcu'), selected: selectedAthlete?.name ?? '', onSelect: (value) => setAthleteId(rosterAthletes.find((athlete) => athlete.name === value)?.id ?? athleteId) })} />
+            </>
+          )}
 
-          <Text style={styles.blockTitle}>C) Yarış Türü</Text>
+          <Text style={styles.blockTitle}>Yarış Türü</Text>
           <SelectField label="Yarış türü" value={raceKind} onPress={() => setSheet({ title: 'Yarış türü', options: raceKinds, selected: raceKind, onSelect: setRaceKind })} />
 
           {raceKind === 'Bireysel Yarış' ? (
             <>
-              <Text style={styles.blockTitle}>D) Bireysel Yarış</Text>
               <SelectField label="Stil seç" value={stroke} onPress={() => setSheet({ title: 'Stil seç', options: strokes, selected: stroke, onSelect: (value) => { setStroke(value); setSelectedDistances([]); setTargetTimes({}); } })} />
               <Pressable style={styles.selectField} onPress={() => setDistanceSheetOpen(true)}>
                 <View>
                   <Text style={styles.selectLabel}>Mesafeleri Seç</Text>
                   <Text style={styles.selectValue}>{selectedDistances.length ? selectedDistances.map((item) => `${item}m`).join(', ') : 'Seçiniz'}</Text>
                 </View>
-                <ChevronRight color={colors.cyan} size={18} />
+                <ChevronRight color={colors.coral} size={18} />
               </Pressable>
-              <View style={styles.chipRow}>
-                {selectedDistances.map((item) => <Text key={item} style={styles.chip}>{item}m</Text>)}
-              </View>
-              <InfoPanel title="Seçilen PB'ler">
-                {selectedPbRows.map((row) => <Text key={row.distance} style={styles.infoText}>{row.distance}m {stroke}: {row.pb ?? noPb}</Text>)}
-              </InfoPanel>
-              <InfoPanel title="Hedef Dereceler">
-                {selectedDistances.map((item) => (
-                  <View key={item} style={styles.targetRow}>
-                    <Text style={styles.targetLabel}>{item}m {stroke}</Text>
-                    <TextInput value={targetTimes[item] ?? ''} onChangeText={(value) => setTargetTimes((current) => ({ ...current, [item]: value }))} placeholder="Hedef derece" placeholderTextColor={colors.muted} style={styles.targetInput} />
-                  </View>
-                ))}
-              </InfoPanel>
+              {selectedDistances.length ? (
+                <InfoPanel title="Seçilen PBler">
+                  {selectedDistances.map((distance) => <Text key={distance} style={styles.infoText}>{distance}m {stroke}: {selectedAthlete ? getAthletePB({ athleteId: selectedAthlete.id, stroke, distance, poolType }) ?? noPb : noPb}</Text>)}
+                </InfoPanel>
+              ) : null}
+              {selectedDistances.length ? (
+                <InfoPanel title="Hedef Dereceler">
+                  {selectedDistances.map((item) => (
+                    <View key={item} style={styles.targetRow}>
+                      <Text style={styles.targetLabel}>{item}m {stroke}</Text>
+                      <TextInput value={targetTimes[item] ?? ''} onChangeText={(value) => setTargetTimes((current) => ({ ...current, [item]: value }))} placeholder="Hedef derece" placeholderTextColor={colors.muted} style={styles.targetInput} />
+                    </View>
+                  ))}
+                </InfoPanel>
+              ) : null}
             </>
           ) : (
             <>
-              <Text style={styles.blockTitle}>D) Bayrak Yarışı</Text>
               <SelectField label="Bayrak türü" value={relayType} onPress={() => setSheet({ title: 'Bayrak türü', options: relayRaceOptions, selected: relayType, onSelect: setRelayType })} />
               <TextInput value={teamName} onChangeText={setTeamName} placeholder="Takım adı" placeholderTextColor={colors.muted} style={styles.input} />
               <SelectField label="Takım kategorisi" value={teamCategory} onPress={() => setSheet({ title: 'Takım kategorisi', options: teamCategories, selected: teamCategory, onSelect: setTeamCategory })} />
-              <Text style={styles.relayTitle}>Sporcuları Toplu Seç</Text>
-              {rosterAthletes.map((athlete) => {
-                const selected = relayAthleteIds.includes(athlete.id);
-                const order = relayAthleteIds.indexOf(athlete.id) + 1;
-                return (
-                  <Pressable key={athlete.id} style={[styles.relayAthleteRow, selected && styles.relayAthleteActive]} onPress={() => setRelayAthleteIds((current) => selected ? current.filter((id) => id !== athlete.id) : [...current, athlete.id])}>
-                    <Text style={[styles.relayAthleteText, selected && styles.relayAthleteTextActive]}>{selected ? `${order}. ` : ''}{athlete.name}{selected && order > 4 ? ' • Yedek' : ''}</Text>
-                  </Pressable>
-                );
-              })}
-              <Text style={styles.relayHint}>Takım Sıralaması: Seçim sırasına göre 1-4, sonrası yedek sporcu olur.</Text>
             </>
           )}
 
-          <Text style={styles.blockTitle}>E) Opsiyonel Bilgiler</Text>
-          <SelectField label="Yarış günü" value={raceDay} onPress={() => setSheet({ title: 'Yarış günü', options: raceDays, selected: raceDay, onSelect: (value) => setRaceDay(value) })} />
-          <SelectField label="Seans" value={session} onPress={() => setSheet({ title: 'Seans', options: sessions, selected: session, onSelect: (value) => setSession(value) })} />
+          <Text style={styles.blockTitle}>Opsiyonel Bilgiler</Text>
+          <SelectField label="Yarış günü" value={raceDay} onPress={() => setSheet({ title: 'Yarış günü', options: raceDays, selected: raceDay, onSelect: (value) => setRaceDay(value as RaceDay) })} />
+          <SelectField label="Seans" value={session} onPress={() => setSheet({ title: 'Seans', options: sessions, selected: session, onSelect: (value) => setSession(value as RaceSession) })} />
           <SelectField label="Seri" value={heat} onPress={() => setSheet({ title: 'Seri', options: heats, selected: heat, onSelect: setHeat })} />
           <SelectField label="Kulvar" value={lane} onPress={() => setSheet({ title: 'Kulvar', options: lanes, selected: lane, onSelect: setLane })} />
           <TextInput value={estimatedTime} onChangeText={setEstimatedTime} placeholder="Tahmini saat" placeholderTextColor={colors.muted} style={styles.input} />
@@ -226,23 +219,24 @@ export default function CompetitionRosterScreen() {
         </GlassCard>
 
         <Text style={styles.sectionTitle}>Hazırlanan Yarış Listeleri</Text>
+        {groups.length === 0 ? <EmptyState title="Henüz yarış listesi oluşturulmadı." detail="Sporcu ve branş eklendiğinde listeler burada görünecek." icon={FileText} tone={colors.coral} /> : null}
         {groups.map((group) => {
           const open = !!openGroups[group.key];
           return (
             <GlassCard key={group.key} style={styles.groupCard}>
               <Pressable style={styles.groupHeader} onPress={() => setOpenGroups((current) => ({ ...current, [group.key]: !current[group.key] }))}>
                 <View style={styles.groupCopy}>
-                  <Text style={styles.groupTitle}>{group.title}</Text>
+                  <Text style={styles.groupTitle}>{group.title ?? 'Yarış seçilmedi'}</Text>
                   <Text style={styles.groupMeta}>Toplam sporcu: {group.totalAthletes} • Toplam start: {group.totalStarts} • Bayrak: {group.relayCount}</Text>
                 </View>
-                {open ? <ChevronDown color={colors.cyan} size={20} /> : <ChevronRight color={colors.cyan} size={20} />}
+                {open ? <ChevronDown color={colors.coral} size={20} /> : <ChevronRight color={colors.coral} size={20} />}
               </Pressable>
               {open ? (
                 <View style={styles.rows}>
                   {group.entries.map((entry) => <RosterRow key={entry.id} entry={entry} />)}
                   <View style={styles.exportRow}>
-                    <AppButton title="PDF mock" icon={FileText} variant="secondary" onPress={() => setMessage(`${group.title} PDF mock hazır.`)} />
-                    <AppButton title="CSV mock" icon={FileText} variant="secondary" onPress={() => setMessage(`${group.title} CSV mock hazır.`)} />
+                    <AppButton title="PDF mock" icon={FileText} variant="secondary" onPress={() => setMessage(`${group.title} PDF hazır.`)} />
+                    <AppButton title="CSV mock" icon={FileText} variant="secondary" onPress={() => setMessage(`${group.title} CSV hazır.`)} />
                   </View>
                 </View>
               ) : null}
@@ -266,13 +260,16 @@ function InfoPanel({ title, children }: { title: string; children: React.ReactNo
 }
 
 function RosterRow({ entry }: { entry: ReturnType<typeof getPreparedRosterGroups>[number]['entries'][number] }) {
-  const branch = entry.raceKind === 'relay' ? entry.relayType : `${entry.distance}m ${entry.stroke}`;
+  const branch = entry.raceKind === 'relay' ? entry.relayType ?? 'Bayrak Yarışı' : `${entry.distance ?? '-'}m ${entry.stroke ?? '-'}`;
   return (
     <View style={styles.rosterRow}>
-      <Text style={styles.rowTitle}>{entry.raceKind === 'relay' ? entry.teamName : entry.athleteName}</Text>
+      <Text style={styles.rowTitle}>{entry.raceKind === 'relay' ? entry.teamName ?? 'İsimsiz Takım' : entry.athleteName ?? 'İsimsiz Sporcu'}</Text>
       <Text style={styles.rowMeta}>{branch} • PB {entry.pb || noPb} • Hedef {entry.targetTime === '-' ? 'boş' : entry.targetTime || 'boş'}</Text>
-      <Text style={styles.rowMeta}>{entry.raceDay} • {entry.session} • Seri {entry.heat} • Kulvar {entry.lane}</Text>
-      {entry.raceKind === 'relay' ? <Text style={styles.rowMeta}>{entry.relayAthletes?.map((athlete) => `${athlete.order}. ${athlete.athleteName}${athlete.reserve ? ' (Yedek)' : ''}`).join('\n')}</Text> : null}
+      <Text style={styles.rowMeta}>{entry.raceDay || selectLabel} • {entry.session || selectLabel} • Seri {entry.heat || selectLabel} • Kulvar {entry.lane || selectLabel}</Text>
+      {entry.raceKind === 'relay' ? <Text style={styles.rowMeta}>{entry.relayAthletes?.map((athlete) => `${athlete.order}. ${athlete.athleteName}${athlete.reserve ? ' (Yedek)' : ''}`).join('\n') || 'Takım sıralaması yok'}</Text> : null}
+      <Pressable style={styles.enterResultButton} onPress={() => router.push('/features/live-race')}>
+        <Text style={styles.enterResultText}>Sonuç Gir</Text>
+      </Pressable>
     </View>
   );
 }
@@ -284,7 +281,7 @@ function SelectField({ label, value, onPress }: { label: string; value: string; 
         <Text style={styles.selectLabel}>{label}</Text>
         <Text style={styles.selectValue}>{value || selectLabel}</Text>
       </View>
-      <ChevronRight color={colors.cyan} size={18} />
+      <ChevronRight color={colors.coral} size={18} />
     </Pressable>
   );
 }
@@ -307,7 +304,7 @@ function SelectionSheet({ sheet, onClose }: { sheet: SheetState; onClose: () => 
               const active = option === sheet.selected;
               return (
                 <Pressable key={option} style={[styles.option, active && styles.optionActive]} onPress={() => { sheet.onSelect(option); onClose(); }}>
-                  {active ? <Check color={colors.background} size={14} /> : null}
+                  {active ? <Check color={colors.surfaceSolid} size={14} /> : null}
                   <Text style={[styles.optionText, active && styles.optionTextActive]}>{option}</Text>
                 </Pressable>
               );
@@ -337,7 +334,7 @@ function DistanceSheet({ visible, options, selected, onToggle, onClose }: { visi
               const active = selected.includes(option);
               return (
                 <Pressable key={option} style={[styles.option, active && styles.optionActive]} onPress={() => onToggle(option)}>
-                  {active ? <Check color={colors.background} size={14} /> : <View style={styles.emptyCheck} />}
+                  {active ? <Check color={colors.surfaceSolid} size={14} /> : <View style={styles.emptyCheck} />}
                   <Text style={[styles.optionText, active && styles.optionTextActive]}>{option}m</Text>
                 </Pressable>
               );
@@ -357,33 +354,25 @@ const styles = StyleSheet.create({
   title: { ...typography.h1, color: colors.text },
   subtitle: { color: colors.muted, fontWeight: '700', lineHeight: 21 },
   message: { color: colors.gold, fontWeight: '900', backgroundColor: colors.goldSoft, borderRadius: 18, padding: spacing.md },
-  officialCard: { gap: 4, borderColor: 'rgba(245, 158, 11, 0.45)', shadowColor: colors.gold, shadowOpacity: 0.09, shadowRadius: 12 },
+  officialCard: { gap: 4, borderColor: 'rgba(194, 65, 12, 0.28)', shadowColor: colors.gold, shadowOpacity: 0.08, shadowRadius: 12 },
   officialLabel: { color: colors.gold, fontWeight: '900', fontSize: 12 },
   officialTitle: { color: colors.text, fontWeight: '900', fontSize: 18 },
   officialMeta: { color: colors.mutedStrong, fontWeight: '800' },
   form: { gap: 10 },
-  blockTitle: { color: colors.cyan, fontWeight: '900', fontSize: 14, marginTop: 4 },
+  blockTitle: { color: colors.coral, fontWeight: '900', fontSize: 14, marginTop: 4 },
   input: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, color: colors.text, fontWeight: '800', paddingHorizontal: spacing.md },
   searchBox: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   searchInput: { color: colors.text, fontWeight: '800', flex: 1 },
   selectField: { minHeight: 50, borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   selectLabel: { color: colors.muted, fontWeight: '900', fontSize: 12 },
   selectValue: { color: colors.text, fontWeight: '900', marginTop: 3 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { color: colors.background, backgroundColor: colors.cyan, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, fontWeight: '900', fontSize: 12 },
-  infoPanel: { borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, padding: spacing.md, gap: 8 },
-  infoTitle: { color: colors.cyan, fontWeight: '900' },
+  infoPanel: { borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.coralSoft, padding: spacing.md, gap: 8 },
+  infoTitle: { color: colors.coral, fontWeight: '900' },
   infoBody: { gap: 6 },
   infoText: { color: colors.text, fontWeight: '800' },
   targetRow: { gap: 5 },
   targetLabel: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
   targetInput: { minHeight: 40, borderRadius: 14, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, color: colors.text, fontWeight: '800', paddingHorizontal: spacing.md },
-  relayTitle: { color: colors.text, fontWeight: '900', fontSize: 15 },
-  relayAthleteRow: { minHeight: 40, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.md, justifyContent: 'center' },
-  relayAthleteActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
-  relayAthleteText: { color: colors.mutedStrong, fontWeight: '900' },
-  relayAthleteTextActive: { color: colors.background },
-  relayHint: { color: colors.muted, fontWeight: '800', lineHeight: 19 },
   sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 20 },
   groupCard: { gap: spacing.sm, padding: 12 },
   groupHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
@@ -394,17 +383,19 @@ const styles = StyleSheet.create({
   rosterRow: { borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, padding: spacing.md, gap: 4 },
   rowTitle: { color: colors.text, fontWeight: '900' },
   rowMeta: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 18 },
+  enterResultButton: { alignSelf: 'flex-start', borderRadius: 999, backgroundColor: colors.coral, paddingHorizontal: spacing.md, paddingVertical: 8, marginTop: 4 },
+  enterResultText: { color: colors.surfaceSolid, fontWeight: '900', fontSize: 12 },
   exportRow: { flexDirection: 'row', gap: spacing.sm },
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.38)' },
   sheet: { maxHeight: '76%', backgroundColor: colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderColor: colors.borderStrong, padding: spacing.lg, gap: spacing.md },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sheetTitle: { color: colors.text, fontWeight: '900', fontSize: 20 },
   closeButton: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.surfaceSoft, alignItems: 'center', justifyContent: 'center' },
   options: { gap: spacing.sm },
   option: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  optionActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
+  optionActive: { backgroundColor: colors.coral, borderColor: colors.coral },
   optionText: { color: colors.mutedStrong, fontWeight: '900' },
-  optionTextActive: { color: colors.background },
+  optionTextActive: { color: colors.surfaceSolid },
   emptyCheck: { width: 14, height: 14, borderRadius: 4, borderWidth: 1, borderColor: colors.borderStrong },
 });

@@ -1,4 +1,4 @@
-import { FileText, Mail, Send } from 'lucide-react-native';
+﻿import { FileText, Mail, Send } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,12 +14,12 @@ export default function CompetitionReportScreen() {
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Yarış Raporlama</Text>
-        <Text style={styles.subtitle}>Tek tuş PDF ve paylaşım hazırlığı.</Text>
+        <Text style={styles.subtitle}>Tek tu? PDF ve payla??m haz?rl???.</Text>
 
         <GlassCard style={styles.preview}>
-          <Text style={styles.previewTitle}>Marmara Cup Raporu</Text>
+          <Text style={styles.previewTitle}>Yarış Raporu</Text>
           <View style={styles.rows}>
-            {reportRows.map((row) => <Text key={row} style={styles.row}>• {row}</Text>)}
+            {reportRows.map((row) => <Text key={row} style={styles.row}> •  {row}</Text>)}
           </View>
         </GlassCard>
 
@@ -47,3 +47,4 @@ const styles = StyleSheet.create({
   message: { color: colors.gold, fontWeight: '900', backgroundColor: colors.goldSoft, borderRadius: 14, padding: spacing.md },
   actionRow: { flexDirection: 'row', gap: spacing.sm },
 });
+

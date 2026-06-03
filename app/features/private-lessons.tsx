@@ -1,229 +1,172 @@
-import { router } from 'expo-router';
-import { CalendarDays, Check, CheckCircle2, Edit3, Plus, Send, Trash2, X } from 'lucide-react-native';
+import { CalendarDays, Check, Clock, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ClubLogo } from '@/components/ClubLogo';
 import { GlassCard } from '@/components/GlassCard';
-import { createLessonAd, deleteLessonAd, getLessonAds, LessonAd, LessonAdVisibility, requestLessonContact, toggleLessonAdStatus } from '@/services/lessonAds';
-import { canManageClub, useSession } from '@/services/session';
+import {
+  PrivateLessonSlot,
+  PrivateLessonStatus,
+  approveLessonRequest,
+  formatDate,
+  getDailySlots,
+  getLessonRequests,
+  getMonthlyCalendar,
+  getWeekStart,
+  getWeeklySlots,
+  parseDate,
+  rejectLessonRequest,
+  requestPrivateLesson,
+  updateSlotStatus,
+} from '@/services/privateLessons';
+import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
-const branches = ['Serbest', 'Sırtüstü', 'Kurbağalama', 'Kelebek', 'Karışık', 'Start/Dönüş', 'Teknik Gelişim', 'Yarış Hazırlık'];
-const levels = ['Başlangıç', 'Orta', 'Performans', 'Yarış Grubu'];
-const ageGroups = ['7-9', '10-12', '13-14', '15+', 'Masters'];
-const visibilities: LessonAdVisibility[] = ['Tüm kullanıcılar', 'Sadece kulüp üyeleri', 'Sadece veliler'];
+type ViewMode = 'monthly' | 'weekly' | 'daily';
 
-type FormState = {
-  title: string;
-  branch: string;
-  level: string;
-  ageGroup: string;
-  schedule: string;
-  location: string;
-  description: string;
-  capacity: string;
-  priceInfo: string;
-  visibility: LessonAdVisibility;
+const viewTabs: Array<{ id: ViewMode; label: string }> = [
+  { id: 'monthly', label: 'Aylık' },
+  { id: 'weekly', label: 'Haftalık' },
+  { id: 'daily', label: 'Günlük' },
+];
+
+const weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+const statusLabels: Record<PrivateLessonStatus, string> = {
+  available: 'Müsait',
+  closed: 'Kapalı',
+  booked: 'Dolu',
+  private_lesson: 'Özel Ders',
+  training: 'Antrenman',
+  race: 'Yarış',
 };
 
-const initialForm: FormState = {
-  title: '',
-  branch: 'Serbest',
-  level: 'Orta',
-  ageGroup: '10-12',
-  schedule: '',
-  location: '',
-  description: '',
-  capacity: '',
-  priceInfo: '',
-  visibility: 'Tüm kullanıcılar',
+const statusColors: Record<PrivateLessonStatus, string> = {
+  available: colors.success,
+  closed: colors.danger,
+  booked: colors.gold,
+  private_lesson: '#A78BFA',
+  training: '#3B82F6',
+  race: '#F97316',
 };
 
 export default function PrivateLessonsScreen() {
   const { currentUser } = useSession();
-  const canCreate = currentUser.role === 'coach';
-  const canModerate = currentUser.role === 'club_admin';
-  const [ads, setAds] = useState(() => getLessonAds());
-  const [formOpen, setFormOpen] = useState(false);
+  const canEdit = currentUser.role === 'coach' || currentUser.role === 'club_admin';
+  const [mode, setMode] = useState<ViewMode>('monthly');
+  const today = new Date();
+  const [selectedDate, setSelectedDate] = useState(formatDate(today));
+  const [refreshKey, setRefreshKey] = useState(0);
   const [message, setMessage] = useState('');
-  const [form, setForm] = useState<FormState>(initialForm);
+  const [editingSlot, setEditingSlot] = useState<PrivateLessonSlot | null>(null);
 
-  const visibleAds = useMemo(
-    () => ads.filter((ad) => {
-      if (canModerate) return ad.clubName === (currentUser.club ?? 'GP Aquatics');
-      if (currentUser.role === 'parent') return ad.status === 'active' && (ad.visibility === 'Tüm kullanıcılar' || ad.visibility === 'Sadece veliler' || ad.visibility === 'Sadece kulüp üyeleri');
-      if (currentUser.role === 'athlete') return ad.status === 'active' && ad.visibility !== 'Sadece veliler';
-      return ad.coachId === currentUser.id || ad.clubName === (currentUser.club ?? 'GP Aquatics');
-    }),
-    [ads, canModerate, currentUser.club, currentUser.id, currentUser.role],
-  );
+  const selected = parseDate(selectedDate);
+  const monthDays = useMemo(() => getMonthlyCalendar(selected.getFullYear(), selected.getMonth()), [selected, refreshKey]);
+  const weekRows = useMemo(() => getWeeklySlots(getWeekStart(selected)), [selectedDate, refreshKey]);
+  const dailySlots = useMemo(() => getDailySlots(selectedDate), [selectedDate, refreshKey]);
+  const lessonRequests = useMemo(() => getLessonRequests(), [refreshKey]);
 
-  const refresh = () => setAds(getLessonAds());
+  const bump = () => setRefreshKey((value) => value + 1);
 
-  const updateForm = (key: keyof FormState, value: string) => {
-    setForm((current) => ({ ...current, [key]: value }));
-  };
-
-  const handlePublish = () => {
-    if (!form.title.trim() || !form.schedule.trim() || !form.location.trim() || !form.description.trim() || !form.capacity.trim()) {
-      setMessage('Zorunlu alanları doldurun: başlık, gün/saat, lokasyon, açıklama ve kontenjan.');
+  const handleSlotPress = (slot: PrivateLessonSlot) => {
+    if (canEdit) {
+      setEditingSlot(slot);
       return;
     }
-
-    createLessonAd({
-      title: form.title.trim(),
-      coachId: currentUser.id,
-      coachName: `${currentUser.firstName} ${currentUser.lastName}`,
-      clubId: 'gp-aquatics',
-      clubName: currentUser.club ?? 'GP Aquatics',
-      branch: form.branch,
-      level: form.level,
-      ageGroup: form.ageGroup,
-      schedule: form.schedule.trim(),
-      location: form.location.trim(),
-      description: form.description.trim(),
-      capacity: form.capacity.trim(),
-      priceInfo: form.priceInfo.trim() || undefined,
-      visibility: form.visibility,
-      status: 'active',
-    });
-    refresh();
-    setForm(initialForm);
-    setFormOpen(false);
-    setMessage(form.visibility === 'Sadece kulüp üyeleri' ? 'İlan panosunda yayınlandı. Kulüp panosuna da özel ders ilanı olarak düştü.' : 'İlan panosunda yayınlandı');
+    if (slot.status === 'available') {
+      requestPrivateLesson(slot.id, `${currentUser.firstName} ${currentUser.lastName}`.trim() || 'Pilot Kullanıcı', currentUser.role === 'parent' ? 'Çocuğum' : currentUser.firstName);
+      bump();
+      setMessage('Özel ders talebiniz antrenöre iletildi.');
+    }
   };
 
-  const handleToggle = (id: string) => {
-    const updated = toggleLessonAdStatus(id);
-    refresh();
-    setMessage(updated?.status === 'active' ? 'İlan aktif yapıldı.' : 'İlan pasif yapıldı.');
+  const setSlot = (status: PrivateLessonStatus, note?: string) => {
+    if (!editingSlot) return;
+    updateSlotStatus(editingSlot.id, status, note);
+    setEditingSlot(null);
+    bump();
+    setMessage(`Saat bloğu ${statusLabels[status]} olarak güncellendi.`);
   };
 
-  const handleDelete = (id: string) => {
-    deleteLessonAd(id);
-    refresh();
-    setMessage('İlan mock olarak silindi.');
+  const handleApprove = (id: string) => {
+    approveLessonRequest(id);
+    bump();
+    setMessage('Ders talebi onaylandı.');
   };
 
-  const handleContact = (id: string) => {
-    requestLessonContact(id, currentUser.id);
-    setMessage(currentUser.role === 'parent' ? 'Çocuğunuz için iletişim talebi gönderildi.' : 'İletişim talebi gönderildi.');
+  const handleReject = (id: string) => {
+    rejectLessonRequest(id);
+    bump();
+    setMessage('Ders talebi reddedildi.');
   };
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Özel Ders İlanları</Text>
-        <Text style={styles.subtitle}>İlan Panosu üzerinden yayınlanan özel dersler görüntülenir; telefon/mail direkt paylaşılmaz.</Text>
+        <View style={styles.header}>
+          <CalendarDays color={colors.cyan} size={30} />
+          <View style={styles.headerCopy}>
+            <Text style={styles.title}>Özel Ders Takvimi</Text>
+            <Text style={styles.subtitle}>{canEdit ? 'Müsaitliklerini aylık, haftalık ve günlük takvimle yönet.' : 'Antrenörün uygun Özel ders saatlerini görüntüle ve talep gönder.'}</Text>
+          </View>
+        </View>
+
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
-        {canCreate ? (
-          <Pressable style={styles.createButton} onPress={() => setFormOpen((value) => !value)}>
-            <Plus color={colors.background} size={18} />
-            <Text style={styles.createButtonText}>Özel Ders İlanı Oluştur</Text>
-          </Pressable>
-        ) : null}
-
-        {formOpen ? (
-          <GlassCard style={styles.form}>
-            <Text style={styles.cardTitle}>Özel Ders İlanı Oluştur</Text>
-            <TextInput placeholder="İlan başlığı" placeholderTextColor={colors.muted} value={form.title} onChangeText={(value) => updateForm('title', value)} style={styles.input} />
-            <ChoiceGroup label="Branş" options={branches} value={form.branch} onChange={(value) => updateForm('branch', value)} />
-            <ChoiceGroup label="Seviye" options={levels} value={form.level} onChange={(value) => updateForm('level', value)} />
-            <ChoiceGroup label="Yaş grubu" options={ageGroups} value={form.ageGroup} onChange={(value) => updateForm('ageGroup', value)} />
-            <TextInput placeholder="Gün/saat" placeholderTextColor={colors.muted} value={form.schedule} onChangeText={(value) => updateForm('schedule', value)} style={styles.input} />
-            <TextInput placeholder="Lokasyon / Havuz" placeholderTextColor={colors.muted} value={form.location} onChangeText={(value) => updateForm('location', value)} style={styles.input} />
-            <TextInput placeholder="Açıklama" placeholderTextColor={colors.muted} value={form.description} onChangeText={(value) => updateForm('description', value)} style={[styles.input, styles.textArea]} multiline={true} />
-            <TextInput placeholder="Kontenjan" placeholderTextColor={colors.muted} value={form.capacity} onChangeText={(value) => updateForm('capacity', value)} style={styles.input} />
-            <TextInput placeholder="Ücret bilgisi (opsiyonel)" placeholderTextColor={colors.muted} value={form.priceInfo} onChangeText={(value) => updateForm('priceInfo', value)} style={styles.input} />
-            <ChoiceGroup label="Görünürlük" options={visibilities} value={form.visibility} onChange={(value) => updateForm('visibility', value)} />
-            <Pressable style={styles.publishButton} onPress={handlePublish}>
-              <Check color={colors.background} size={17} />
-              <Text style={styles.publishButtonText}>İlanı Gönder</Text>
+        <View style={styles.tabs}>
+          {viewTabs.map((tab) => (
+            <Pressable key={tab.id} style={[styles.tab, mode === tab.id && styles.tabActive]} onPress={() => setMode(tab.id)}>
+              <Text style={[styles.tabText, mode === tab.id && styles.tabTextActive]}>{tab.label}</Text>
             </Pressable>
-          </GlassCard>
-        ) : null}
+          ))}
+        </View>
 
-        <Text style={styles.sectionTitle}>İlan Panosu</Text>
-        {visibleAds.map((ad) => (
-          <LessonAdCard
-            key={ad.id}
-            ad={ad}
-            canManage={canModerate || ad.coachId === currentUser.id}
-            canRequest={currentUser.role === 'athlete' || currentUser.role === 'parent'}
-            onContact={() => handleContact(ad.id)}
-            onAvailability={() => router.push({ pathname: '/features/coach-calendar', params: { coachId: ad.coachId } })}
-            onToggle={() => handleToggle(ad.id)}
-            onDelete={() => handleDelete(ad.id)}
-          />
-        ))}
-        {!visibleAds.length ? <Text style={styles.empty}>İlan panosunda görünür ilan yok.</Text> : null}
+        <GlassCard style={styles.calendarCard}>
+          <View style={styles.calendarHeader}>
+            <Text style={styles.monthTitle}>{monthNames[selected.getMonth()]} {selected.getFullYear()}</Text>
+            <Text style={styles.selectedDate}>{formatDisplayDate(selectedDate)}</Text>
+          </View>
+
+          {mode === 'monthly' ? <MonthlyCalendar days={monthDays} selectedDate={selectedDate} today={formatDate(today)} onSelect={(date) => { setSelectedDate(date); setMode('daily'); }} /> : null}
+          {mode === 'weekly' ? <WeeklyCalendar weekRows={weekRows} onSlotPress={handleSlotPress} canEdit={canEdit} /> : null}
+          {mode === 'daily' ? <DailyCalendar slots={dailySlots} onSlotPress={handleSlotPress} canEdit={canEdit} /> : null}
+        </GlassCard>
+
+        <RequestPanel requests={lessonRequests} canEdit={canEdit} onApprove={handleApprove} onReject={handleReject} />
       </ScrollView>
+
+      <EditSlotModal slot={editingSlot} onClose={() => setEditingSlot(null)} onSetStatus={setSlot} />
     </SafeAreaView>
   );
 }
 
-function LessonAdCard({ ad, canManage, canRequest, onContact, onAvailability, onToggle, onDelete }: { ad: LessonAd; canManage: boolean; canRequest: boolean; onContact: () => void; onAvailability: () => void; onToggle: () => void; onDelete: () => void }) {
+function MonthlyCalendar({ days, selectedDate, today, onSelect }: { days: ReturnType<typeof getMonthlyCalendar>; selectedDate: string; today: string; onSelect: (date: string) => void }) {
   return (
-    <GlassCard style={styles.card}>
-      <View style={styles.cardHeader}>
-        <ClubLogo club={ad.clubName} size={38} />
-        <Text style={[styles.status, ad.status === 'active' ? styles.statusActive : styles.statusPassive]}>{ad.status === 'active' ? 'Aktif' : 'Pasif'}</Text>
+    <View style={styles.monthWrap}>
+      <View style={styles.weekdayRow}>
+        {weekdays.map((day) => <Text key={day} style={styles.weekday}>{day}</Text>)}
       </View>
-      <Text style={styles.cardTitle}>{ad.title}</Text>
-      <Text style={styles.coach}>{ad.coachName} • {ad.clubName}</Text>
-      <View style={styles.metaGrid}>
-        <Meta label="Branş" value={ad.branch} />
-        <Meta label="Seviye" value={ad.level} />
-        <Meta label="Yaş grubu" value={ad.ageGroup} />
-        <Meta label="Kontenjan" value={ad.capacity} />
-      </View>
-      <Text style={styles.body}>{ad.schedule} • {ad.location}</Text>
-      <Text style={styles.description} numberOfLines={2}>{ad.description}</Text>
-      {ad.priceInfo ? <Text style={styles.price}>Ücret bilgisi: {ad.priceInfo}</Text> : null}
-      <Text style={styles.visibility}>{ad.visibility}</Text>
-      <Pressable style={styles.availabilityButton} onPress={onAvailability}>
-        <CalendarDays color={colors.cyan} size={16} />
-        <Text style={styles.availabilityText}>Uygun Saatleri Gör</Text>
-      </Pressable>
-      {canRequest ? (
-        <Pressable style={styles.requestButton} onPress={onContact}>
-          <Send color={colors.background} size={16} />
-          <Text style={styles.requestText}>İletişim talebi gönder</Text>
-        </Pressable>
-      ) : null}
-      {canManage ? (
-        <View style={styles.manageRow}>
-          <Pressable style={styles.manageButton} onPress={onToggle}>
-            {ad.status === 'active' ? <X color={colors.text} size={15} /> : <CheckCircle2 color={colors.text} size={15} />}
-            <Text style={styles.manageText}>{ad.status === 'active' ? 'Pasif yap' : 'Aktif yap'}</Text>
-          </Pressable>
-          <Pressable style={styles.manageButton} onPress={onToggle}>
-            <Edit3 color={colors.text} size={15} />
-            <Text style={styles.manageText}>Düzenle mock</Text>
-          </Pressable>
-          <Pressable style={styles.manageButtonDanger} onPress={onDelete}>
-            <Trash2 color={colors.danger} size={15} />
-            <Text style={styles.manageDangerText}>Sil</Text>
-          </Pressable>
-        </View>
-      ) : null}
-    </GlassCard>
-  );
-}
-
-function ChoiceGroup({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (value: string) => void }) {
-  return (
-    <View style={styles.choiceBlock}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.chips}>
-        {options.map((option) => {
-          const active = option === value;
+      <View style={styles.monthGrid}>
+        {days.map((day) => {
+          const available = day.slots.filter((slot) => slot.status === 'available').length;
+          const filled = day.slots.filter((slot) => slot.status !== 'available' && slot.status !== 'closed').length;
+          const closed = day.slots.some((slot) => slot.status === 'closed');
+          const selected = day.date === selectedDate;
+          const isToday = day.date === today;
           return (
-            <Pressable key={option} style={[styles.chip, active && styles.chipActive]} onPress={() => onChange(option)}>
-              {active ? <Check color={colors.background} size={13} /> : null}
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{option}</Text>
+            <Pressable key={day.date} disabled={!day.inMonth} style={[styles.dayCell, !day.inMonth && styles.dayCellEmpty, selected && styles.dayCellSelected, isToday && styles.dayCellToday]} onPress={() => onSelect(day.date)}>
+              {day.inMonth ? (
+                <>
+                  <Text style={styles.dayNumber}>{day.dayNumber}</Text>
+                  <Text style={styles.dayMini}>{filled} dolu</Text>
+                  <Text style={styles.dayMini}>{available} müsait</Text>
+                  <View style={styles.dayDots}>
+                    {available ? <View style={[styles.dayDot, { backgroundColor: colors.success }]} /> : null}
+                    {filled ? <View style={[styles.dayDot, { backgroundColor: colors.gold }]} /> : null}
+                    {closed ? <View style={[styles.dayDot, { backgroundColor: colors.danger }]} /> : null}
+                  </View>
+                </>
+              ) : null}
             </Pressable>
           );
         })}
@@ -232,59 +175,208 @@ function ChoiceGroup({ label, options, value, onChange }: { label: string; optio
   );
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
+function WeeklyCalendar({ weekRows, onSlotPress, canEdit }: { weekRows: ReturnType<typeof getWeeklySlots>; onSlotPress: (slot: PrivateLessonSlot) => void; canEdit: boolean }) {
   return (
-    <View style={styles.metaItem}>
-      <Text style={styles.metaLabel}>{label}</Text>
-      <Text style={styles.metaValue} numberOfLines={1}>{value}</Text>
+    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+      <View>
+        <View style={styles.weekGridHeader}>
+          <View style={styles.timeHeader} />
+          {weekRows.map((day) => (
+            <View key={day.date} style={styles.weekDayHeader}>
+              <Text style={styles.weekDayText}>{day.dayLabel.slice(0, 3)}</Text>
+              <Text style={styles.weekDateText}>{day.date.slice(8)}</Text>
+            </View>
+          ))}
+        </View>
+        {weekRows[0]?.slots.map((_, hourIndex) => (
+          <View key={hourIndex} style={styles.weekRow}>
+            <Text style={styles.hourLabel}>{weekRows[0].slots[hourIndex].startTime}</Text>
+            {weekRows.map((day) => <SlotBlock key={`${day.date}-${hourIndex}`} slot={day.slots[hourIndex]} compact={true} onPress={onSlotPress} canEdit={canEdit} />)}
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+function DailyCalendar({ slots, onSlotPress, canEdit }: { slots: PrivateLessonSlot[]; onSlotPress: (slot: PrivateLessonSlot) => void; canEdit: boolean }) {
+  return (
+    <View style={styles.dailyList}>
+      {slots.map((slot) => <SlotBlock key={slot.id} slot={slot} onPress={onSlotPress} canEdit={canEdit} />)}
     </View>
   );
+}
+
+function SlotBlock({ slot, compact = false, onPress, canEdit }: { slot: PrivateLessonSlot; compact?: boolean; onPress: (slot: PrivateLessonSlot) => void; canEdit: boolean }) {
+  const statusColor = statusColors[slot.status];
+  const disabled = !canEdit && slot.status !== 'available';
+  return (
+    <Pressable disabled={disabled} style={[compact ? styles.weekSlot : styles.dailySlot, { borderColor: statusColor, backgroundColor: `${statusColor}22` }, disabled && styles.disabledSlot]} onPress={() => onPress(slot)}>
+      <View style={styles.slotTop}>
+        <Text style={[styles.slotStatus, { color: statusColor }]}>{!canEdit && slot.status !== 'available' ? 'Müsait değil' : statusLabels[slot.status]}</Text>
+        {!compact ? <Text style={styles.slotTime}>{slot.startTime} - {slot.endTime}</Text> : null}
+      </View>
+      {!compact ? (
+        <>
+          <Text style={styles.slotNote}>{slot.note ?? 'Not yok'}</Text>
+          <Text style={styles.slotMeta}>{slot.athleteName ?? 'Sporcu yok'} • {slot.lessonType ?? 'Ders türü mock'}</Text>
+          {!canEdit && slot.status === 'available' ? <Text style={styles.requestHint}>Ders Talep Et</Text> : null}
+        </>
+      ) : (
+        <Text style={styles.weekSlotText}>{slot.status === 'available' ? 'Müsait' : statusLabels[slot.status]}</Text>
+      )}
+    </Pressable>
+  );
+}
+
+function RequestPanel({ requests, canEdit, onApprove, onReject }: { requests: ReturnType<typeof getLessonRequests>; canEdit: boolean; onApprove: (id: string) => void; onReject: (id: string) => void }) {
+  const pending = requests.filter((item) => item.status === 'pending');
+  const approved = requests.filter((item) => item.status === 'approved');
+  const rejected = requests.filter((item) => item.status === 'rejected');
+
+  return (
+    <GlassCard style={styles.requestsCard}>
+      <Text style={styles.sectionTitle}>Bekleyen Talepler</Text>
+      {pending.map((request) => <RequestRow key={request.id} request={request} canEdit={canEdit} onApprove={onApprove} onReject={onReject} />)}
+      {!pending.length ? <Text style={styles.empty}>Bekleyen talep yok.</Text> : null}
+      <View style={styles.requestSummary}>
+        <SummaryPill label="Onaylanan Dersler" value={approved.length} tone={colors.success} />
+        <SummaryPill label="Reddedilen Talepler" value={rejected.length} tone={colors.danger} />
+      </View>
+    </GlassCard>
+  );
+}
+
+function RequestRow({ request, canEdit, onApprove, onReject }: { request: ReturnType<typeof getLessonRequests>[number]; canEdit: boolean; onApprove: (id: string) => void; onReject: (id: string) => void }) {
+  return (
+    <View style={styles.requestRow}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.requestTitle}>{request.athleteName}</Text>
+        <Text style={styles.requestMeta}>{request.date} • {request.time} • {request.requesterName}</Text>
+      </View>
+      {canEdit ? (
+        <View style={styles.requestActions}>
+          <Pressable style={styles.approveButton} onPress={() => onApprove(request.id)}><Check color={colors.background} size={14} /><Text style={styles.approveText}>Onayla</Text></Pressable>
+          <Pressable style={styles.rejectButton} onPress={() => onReject(request.id)}><X color={colors.danger} size={14} /><Text style={styles.rejectText}>Reddet</Text></Pressable>
+        </View>
+      ) : <Text style={styles.pendingText}>Beklemede</Text>}
+    </View>
+  );
+}
+
+function EditSlotModal({ slot, onClose, onSetStatus }: { slot: PrivateLessonSlot | null; onClose: () => void; onSetStatus: (status: PrivateLessonStatus, note?: string) => void }) {
+  const options: Array<{ label: string; status: PrivateLessonStatus; note?: string }> = [
+    { label: 'Müsait yap', status: 'available', note: 'Müsait Özel ders saati' },
+    { label: 'Kapalı yap', status: 'closed', note: 'Uygun değil' },
+    { label: 'Özel ders olarak işaretle', status: 'private_lesson', note: 'Özel ders' },
+    { label: 'Antrenman olarak işaretle', status: 'training', note: 'Kulüp antrenmanı' },
+    { label: 'Yarış olarak işaretle', status: 'race', note: 'Yarış günü' },
+    { label: 'Bu saati sadece bugün kapat', status: 'closed', note: 'Bugün kapalı' },
+    { label: 'Her hafta bu gün/saat kapat', status: 'closed', note: 'Haftalık tekrar mock kapalı' },
+    { label: 'Tüm hafta aynı saatleri kapat', status: 'closed', note: 'Tüm hafta mock kapalı' },
+    { label: 'Not ekle', status: slot?.status ?? 'available', note: 'Antrenör notu eklendi' },
+  ];
+
+  return (
+    <Modal visible={!!slot} transparent={true} animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+        <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
+          <Text style={styles.modalTitle}>Saat Durumu</Text>
+          <Text style={styles.modalMeta}>{slot ? `${slot.date} • ${slot.startTime} - ${slot.endTime}` : ''}</Text>
+          {options.map((option) => (
+            <Pressable key={option.label} style={styles.modalOption} onPress={() => onSetStatus(option.status, option.note)}>
+              <View style={[styles.modalDot, { backgroundColor: statusColors[option.status] }]} />
+              <Text style={styles.modalOptionText}>{option.label}</Text>
+            </Pressable>
+          ))}
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function SummaryPill({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <View style={[styles.summaryPill, { borderColor: tone, backgroundColor: `${tone}22` }]}>
+      <Text style={[styles.summaryValue, { color: tone }]}>{value}</Text>
+      <Text style={styles.summaryLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function formatDisplayDate(date: string) {
+  const parsed = parseDate(date);
+  return `${String(parsed.getDate()).padStart(2, '0')}.${String(parsed.getMonth() + 1).padStart(2, '0')}.${parsed.getFullYear()}`;
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 110 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerCopy: { flex: 1, minWidth: 0 },
   title: { ...typography.h1, color: colors.text },
-  subtitle: { color: colors.muted, fontWeight: '700', lineHeight: 21 },
-  message: { color: colors.gold, fontWeight: '900', backgroundColor: colors.goldSoft, borderRadius: 14, padding: spacing.md },
-  createButton: { minHeight: 48, borderRadius: 16, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  createButtonText: { color: colors.background, fontWeight: '900' },
-  form: { gap: spacing.md },
-  input: { minHeight: 46, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, color: colors.text, paddingHorizontal: spacing.md, fontWeight: '800' },
-  textArea: { minHeight: 82, textAlignVertical: 'top', paddingTop: spacing.md },
-  choiceBlock: { gap: spacing.sm },
-  label: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: { minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  chipActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
-  chipText: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
-  chipTextActive: { color: colors.background },
-  publishButton: { minHeight: 46, borderRadius: 15, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  publishButtonText: { color: colors.background, fontWeight: '900' },
-  sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 20, marginTop: spacing.sm },
-  empty: { color: colors.muted, fontWeight: '800', textAlign: 'center', padding: spacing.lg },
-  card: { gap: spacing.sm },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  status: { fontWeight: '900', borderRadius: 999, paddingHorizontal: spacing.sm, paddingVertical: 6, overflow: 'hidden' },
-  statusActive: { color: colors.success, backgroundColor: 'rgba(52, 211, 153, 0.12)' },
-  statusPassive: { color: colors.muted, backgroundColor: colors.glass },
-  cardTitle: { color: colors.text, fontWeight: '900', fontSize: 19 },
-  coach: { color: colors.gold, fontWeight: '900' },
-  metaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  metaItem: { width: '48%', borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.sm },
-  metaLabel: { color: colors.muted, fontWeight: '900', fontSize: 11 },
-  metaValue: { color: colors.text, fontWeight: '900', marginTop: 4 },
-  body: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 21 },
-  description: { color: colors.muted, fontWeight: '700', lineHeight: 21 },
-  price: { color: colors.cyan, fontWeight: '900' },
-  visibility: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
-  requestButton: { minHeight: 44, borderRadius: 15, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  requestText: { color: colors.background, fontWeight: '900' },
-  availabilityButton: { minHeight: 42, borderRadius: 15, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  availabilityText: { color: colors.text, fontWeight: '900' },
-  manageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  manageButton: { borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, paddingHorizontal: spacing.sm, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  manageButtonDanger: { borderRadius: 999, borderWidth: 1, borderColor: 'rgba(251, 113, 133, 0.42)', paddingHorizontal: spacing.sm, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  manageText: { color: colors.text, fontWeight: '900', fontSize: 12 },
-  manageDangerText: { color: colors.danger, fontWeight: '900', fontSize: 12 },
+  subtitle: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 20, marginTop: 4 },
+  message: { color: colors.cyan, fontWeight: '900', backgroundColor: colors.cyanSoft, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, padding: spacing.md },
+  tabs: { flexDirection: 'row', gap: spacing.sm },
+  tab: { flex: 1, minHeight: 42, borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, alignItems: 'center', justifyContent: 'center' },
+  tabActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
+  tabText: { color: colors.mutedStrong, fontWeight: '900' },
+  tabTextActive: { color: colors.background },
+  calendarCard: { gap: spacing.md },
+  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  monthTitle: { color: colors.text, fontWeight: '900', fontSize: 20 },
+  selectedDate: { color: colors.cyan, fontWeight: '900' },
+  monthWrap: { gap: spacing.sm },
+  weekdayRow: { flexDirection: 'row', gap: 5 },
+  weekday: { flex: 1, color: colors.mutedStrong, fontWeight: '900', textAlign: 'center', fontSize: 12 },
+  monthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
+  dayCell: { width: '13.55%', minHeight: 78, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: 5, gap: 2 },
+  dayCellEmpty: { opacity: 0.18 },
+  dayCellSelected: { borderColor: colors.cyan, borderWidth: 2 },
+  dayCellToday: { backgroundColor: colors.cyanSoft },
+  dayNumber: { color: colors.text, fontWeight: '900', fontSize: 13 },
+  dayMini: { color: colors.muted, fontWeight: '800', fontSize: 9 },
+  dayDots: { flexDirection: 'row', gap: 3, marginTop: 2 },
+  dayDot: { width: 5, height: 5, borderRadius: 999 },
+  weekGridHeader: { flexDirection: 'row', gap: 6, marginBottom: 6 },
+  timeHeader: { width: 50 },
+  weekDayHeader: { width: 88, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, alignItems: 'center', padding: 6 },
+  weekDayText: { color: colors.text, fontWeight: '900' },
+  weekDateText: { color: colors.muted, fontWeight: '800', fontSize: 11 },
+  weekRow: { flexDirection: 'row', gap: 6, marginBottom: 6, alignItems: 'stretch' },
+  hourLabel: { width: 50, color: colors.mutedStrong, fontWeight: '900', fontSize: 12, paddingTop: 8 },
+  weekSlot: { width: 88, minHeight: 48, borderRadius: 12, borderWidth: 1, padding: 5 },
+  weekSlotText: { color: colors.text, fontWeight: '800', fontSize: 10, marginTop: 3 },
+  dailyList: { gap: spacing.sm },
+  dailySlot: { minHeight: 92, borderRadius: 16, borderWidth: 1, padding: spacing.md, gap: 5 },
+  disabledSlot: { opacity: 0.72 },
+  slotTop: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
+  slotStatus: { fontWeight: '900', fontSize: 12 },
+  slotTime: { color: colors.text, fontWeight: '900' },
+  slotNote: { color: colors.mutedStrong, fontWeight: '800' },
+  slotMeta: { color: colors.muted, fontWeight: '800' },
+  requestHint: { color: colors.cyan, fontWeight: '900', marginTop: 4 },
+  requestsCard: { gap: spacing.md },
+  sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 19 },
+  requestRow: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.md, gap: spacing.sm },
+  requestTitle: { color: colors.text, fontWeight: '900' },
+  requestMeta: { color: colors.mutedStrong, fontWeight: '800', marginTop: 3 },
+  requestActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  approveButton: { borderRadius: 999, backgroundColor: colors.cyan, paddingHorizontal: spacing.sm, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  approveText: { color: colors.background, fontWeight: '900', fontSize: 12 },
+  rejectButton: { borderRadius: 999, borderWidth: 1, borderColor: colors.danger, paddingHorizontal: spacing.sm, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  rejectText: { color: colors.danger, fontWeight: '900', fontSize: 12 },
+  pendingText: { color: colors.gold, fontWeight: '900' },
+  empty: { color: colors.muted, fontWeight: '800', textAlign: 'center' },
+  requestSummary: { flexDirection: 'row', gap: spacing.sm },
+  summaryPill: { flex: 1, borderRadius: 16, borderWidth: 1, padding: spacing.sm },
+  summaryValue: { fontWeight: '900', fontSize: 18 },
+  summaryLabel: { color: colors.mutedStrong, fontWeight: '800', marginTop: 2, fontSize: 11 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(2, 10, 20, 0.72)', justifyContent: 'center', padding: spacing.lg },
+  modalCard: { borderRadius: 24, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.sm },
+  modalTitle: { ...typography.h2, color: colors.text },
+  modalMeta: { color: colors.mutedStrong, fontWeight: '800', marginBottom: spacing.sm },
+  modalOption: { minHeight: 42, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
+  modalDot: { width: 9, height: 9, borderRadius: 999 },
+  modalOptionText: { color: colors.text, fontWeight: '900' },
 });

@@ -27,6 +27,10 @@ export type CurrentUser = {
   mainStroke?: string;
   targetEvent?: string;
   guardianName?: string;
+  kvkkAccepted?: boolean;
+  explicitConsentAccepted?: boolean;
+  consentAcceptedAt?: string;
+  inviteCode?: string;
 };
 
 type SessionContextValue = {
@@ -198,8 +202,8 @@ export function panelLabel(role: UserRole) {
 
 export function roleFromUserType(userType: string): UserRole {
   if (userType === 'Veli') return 'parent';
-  if (userType === 'Antrenör' || userType === 'AntrenÃ¶r') return 'coach';
-  if (userType === 'Kulüp Yöneticisi' || userType === 'KulÃ¼p YÃ¶neticisi') return 'club_admin';
+  if (userType === 'Antrenör' || userType === 'Antrenör') return 'coach';
+  if (userType === 'Kulüp Yöneticisi' || userType === 'Kulüp Yöneticisi') return 'club_admin';
   return 'athlete';
 }
 
