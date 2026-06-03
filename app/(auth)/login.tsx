@@ -1,20 +1,31 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Lock, Mail } from 'lucide-react-native';
+import { Lock, Mail, ShieldCheck, User } from 'lucide-react-native';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { getCurrentUser, loginWithMockCredentials } from '@/services/auth';
+import { useLocale } from '@/locales';
+import { createDemoUser, DemoLoginRole, getCurrentUser, isDemoLoginEnabled, loginWithMockCredentials } from '@/services/auth';
 import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme/tokens';
 
+const demoOptions: Array<{ role: DemoLoginRole; labelKey: 'athleteDemo' | 'parentDemo' | 'coachDemo' | 'clubManagerDemo' }> = [
+  { role: 'athlete', labelKey: 'athleteDemo' },
+  { role: 'parent', labelKey: 'parentDemo' },
+  { role: 'coach', labelKey: 'coachDemo' },
+  { role: 'club_admin', labelKey: 'clubManagerDemo' },
+];
+
 export default function LoginScreen() {
+  const { t } = useLocale();
   const { setCurrentUserProfile } = useSession();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showDemoOptions, setShowDemoOptions] = useState(false);
+  const demoEnabled = isDemoLoginEnabled();
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -33,6 +44,13 @@ export default function LoginScreen() {
     setCurrentUserProfile(user);
     setError('');
     router.replace(user.profileCreated ? (user.hasSeenAppGuide ? '/(tabs)/dashboard' : '/onboarding-guide') : '/(auth)/create-profile');
+  };
+
+  const handleDemoLogin = (role: DemoLoginRole) => {
+    const user = createDemoUser(role);
+    setCurrentUserProfile(user);
+    setError('');
+    router.replace('/(tabs)/dashboard');
   };
 
   return (
@@ -71,9 +89,35 @@ export default function LoginScreen() {
                   <Text style={styles.footerText}>Hesabın yok mu? <Text style={styles.footerLink}>Davet kodu ile kayıt ol</Text></Text>
                 </Pressable>
               </View>
-
-              <Text style={styles.demoNote}>Bu sistem yalnızca pilot/demo mock giriş içindir. Üretim sürümünde Firebase Auth veya backend auth ile değiştirilecektir.</Text>
             </GlassCard>
+
+            {demoEnabled ? (
+              <GlassCard style={styles.demoCard}>
+                <View style={styles.demoHeader}>
+                  <ShieldCheck color={colors.gold} size={22} />
+                  <View style={styles.demoHeaderText}>
+                    <Text style={styles.demoTitle}>{t('demoLogin')}</Text>
+                    <Text style={styles.demoSubtitle}>{t('demoLoginDescription')}</Text>
+                  </View>
+                </View>
+                <Text style={styles.demoWarning}>{t('demoLoginWarning')}. Gerçek kullanıcı verisi oluşturmaz.</Text>
+                <Pressable style={styles.demoToggle} onPress={() => setShowDemoOptions((value) => !value)}>
+                  <User color={colors.background} size={18} />
+                  <Text style={styles.demoToggleText}>{t('demoLogin')}</Text>
+                </Pressable>
+                {showDemoOptions ? (
+                  <View style={styles.demoGrid}>
+                    {demoOptions.map((option) => (
+                      <Pressable key={option.role} style={styles.demoOption} onPress={() => handleDemoLogin(option.role)}>
+                        <Text style={styles.demoOptionText}>{t(option.labelKey)}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
+              </GlassCard>
+            ) : null}
+
+            <Text style={styles.demoNote}>Bu sistem yalnızca pilot/demo mock giriş içindir. Üretim sürümünde Firebase Auth veya backend auth ile değiştirilecektir.</Text>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -98,5 +142,16 @@ const styles = StyleSheet.create({
   footerLinks: { alignItems: 'center', gap: spacing.sm },
   footerText: { color: colors.mutedStrong, fontWeight: '800', textAlign: 'center' },
   footerLink: { color: colors.cyan, fontWeight: '900' },
+  demoCard: { gap: spacing.md },
+  demoHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  demoHeaderText: { flex: 1, gap: 2 },
+  demoTitle: { color: colors.text, fontWeight: '900', fontSize: 18 },
+  demoSubtitle: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 19 },
+  demoWarning: { color: colors.gold, fontWeight: '900', lineHeight: 19 },
+  demoToggle: { minHeight: 48, borderRadius: 16, backgroundColor: colors.gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  demoToggleText: { color: colors.background, fontWeight: '900' },
+  demoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  demoOption: { width: '48%', minHeight: 44, borderRadius: 14, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, alignItems: 'center', justifyContent: 'center', padding: spacing.sm },
+  demoOptionText: { color: colors.text, fontWeight: '900', textAlign: 'center' },
   demoNote: { color: colors.gold, fontWeight: '800', fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });

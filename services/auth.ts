@@ -1,7 +1,9 @@
-import { CurrentUser } from '@/services/session';
+import Constants from 'expo-constants';
 import { joinClubByCode } from '@/services/invitations';
+import { CurrentUser } from '@/services/session';
 
 export type MockLoginResult = { success: true; user: CurrentUser } | { success: false; message: string };
+export type DemoLoginRole = 'athlete' | 'parent' | 'coach' | 'club_admin';
 
 export type RegisterUserData = {
   fullName: string;
@@ -97,6 +99,58 @@ export async function loginWithMockCredentials(username: string, password: strin
   }
 
   return { success: true, user: credential.user };
+}
+
+export function isDemoLoginEnabled() {
+  return Boolean(Constants.expoConfig?.extra?.enableDemoLogin === true);
+}
+
+export function createDemoUser(role: DemoLoginRole): CurrentUser {
+  const demoUsers: Record<DemoLoginRole, CurrentUser> = {
+    athlete: {
+      id: 'demo-athlete',
+      firstName: 'Demo',
+      lastName: 'Sporcu',
+      role: 'athlete',
+      club: 'SwimLab Pilot',
+      specialty: 'Demo profil',
+      hasSeenAppGuide: true,
+      profileCreated: true,
+    },
+    parent: {
+      id: 'demo-parent',
+      firstName: 'Demo',
+      lastName: 'Veli',
+      role: 'parent',
+      club: 'SwimLab Pilot',
+      childAthleteId: 'demo-athlete',
+      childName: 'Demo Sporcu',
+      hasSeenAppGuide: true,
+      profileCreated: true,
+    },
+    coach: {
+      id: 'demo-coach',
+      firstName: 'Demo',
+      lastName: 'Antrenör',
+      role: 'coach',
+      club: 'SwimLab Pilot',
+      specialty: 'Demo antrenör hesabı',
+      hasSeenAppGuide: true,
+      profileCreated: true,
+    },
+    club_admin: {
+      id: 'demo-club-admin',
+      firstName: 'Demo',
+      lastName: 'Kulüp Yöneticisi',
+      role: 'club_admin',
+      club: 'SwimLab Pilot',
+      specialty: 'Demo yönetici hesabı',
+      hasSeenAppGuide: true,
+      profileCreated: true,
+    },
+  };
+
+  return demoUsers[role];
 }
 
 export async function registerWithInviteCode(userData: RegisterUserData, inviteCode: string): Promise<MockLoginResult> {

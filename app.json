@@ -30,6 +30,7 @@
     ],
     "extra": {
       "router": {},
+      "enableDemoLogin": true,
       "enableMockOtp": false,
       "allowMockOtp": false,
       "eas": {
