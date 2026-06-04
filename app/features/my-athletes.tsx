@@ -106,6 +106,10 @@ export default function MyAthletesScreen() {
           <GradientBadge label={`${filteredAthletes.length} sporcu`} tone={colors.coral} icon={Users} />
         </View>
 
+        <View style={styles.actionRow}>
+          <AppButton title="Sporcu Davet Kodu Oluştur" icon={ClipboardList} variant="secondary" onPress={() => setMessage('Sporcu davet kodu oluşturma akışı hazır.')} />
+          <AppButton title="Sporcu Ekle" icon={Users} variant="secondary" onPress={() => setMessage('Sporcu ekleme akışı mock olarak hazır.')} />
+        </View>
         <AppButton title="Sporcu Listesi PDF" icon={ClipboardList} onPress={handlePdf} />
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
@@ -140,7 +144,7 @@ export default function MyAthletesScreen() {
         </GlassCard>
 
         {!ageGroups.length ? (
-          <EmptyState title="Henüz sporcu eklenmedi" detail="Filtreleri değiştirerek tekrar deneyebilirsin." icon={Users} tone={colors.coral} />
+          <EmptyState title="Henüz kulübe sporcu eklenmedi." detail="Sporcu davet kodu oluşturabilir veya manuel ekleme akışını kullanabilirsin." icon={Users} tone={colors.coral} />
         ) : null}
 
         {ageGroups.map((group) => {
@@ -212,7 +216,7 @@ function AthleteRow({ athlete }: { athlete: ManagedAthlete }) {
       </View>
       <View style={styles.athleteCopy}>
         <Text style={styles.athleteName}>{athlete.name}</Text>
-        <Text style={styles.meta}>{athlete.birthYear}  •  {currentYear - athlete.birthYear} yaş ? {athlete.gender}</Text>
+        <Text style={styles.meta}>{athlete.birthYear}  •  {currentYear - athlete.birthYear} yaş • {athlete.gender}</Text>
         <Text style={styles.meta}>{athlete.group}  •  {athlete.mainStroke}</Text>
       </View>
       <View style={styles.metricBox}>
@@ -263,6 +267,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: 110, gap: spacing.md },
   locked: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.md },
+  actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   title: { ...typography.h1, color: colors.text },
   subtitle: { color: colors.mutedStrong, lineHeight: 21, fontWeight: '700', marginTop: 4 },
   message: { color: colors.text, fontWeight: '900', backgroundColor: colors.goldSoft, borderRadius: 14, padding: spacing.md },
@@ -302,4 +307,3 @@ const styles = StyleSheet.create({
   metricValue: { color: colors.text, fontWeight: '900', textAlign: 'right' },
   metricMeta: { color: colors.success, fontWeight: '900', marginTop: 3 },
 });
-

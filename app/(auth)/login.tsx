@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useLocale } from '@/locales';
-import { createDemoUser, DemoLoginRole, getCurrentUser, isDemoLoginEnabled, loginWithMockCredentials } from '@/services/auth';
+import { createDemoUser, DemoLoginRole, getCurrentUser, isDemoLoginEnabled, loginWithMockCredentials, validateDemoAccessCode } from '@/services/auth';
 import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme/tokens';
 
@@ -24,6 +24,8 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [demoAccessCode, setDemoAccessCode] = useState('');
+  const [demoUnlockedRole, setDemoUnlockedRole] = useState<DemoLoginRole | null>(null);
   const [showDemoOptions, setShowDemoOptions] = useState(false);
   const demoEnabled = isDemoLoginEnabled();
 
@@ -46,7 +48,27 @@ export default function LoginScreen() {
     router.replace(user.profileCreated ? (user.hasSeenAppGuide ? '/(tabs)/dashboard' : '/onboarding-guide') : '/(auth)/create-profile');
   };
 
+  const unlockDemoOptions = () => {
+    const access = validateDemoAccessCode(demoAccessCode);
+    if (!access.valid) {
+      setShowDemoOptions(false);
+      setDemoUnlockedRole(null);
+      setError(t('demoAccessCodeInvalid'));
+      return;
+    }
+
+    setError('');
+    setDemoUnlockedRole(access.unlockedRole);
+    setShowDemoOptions(true);
+  };
+
   const handleDemoLogin = (role: DemoLoginRole) => {
+    const access = validateDemoAccessCode(demoAccessCode, role);
+    if (!access.valid) {
+      setError(t('demoAccessCodeInvalid'));
+      return;
+    }
+
     const user = createDemoUser(role);
     setCurrentUserProfile(user);
     setError('');
@@ -101,13 +123,25 @@ export default function LoginScreen() {
                   </View>
                 </View>
                 <Text style={styles.demoWarning}>{t('demoLoginWarning')}. Gerçek kullanıcı verisi oluşturmaz.</Text>
-                <Pressable style={styles.demoToggle} onPress={() => setShowDemoOptions((value) => !value)}>
+                <TextInput
+                  placeholder={t('enterDemoAccessCode')}
+                  placeholderTextColor={colors.muted}
+                  value={demoAccessCode}
+                  onChangeText={(value) => {
+                    setDemoAccessCode(value.toUpperCase());
+                    setShowDemoOptions(false);
+                    setDemoUnlockedRole(null);
+                  }}
+                  autoCapitalize="characters"
+                  style={styles.demoCodeInput}
+                />
+                <Pressable style={styles.demoToggle} onPress={unlockDemoOptions}>
                   <User color={colors.background} size={18} />
                   <Text style={styles.demoToggleText}>{t('demoLogin')}</Text>
                 </Pressable>
                 {showDemoOptions ? (
                   <View style={styles.demoGrid}>
-                    {demoOptions.map((option) => (
+                    {demoOptions.filter((option) => !demoUnlockedRole || option.role === demoUnlockedRole).map((option) => (
                       <Pressable key={option.role} style={styles.demoOption} onPress={() => handleDemoLogin(option.role)}>
                         <Text style={styles.demoOptionText}>{t(option.labelKey)}</Text>
                       </Pressable>
@@ -148,6 +182,7 @@ const styles = StyleSheet.create({
   demoTitle: { color: colors.text, fontWeight: '900', fontSize: 18 },
   demoSubtitle: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 19 },
   demoWarning: { color: colors.gold, fontWeight: '900', lineHeight: 19 },
+  demoCodeInput: { minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, color: colors.text, paddingHorizontal: spacing.md, fontWeight: '900' },
   demoToggle: { minHeight: 48, borderRadius: 16, backgroundColor: colors.gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   demoToggleText: { color: colors.background, fontWeight: '900' },
   demoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

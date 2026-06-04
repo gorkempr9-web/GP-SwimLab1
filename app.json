@@ -31,6 +31,7 @@
     "extra": {
       "router": {},
       "enableDemoLogin": true,
+      "demoAccessCode": "GPSWIM-DEMO-2026",
       "enableMockOtp": false,
       "allowMockOtp": false,
       "eas": {

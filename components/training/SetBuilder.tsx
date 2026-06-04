@@ -8,7 +8,6 @@ import { formatTrainingSet, TrainingSection, TrainingSet } from '@/services/trai
 const repeats = Array.from({ length: 20 }, (_, index) => String(index + 1));
 const distances = ['25', '50', '75', '100', '150', '200', '300', '400', '800', '1500'];
 const strokes = ['Serbest', 'Sırtüstü', 'Kurbağalama', 'Kelebek', 'Karışık', 'Ayak', 'Kol', 'Drill'];
-const drillOptions = ['Catch-up Drill', 'Tek kol serbest', '6 kick switch', 'Sculling', 'Fingertip drag', 'Tarzan drill', 'Streamline kick', 'Dolphin kick', 'Breaststroke pullout', 'Backstroke rotation drill'];
 const intervals = ['@0:30', '@0:45', '@1:00', '@1:15', '@1:30', '@1:45', '@2:00', '@2:30', '@3:00'];
 const intensities = ['Kolay', 'Orta', 'Sert', 'Sprint', 'Race Pace'];
 const equipment = ['Yok', 'Tahta', 'Pullbuoy', 'Palet', 'Şnorkel', 'Kürek', 'Lastik'];
@@ -22,11 +21,11 @@ export function SetBuilder({
   sets: TrainingSet[];
   onChange: (sets: TrainingSet[]) => void;
 }) {
-  const [repeat, setRepeat] = useState('4');
-  const [distance, setDistance] = useState('100');
-  const [stroke, setStroke] = useState(section === 'Drill' ? 'Catch-up Drill' : 'Serbest');
-  const [interval, setInterval] = useState('@1:30');
-  const [intensity, setIntensity] = useState(section === 'Sprint Seti' ? 'Sprint' : 'Orta');
+  const [repeat, setRepeat] = useState('');
+  const [distance, setDistance] = useState('');
+  const [stroke, setStroke] = useState('');
+  const [interval, setInterval] = useState('');
+  const [intensity, setIntensity] = useState('');
   const [gear, setGear] = useState('Yok');
   const [note, setNote] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,9 +73,12 @@ export function SetBuilder({
       <ChipGroup options={repeats} value={repeat} onChange={setRepeat} compact={true} />
       <Text style={styles.label}>Mesafe</Text>
       <ChipGroup options={distances} value={distance} onChange={setDistance} />
-      <Text style={styles.label}>{section === 'Drill' ? 'Drill Seç' : 'Stil'}</Text>
-      <ChipGroup options={section === 'Drill' ? drillOptions : strokes} value={stroke} onChange={setStroke} />
-      {section === 'Drill' ? <TextInput value={stroke} onChangeText={setStroke} placeholder="Özel Drill" placeholderTextColor={colors.muted} style={styles.input} /> : null}
+      <Text style={styles.label}>{section === 'Drill' ? 'Manuel Drill' : 'Stil'}</Text>
+      {section === 'Drill' ? (
+        <TextInput value={stroke} onChangeText={setStroke} placeholder="Drill adını yaz" placeholderTextColor={colors.muted} style={styles.input} />
+      ) : (
+        <ChipGroup options={strokes} value={stroke} onChange={setStroke} />
+      )}
       <Text style={styles.label}>Tempo</Text>
       <ChipGroup options={intervals} value={interval} onChange={setInterval} />
       <TextInput value={interval} onChangeText={setInterval} placeholder="@1:40" placeholderTextColor={colors.muted} style={styles.input} />
@@ -90,7 +92,7 @@ export function SetBuilder({
         <Text style={styles.previewLabel}>Önizleme</Text>
         <Text style={styles.previewText}>{formatTrainingSet(previewSet)}</Text>
       </View>
-      <AppButton title={editingId ? 'Seti GÖncelle' : 'Set Ekle'} icon={Plus} onPress={addSet} />
+      <AppButton title={editingId ? 'Seti Güncelle' : 'Set Ekle'} icon={Plus} onPress={addSet} />
 
       {sets.map((set, index) => (
         <View key={set.id} style={styles.setRow}>
@@ -115,9 +117,9 @@ function makeSet(section: TrainingSection, repeat: string, distance: string, str
     section,
     repeat: repeatValue,
     distance: distanceValue,
-    stroke,
+    stroke: stroke || (section === 'Drill' ? 'Manuel Drill' : 'Serbest'),
     interval,
-    intensity,
+    intensity: intensity || 'Orta',
     equipment,
     note,
     calculatedMeters: repeatValue * distanceValue,
@@ -130,7 +132,7 @@ function ChipGroup({ options, value, onChange, compact = false }: { options: str
       {options.map((option) => (
         <Pressable key={option} style={({ pressed }) => [styles.chip, compact && styles.chipCompact, value === option && styles.chipActive, pressed && styles.pressedChip]} onPress={() => onChange(option)}>
           {value === option ? <Check color={colors.text} size={14} /> : null}
-          <Text style={[styles.chipText, value === option && styles.chipTextActive]}>{compact ? option : option.includes('m') ? option : option}</Text>
+          <Text style={[styles.chipText, value === option && styles.chipTextActive]}>{option}</Text>
         </Pressable>
       ))}
     </View>

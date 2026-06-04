@@ -52,8 +52,18 @@ export type TrainingPlan = {
 export const weekDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
 
 const defaultAthletes: Array<{ athleteId: string; name: string; group: string }> = [];
+const storageKey = 'gp-swimlab-training-plans';
 
 let trainingPlans: TrainingPlan[] = [];
+
+function persistTrainingPlans() {
+  void saveLocalData(storageKey, trainingPlans);
+}
+
+export async function hydrateTrainingPlansFromStorage() {
+  trainingPlans = await getLocalData<TrainingPlan[]>(storageKey, []);
+  return trainingPlans;
+}
 
 export function getTrainingPlans() {
   return trainingPlans;
@@ -74,6 +84,7 @@ export function createTrainingPlan(input: Omit<TrainingPlan, 'planId' | 'assigne
     coachNotesByAthlete: {},
   };
   trainingPlans = [plan, ...trainingPlans];
+  persistTrainingPlans();
   return plan;
 }
 
@@ -103,10 +114,12 @@ export function updateAthleteTrainingStatus(planId: string, athleteId: string, s
       feedbackByAthlete: feedback ? { ...plan.feedbackByAthlete, [athleteId]: feedback } : plan.feedbackByAthlete,
     };
   });
+  persistTrainingPlans();
 }
 
 export function updateCoachNote(planId: string, athleteId: string, note: string) {
   trainingPlans = trainingPlans.map((plan) => (plan.planId === planId ? { ...plan, coachNotesByAthlete: { ...plan.coachNotesByAthlete, [athleteId]: note } } : plan));
+  persistTrainingPlans();
 }
 
 export function cancelTrainingPlan(planId: string) {
@@ -116,6 +129,7 @@ export function cancelTrainingPlan(planId: string) {
       ? Object.fromEntries(Object.entries(plan.statusByAthlete).map(([athleteId, value]) => [athleteId, { ...value, status: 'cancelled' as TrainingStatus }]))
       : plan.statusByAthlete,
   }));
+  persistTrainingPlans();
 }
 
 export function getPlanSummary(plan: TrainingPlan) {
@@ -161,4 +175,5 @@ export async function generateTrainingPlanPdf() {
     rows: trainingPlans,
   };
 }
+import { getLocalData, saveLocalData } from '@/services/localStore';
 

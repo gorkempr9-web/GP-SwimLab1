@@ -1,21 +1,42 @@
-import { Building2, XCircle } from 'lucide-react-native';
-import { useState } from 'react';
+import { Building2, Plus, UserPlus, XCircle } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/GlassCard';
 import { activateInviteCode, cancelInviteCode, createManualInviteCode, generateAthleteCode, generateClubCode, generateCoachCode, generateParentCode, getInviteCodes, inviteClubs, InviteCodeType } from '@/services/invitations';
+import { getLocalData, saveLocalData } from '@/services/localStore';
 import { colors, spacing, typography } from '@/theme/tokens';
 
+type CoachDuty = 'Baş Antrenör' | 'Yardımcı Antrenör' | 'Kara Antrenörü' | 'Performans Antrenörü' | 'Fizyoterapist' | 'Diyetisyen';
+type CoachGroup = 'Performans' | 'Gelişim' | 'Temel Eğitim' | 'Masters';
+type CoachPermission = 'Sadece görüntüle' | 'Sporcu yönetebilir' | 'Yarış sonucu girebilir' | 'Plan oluşturabilir';
+
+type ManagedCoach = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  duty: CoachDuty;
+  group: CoachGroup;
+  permission: CoachPermission;
+};
+
+const coachStorageKey = 'gp-swimlab-demo-coaches';
+const duties: CoachDuty[] = ['Baş Antrenör', 'Yardımcı Antrenör', 'Kara Antrenörü', 'Performans Antrenörü', 'Fizyoterapist', 'Diyetisyen'];
+const coachGroups: CoachGroup[] = ['Performans', 'Gelişim', 'Temel Eğitim', 'Masters'];
+const permissions: CoachPermission[] = ['Sadece görüntüle', 'Sporcu yönetebilir', 'Yarış sonucu girebilir', 'Plan oluşturabilir'];
+
 const adminStats = [
-  ['Aktif sporcu', '128'],
-  ['Aktif antrenör', '9'],
-  ['Yaklaşan yarış', '3'],
-  ['Haftalık yük', '42 km'],
-  ['Katılım', '91%'],
-  ['Yarış sayısı', '18'],
-  ['Kulüp duyuruları', '7'],
-  ['Kamplar', '2'],
-  ['Sponsorlar', '4'],
+  ['Aktif sporcu', '0'],
+  ['Aktif antrenör', '0'],
+  ['Yaklaşan yarış', '0'],
+  ['Haftalık yük', '-'],
+  ['Katılım', '-'],
+  ['Yarış sayısı', '0'],
+  ['Kulüp duyuruları', '0'],
+  ['Kamplar', '0'],
+  ['Sponsorlar', '0'],
 ];
 
 const codeTypes: Array<{ type: InviteCodeType; label: string }> = [
@@ -27,11 +48,26 @@ const codeTypes: Array<{ type: InviteCodeType; label: string }> = [
 
 export default function ClubAdminScreen() {
   const [codes, setCodes] = useState(() => getInviteCodes());
+  const [coaches, setCoaches] = useState<ManagedCoach[]>([]);
   const [manualCode, setManualCode] = useState('');
   const [manualType, setManualType] = useState<InviteCodeType>('athlete');
   const [manualClubId, setManualClubId] = useState(inviteClubs[0]?.id ?? 'mev-koleji');
   const [manualGroup, setManualGroup] = useState('');
   const [message, setMessage] = useState('');
+  const [coachDraft, setCoachDraft] = useState<ManagedCoach>({
+    id: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    duty: 'Yardımcı Antrenör',
+    group: 'Gelişim',
+    permission: 'Sadece görüntüle',
+  });
+
+  useEffect(() => {
+    getLocalData<ManagedCoach[]>(coachStorageKey, []).then(setCoaches);
+  }, []);
 
   const generateCode = (type: InviteCodeType) => {
     const groupName = manualGroup.trim() || undefined;
@@ -58,6 +94,20 @@ export default function ClubAdminScreen() {
     setMessage(`${result.record.code} manuel olarak oluşturuldu.`);
   };
 
+  const saveCoach = () => {
+    if (!coachDraft.firstName.trim() || !coachDraft.lastName.trim()) {
+      setMessage('Antrenör adı ve soyadı zorunludur.');
+      return;
+    }
+
+    const nextCoach = { ...coachDraft, id: `coach-${Date.now()}` };
+    const nextCoaches = [nextCoach, ...coaches];
+    setCoaches(nextCoaches);
+    void saveLocalData(coachStorageKey, nextCoaches);
+    setCoachDraft({ id: '', firstName: '', lastName: '', phone: '', email: '', duty: 'Yardımcı Antrenör', group: 'Gelişim', permission: 'Sadece görüntüle' });
+    setMessage('Antrenör listeye eklendi.');
+  };
+
   const cancelCode = (code: string) => {
     setCodes(cancelInviteCode(code));
     setMessage(`${code} iptal edildi.`);
@@ -82,11 +132,49 @@ export default function ClubAdminScreen() {
         <View style={styles.grid}>
           {adminStats.map(([label, value]) => (
             <GlassCard key={label} style={styles.card}>
-              <Text style={styles.value}>{value}</Text>
+              <Text style={styles.value}>{label === 'Aktif antrenör' ? String(coaches.length) : value}</Text>
               <Text style={styles.label}>{label}</Text>
             </GlassCard>
           ))}
         </View>
+
+        <GlassCard style={styles.invitePanel}>
+          <View style={styles.panelHeader}>
+            <UserPlus color={colors.cyan} size={24} />
+            <View>
+              <Text style={styles.sectionTitle}>Antrenör Ekle</Text>
+              <Text style={styles.meta}>Yeni antrenörü kulüp ekibine mock/local olarak ekle.</Text>
+            </View>
+          </View>
+          <View style={styles.inputRow}>
+            <TextInput placeholder="Ad" placeholderTextColor={colors.muted} value={coachDraft.firstName} onChangeText={(firstName) => setCoachDraft((current) => ({ ...current, firstName }))} style={styles.input} />
+            <TextInput placeholder="Soyad" placeholderTextColor={colors.muted} value={coachDraft.lastName} onChangeText={(lastName) => setCoachDraft((current) => ({ ...current, lastName }))} style={styles.input} />
+          </View>
+          <TextInput placeholder="Telefon" placeholderTextColor={colors.muted} value={coachDraft.phone} onChangeText={(phone) => setCoachDraft((current) => ({ ...current, phone }))} style={styles.input} />
+          <TextInput placeholder="E-posta" placeholderTextColor={colors.muted} value={coachDraft.email} onChangeText={(email) => setCoachDraft((current) => ({ ...current, email }))} autoCapitalize="none" style={styles.input} />
+          <Text style={styles.smallLabel}>Görev</Text>
+          <ChipRow options={duties} value={coachDraft.duty} onChange={(duty) => setCoachDraft((current) => ({ ...current, duty }))} />
+          <Text style={styles.smallLabel}>Sorumlu grup</Text>
+          <ChipRow options={coachGroups} value={coachDraft.group} onChange={(group) => setCoachDraft((current) => ({ ...current, group }))} />
+          <Text style={styles.smallLabel}>Yetki seviyesi</Text>
+          <ChipRow options={permissions} value={coachDraft.permission} onChange={(permission) => setCoachDraft((current) => ({ ...current, permission }))} />
+          <Pressable style={styles.primaryButton} onPress={saveCoach}>
+            <Plus color={colors.background} size={18} />
+            <Text style={styles.primaryText}>Kaydet</Text>
+          </Pressable>
+        </GlassCard>
+
+        <GlassCard style={styles.invitePanel}>
+          <Text style={styles.sectionTitle}>Antrenör Listesi</Text>
+          {coaches.length ? coaches.map((coach) => (
+            <View key={coach.id} style={styles.coachRow}>
+              <View>
+                <Text style={styles.coachName}>{coach.firstName} {coach.lastName}</Text>
+                <Text style={styles.meta}>{coach.duty} • {coach.group} • {coach.permission}</Text>
+              </View>
+            </View>
+          )) : <Text style={styles.meta}>Henüz antrenör eklenmedi.</Text>}
+        </GlassCard>
 
         <GlassCard style={styles.invitePanel}>
           <Text style={styles.sectionTitle}>Davet kodu oluştur</Text>
@@ -120,6 +208,9 @@ export default function ClubAdminScreen() {
               </Pressable>
             ))}
           </View>
+          <Pressable style={styles.quickButton} onPress={() => generateCode('coach')}>
+            <Text style={styles.quickText}>Antrenör Davet Kodu Oluştur</Text>
+          </Pressable>
           {message ? <Text style={styles.message}>{message}</Text> : null}
         </GlassCard>
 
@@ -153,6 +244,18 @@ export default function ClubAdminScreen() {
   );
 }
 
+function ChipRow<T extends string>({ options, value, onChange }: { options: T[]; value: T; onChange: (value: T) => void }) {
+  return (
+    <View style={styles.typeRow}>
+      {options.map((option) => (
+        <Pressable key={option} style={[styles.typeChip, value === option && styles.typeChipActive]} onPress={() => onChange(option)}>
+          <Text style={[styles.typeText, value === option && styles.typeTextActive]}>{option}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 function roleLabel(type: InviteCodeType) {
   if (type === 'club') return 'Kulüp Kodu';
   if (type === 'coach') return 'Antrenör Kodu';
@@ -171,21 +274,26 @@ const styles = StyleSheet.create({
   value: { color: colors.cyan, fontWeight: '900', fontSize: 24 },
   label: { color: colors.mutedStrong, fontWeight: '900', marginTop: 5 },
   invitePanel: { gap: spacing.md },
+  panelHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 20 },
   smallLabel: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
+  meta: { color: colors.muted, fontWeight: '800', lineHeight: 19 },
   typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   typeChip: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, paddingHorizontal: spacing.md, paddingVertical: 9 },
   typeChipActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
   typeText: { color: colors.mutedStrong, fontWeight: '900' },
   typeTextActive: { color: colors.background },
+  inputRow: { flexDirection: 'row', gap: spacing.sm },
   manualRow: { gap: spacing.sm },
-  input: { minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, color: colors.text, paddingHorizontal: spacing.md, fontWeight: '900' },
-  primaryButton: { minHeight: 48, borderRadius: 14, backgroundColor: colors.cyan, alignItems: 'center', justifyContent: 'center' },
+  input: { minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, color: colors.text, paddingHorizontal: spacing.md, fontWeight: '900', flex: 1 },
+  primaryButton: { minHeight: 48, borderRadius: 14, backgroundColor: colors.cyan, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: spacing.sm },
   primaryText: { color: colors.background, fontWeight: '900' },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   quickButton: { borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, paddingHorizontal: spacing.md, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 6 },
   quickText: { color: colors.text, fontWeight: '900' },
   message: { color: colors.gold, fontWeight: '900' },
+  coachRow: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.md },
+  coachName: { color: colors.text, fontWeight: '900', fontSize: 16 },
   codeCard: { gap: spacing.md },
   codeCardPassive: { opacity: 0.65 },
   codeHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },

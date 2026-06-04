@@ -7,6 +7,7 @@ import { AppLogo } from '@/components/AppLogo';
 import { ClubLogo } from '@/components/ClubLogo';
 import { GlassCard } from '@/components/GlassCard';
 import { useLocale } from '@/locales';
+import { clearLocalDemoData } from '@/services/localStore';
 import { CurrentUser, roleLabel, useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
@@ -40,6 +41,7 @@ export default function ProfileScreen() {
   const { currentUser, setCurrentUserProfile, logout } = useSession();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<CurrentUser>(currentUser);
+  const [message, setMessage] = useState('');
   const cardWidth: DimensionValue = width < 390 ? '100%' : '48%';
   const fullName = getFullName(currentUser);
 
@@ -76,6 +78,11 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const handleClearDemoData = async () => {
+    await clearLocalDemoData();
+    setMessage('Demo verileri temizlendi.');
+  };
+
   const updateField = (key: ProfileFieldKey, value: string) => {
     if (key === 'role' || key === 'age') return;
     setDraft((current) => ({ ...current, [key]: value }));
@@ -99,6 +106,8 @@ export default function ProfileScreen() {
             <Badge label={currentUser.email ? 'E-posta doğrulandı' : 'E-posta bekliyor'} tone={colors.cyan} />
           </View>
         </GlassCard>
+        <Text style={styles.demoInfo}>{t('demoDataLocalWarning')}</Text>
+        {message ? <Text style={styles.message}>{message}</Text> : null}
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Kişisel Bilgiler</Text>
@@ -125,6 +134,7 @@ export default function ProfileScreen() {
         <ActionRow icon={ShieldCheck} title="Güvenlik Merkezi" detail="Güvenli Hesap • Telefon + E-posta doğrulandı" onPress={() => router.push('/features/security-center')} />
         <ActionRow icon={Users} title="Veli iletişim bilgisi" detail={getGuardianDetail(currentUser)} />
         <ActionRow icon={Trash2} title={t('deleteData')} detail="KVKK kapsamında talep oluştur" />
+        <ActionRow icon={Trash2} title={t('clearDemoData')} detail="Cihazda saklanan pilot test verilerini temizle" onPress={handleClearDemoData} />
         <ActionRow icon={UserCircle} title="Uygulama Tanıtımını Tekrar Gör" detail="İlk kullanım rehberini yeniden aç" onPress={() => router.push('/onboarding-guide')} />
         <ActionRow icon={Settings} title={t('settings')} detail={t('settingsDetail')} onPress={() => router.push('/features/settings')} />
 
@@ -245,6 +255,8 @@ const styles = StyleSheet.create({
   verifyRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, borderWidth: 1, paddingHorizontal: spacing.sm, paddingVertical: 6 },
   badgeText: { color: colors.text, fontWeight: '900', fontSize: 11 },
+  demoInfo: { color: colors.gold, fontWeight: '800', fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  message: { color: colors.success, fontWeight: '900', textAlign: 'center' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.sm },
   sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 20 },
   editButton: { borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, paddingHorizontal: spacing.md, paddingVertical: 9 },

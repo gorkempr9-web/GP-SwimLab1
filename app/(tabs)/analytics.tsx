@@ -1,25 +1,43 @@
 import { BarChart3, TrendingUp } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
-import { getAthleteRaceHistory } from '@/services/clubCompetition';
+import { getPerformanceData, hydrateResults, RaceResult, TrainingResult } from '@/services/results';
 import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 const periods = ['Haftalık', 'Aylık', 'Yıllık'];
+const dataFilters = ['Tüm veriler', 'Sadece yarış dereceleri', 'Sadece antrenman dereceleri'] as const;
 const strokes = ['Serbest', 'Sırtüstü', 'Kurbağalama', 'Kelebek', 'Karışık'];
 const distances = ['50', '100', '200', '400', '800', '1500'];
 
 export default function AnalyticsScreen() {
   const { currentUser } = useSession();
   const [period, setPeriod] = useState('Aylık');
+  const [dataFilter, setDataFilter] = useState<(typeof dataFilters)[number]>('Tüm veriler');
   const [stroke, setStroke] = useState('Serbest');
   const [distance, setDistance] = useState('100');
+  const [raceResults, setRaceResults] = useState<RaceResult[]>([]);
+  const [trainingResults, setTrainingResults] = useState<TrainingResult[]>([]);
+
+  useEffect(() => {
+    hydrateResults().then((data) => {
+      setRaceResults(data.raceResults);
+      setTrainingResults(data.trainingResults);
+    });
+  }, []);
+
+  const filterKey = dataFilter === 'Sadece yarış dereceleri' ? 'race' : dataFilter === 'Sadece antrenman dereceleri' ? 'training' : 'all';
+  const scopedData = getPerformanceData(filterKey);
   const athleteId = currentUser.role === 'parent' ? currentUser.childAthleteId ?? currentUser.id : currentUser.id;
-  const history = getAthleteRaceHistory(athleteId);
-  const filtered = useMemo(() => history.filter((race) => race.stroke === stroke && race.distance === distance), [distance, history, stroke]);
+  const scopedRaceResults = scopedData.raceResults.length ? scopedData.raceResults : raceResults;
+  const scopedTrainingResults = scopedData.trainingResults.length ? scopedData.trainingResults : trainingResults;
+
+  const filteredRaceResults = useMemo(() => scopedRaceResults.filter((result) => result.athleteId === athleteId && result.stroke === stroke && result.distance.replace('m', '') === distance), [athleteId, distance, scopedRaceResults, stroke]);
+  const filteredTrainingResults = useMemo(() => scopedTrainingResults.filter((result) => result.athleteId === athleteId && result.stroke === stroke && result.distance.replace('m', '') === distance), [athleteId, distance, scopedTrainingResults, stroke]);
+  const hasData = filterKey === 'race' ? filteredRaceResults.length > 0 : filterKey === 'training' ? filteredTrainingResults.length > 0 : filteredRaceResults.length + filteredTrainingResults.length > 0;
   const chartTitle = `${distance}m ${stroke} Gelişim Grafiği`;
 
   return (
@@ -29,23 +47,24 @@ export default function AnalyticsScreen() {
           <TrendingUp color={colors.coral} size={28} />
           <View>
             <Text style={styles.title}>Performans Analizi</Text>
-            <Text style={styles.subtitle}>{currentUser.role === 'coach' ? 'Sporcu seçerek yarış verisine bağlı analizleri takip et.' : currentUser.role === 'parent' ? 'Çocuğunun gelişim grafiğini takip et.' : 'Yarış sonuçlarına göre PB ve gelişim trendini gör.'}</Text>
+            <Text style={styles.subtitle}>{currentUser.role === 'coach' ? 'Sporcu seçerek yarış ve antrenman verilerini ayrı takip et.' : currentUser.role === 'parent' ? 'Çocuğunun gelişim grafiğini takip et.' : 'Yarış dereceleri resmi PB için, antrenman dereceleri ayrı analiz için kullanılır.'}</Text>
           </View>
         </View>
 
         <FilterStrip options={periods} value={period} onChange={setPeriod} />
+        <FilterStrip options={[...dataFilters]} value={dataFilter} onChange={(value) => setDataFilter(value as (typeof dataFilters)[number])} />
         <FilterStrip options={strokes} value={stroke} onChange={setStroke} />
         <FilterStrip options={distances.map((item) => `${item}m`)} value={`${distance}m`} onChange={(value) => setDistance(value.replace('m', ''))} />
 
-        {filtered.length ? (
+        {hasData ? (
           <GlassCard style={styles.chartCard} tone={colors.coral}>
             <View style={styles.chartHeader}>
               <Text style={styles.chartTitle}>{chartTitle}</Text>
               <Text style={styles.periodBadge}>{period}</Text>
             </View>
             <View style={styles.chart}>
-              {filtered.slice(-8).map((race) => {
-                const seconds = parseTime(race.finalTime);
+              {filteredRaceResults.slice(-8).map((race) => {
+                const seconds = parseTime(race.officialTime);
                 const height = seconds ? Math.max(28, 150 - Math.min(seconds, 140)) : 28;
                 return (
                   <View key={race.id} style={styles.barItem}>
@@ -55,15 +74,23 @@ export default function AnalyticsScreen() {
                 );
               })}
             </View>
-            {filtered.map((race) => (
+            <Text style={styles.sectionLabel}>Yarış Dereceleri</Text>
+            {filteredRaceResults.map((race) => (
               <View key={race.id} style={styles.resultRow}>
                 <BarChart3 color={race.isPB ? colors.coral : colors.blue} size={16} />
-                <Text style={styles.resultText}>{race.date} • {race.finalTime}{race.isPB ? ' • PB gelişimi' : ''}{race.splits.length ? ` • Split ${race.splits.join(' / ')}` : ''}</Text>
+                <Text style={styles.resultText}>{race.date} • {race.officialTime}{race.isPB ? ' • Resmi PB' : ''}{race.splits.length ? ` • Split ${race.splits.join(' / ')}` : ''}</Text>
+              </View>
+            ))}
+            <Text style={styles.sectionLabel}>Antrenman Dereceleri</Text>
+            {filteredTrainingResults.map((result) => (
+              <View key={result.id} style={styles.resultRow}>
+                <BarChart3 color={colors.success} size={16} />
+                <Text style={styles.resultText}>{result.trainingDate} • {result.setName} • {result.time} • Antrenman derecesi</Text>
               </View>
             ))}
           </GlassCard>
         ) : (
-          <EmptyState title="Bu branş için henüz analiz verisi yok" detail="Yarış sonucu girildiğinde seçilen stil ve mesafeye göre grafik oluşacak." icon={TrendingUp} tone={colors.coral} />
+          <EmptyState title="Henüz analiz verisi yok" detail="Yarış sonucu veya antrenman derecesi girildiğinde seçilen filtreye göre grafik oluşacak." icon={TrendingUp} tone={colors.coral} />
         )}
       </ScrollView>
     </SafeAreaView>
@@ -108,6 +135,7 @@ const styles = StyleSheet.create({
   chartHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
   chartTitle: { color: colors.text, fontWeight: '900', fontSize: 18, flex: 1 },
   periodBadge: { color: colors.coral, fontWeight: '900' },
+  sectionLabel: { color: colors.coral, fontWeight: '900', fontSize: 13 },
   chart: { height: 170, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', borderRadius: 18, backgroundColor: colors.surfaceSoft, padding: spacing.sm },
   barItem: { alignItems: 'center', gap: spacing.sm },
   bar: { width: 26, borderRadius: 10, backgroundColor: colors.coral },

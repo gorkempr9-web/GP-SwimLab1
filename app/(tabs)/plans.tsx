@@ -1,27 +1,23 @@
-import { CheckCircle2, Clock3, Dumbbell, FileText, Plus, XCircle } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { CheckCircle2, Dumbbell, FileText, Plus, XCircle } from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
 import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
-import { SetBuilder } from '@/components/training/SetBuilder';
 import { useLocale } from '@/locales';
 import { canManageClub, useSession } from '@/services/session';
 import {
   cancelTrainingPlan,
   createTrainingPlan,
   generateTrainingPlanPdf,
-  formatTrainingSet,
   getPlanSummary,
   getTrainingPlans,
+  hydrateTrainingPlansFromStorage,
   statusLabel,
-  summarizeTrainingSets,
   TrainingGroup,
   TrainingPlan,
-  TrainingSection,
   TrainingStatus,
-  TrainingSet,
   TrainingType,
   updateAthleteTrainingStatus,
   updateCoachNote,
@@ -32,7 +28,6 @@ import { colors, spacing, typography } from '@/theme/tokens';
 const groups: TrainingGroup[] = ['Tüm kulüp', 'Performans grubu', 'Küçük yaş grubu', 'Yarış takımı', 'Belirli sporcular'];
 const types: TrainingType[] = ['Teknik', 'Sprint', 'Dayanıklılık', 'Yarış Pace', 'Recovery', 'Kara Antrenmanı', 'Mobilite'];
 const statuses: TrainingStatus[] = ['planned', 'in_progress', 'completed', 'missed', 'cancelled'];
-const trainingSections: TrainingSection[] = ['Isınma', 'Drill', 'Ana Set', 'Sprint Seti', 'Teknik Odak', 'Kara Antrenmanı', 'Soğuma'];
 
 export default function PlansScreen() {
   const { t } = useLocale();
@@ -44,6 +39,13 @@ export default function PlansScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(plans[0]?.planId ?? null);
   const [showCreate, setShowCreate] = useState(false);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    hydrateTrainingPlansFromStorage().then((storedPlans) => {
+      setPlans([...storedPlans]);
+      setExpandedId(storedPlans[0]?.planId ?? null);
+    });
+  }, []);
 
   const plansByDay = useMemo(() => weekDays.map((day) => ({ day, plans: plans.filter((plan) => plan.day === day) })), [plans]);
 
@@ -64,6 +66,7 @@ export default function PlansScreen() {
           </View>
         </View>
 
+        <Text style={styles.demoInfo}>{t('demoDataLocalWarning')}</Text>
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
         {canEdit ? (
@@ -118,87 +121,91 @@ export default function PlansScreen() {
 }
 
 function CreatePlanForm({ onCreate }: { onCreate: () => void }) {
-  const [title, setTitle] = useState('Yeni Sprint Seti');
-  const [date, setDate] = useState('24.05.2026');
-  const [day, setDay] = useState('Pazar');
-  const [time, setTime] = useState('18:00');
-  const [group, setGroup] = useState<TrainingGroup>('Performans grubu');
-  const [type, setType] = useState<TrainingType>('Sprint');
+  const [title, setTitle] = useState('');
+  const [date, setDate] = useState('');
+  const [day, setDay] = useState('');
+  const [time, setTime] = useState('');
+  const [duration, setDuration] = useState('');
+  const [group, setGroup] = useState<TrainingGroup>('Belirli sporcular');
+  const [type, setType] = useState<TrainingType>('Teknik');
   const [pool, setPool] = useState<'25m' | '50m'>('50m');
-  const [difficulty, setDifficulty] = useState('8');
-  const [coachNote, setCoachNote] = useState('Split takibi yapılacak.');
-  const [sets, setSets] = useState<TrainingSet[]>([]);
-  const setSummary = summarizeTrainingSets(sets);
-
-  const updateSectionSets = (section: TrainingSection, nextSets: TrainingSet[]) => {
-    setSets((current) => [...current.filter((set) => set.section !== section), ...nextSets]);
-  };
-
-  const getSectionSets = (section: TrainingSection) => sets.filter((set) => set.section === section);
-
-  const sectionText = (section: TrainingSection) => {
-    const text = getSectionSets(section).map(formatTrainingSet).join('\n');
-    return text || '-';
-  };
+  const [difficulty, setDifficulty] = useState('');
+  const [mainSet, setMainSet] = useState('');
+  const [techniqueNote, setTechniqueNote] = useState('');
+  const [dryland, setDryland] = useState('');
+  const [equipment, setEquipment] = useState('');
+  const [coachNote, setCoachNote] = useState('');
+  const [manualDrill, setManualDrill] = useState('');
+  const [showManualDrill, setShowManualDrill] = useState(false);
+  const [error, setError] = useState('');
 
   const create = () => {
+    if (!title.trim() || !date.trim()) {
+      setError('Plan adı ve tarih zorunludur.');
+      return;
+    }
+
     createTrainingPlan({
       title,
       date,
-      day,
+      day: day || 'Pazartesi',
       time,
       group,
       type,
       pool,
-      totalMeters: `${setSummary.totalMeters}m`,
-      duration: setSummary.estimatedDuration,
+      totalMeters: '-',
+      duration: duration || '-',
       difficulty: Number(difficulty) || 1,
       sections: {
-        warmup: sectionText('Isınma'),
-        mainSet: sectionText('Ana Set'),
-        drills: sectionText('Drill'),
-        sprint: sectionText('Sprint Seti'),
-        techniqueFocus: sectionText('Teknik Odak'),
-        dryland: sectionText('Kara Antrenmanı'),
-        cooldown: sectionText('Soğuma'),
-        coachNote,
+        warmup: '',
+        mainSet,
+        drills: manualDrill,
+        sprint: '',
+        techniqueFocus: techniqueNote,
+        dryland,
+        cooldown: '',
+        coachNote: `${coachNote}${equipment ? `\nEkipman: ${equipment}` : ''}`,
       },
-      sets,
-      totalSetCount: setSummary.totalSetCount,
-      sprintMeters: setSummary.sprintMeters,
-      techniqueMeters: setSummary.techniqueMeters,
-      enduranceMeters: setSummary.enduranceMeters,
+      sets: [],
+      totalSetCount: 0,
+      sprintMeters: 0,
+      techniqueMeters: 0,
+      enduranceMeters: 0,
     });
+    setError('');
     onCreate();
   };
 
   return (
     <GlassCard style={styles.formCard}>
       <Text style={styles.cardTitle}>Yeni Antrenman Planı</Text>
-      <TextInput value={title} onChangeText={setTitle} placeholder="Antrenman başlığı" placeholderTextColor={colors.muted} style={styles.input} />
+      <TextInput value={title} onChangeText={setTitle} placeholder="Plan adı" placeholderTextColor={colors.muted} style={styles.input} />
       <View style={styles.inputRow}>
         <TextInput value={date} onChangeText={setDate} placeholder="Tarih" placeholderTextColor={colors.muted} style={styles.input} />
-        <TextInput value={time} onChangeText={setTime} placeholder="Saat" placeholderTextColor={colors.muted} style={styles.input} />
+        <TextInput value={duration} onChangeText={setDuration} placeholder="Süre" placeholderTextColor={colors.muted} style={styles.input} />
       </View>
-      <ChipGroup options={weekDays} value={day} onChange={setDay} />
-      <ChipGroup options={groups} value={group} onChange={(value) => setGroup(value as TrainingGroup)} />
-      <ChipGroup options={types} value={type} onChange={(value) => setType(value as TrainingType)} />
-      <ChipGroup options={['25m', '50m']} value={pool} onChange={(value) => setPool(value as '25m' | '50m')} />
       <View style={styles.inputRow}>
+        <TextInput value={time} onChangeText={setTime} placeholder="Saat" placeholderTextColor={colors.muted} style={styles.input} />
         <TextInput value={difficulty} onChangeText={(value) => setDifficulty(value.replace(/\D/g, '').slice(0, 2))} placeholder="Zorluk 1-10" placeholderTextColor={colors.muted} keyboardType="number-pad" style={styles.input} />
       </View>
-      <View style={styles.setSummary}>
-        <SummaryCard label="Toplam Metre" value={`${setSummary.totalMeters}m`} />
-        <SummaryCard label="Set" value={String(setSummary.totalSetCount)} />
-        <SummaryCard label="Sprint" value={`${setSummary.sprintMeters}m`} />
-        <SummaryCard label="Teknik" value={`${setSummary.techniqueMeters}m`} />
-        <SummaryCard label="Dayanıklılık" value={`${setSummary.enduranceMeters}m`} />
-        <SummaryCard label="Süre" value={setSummary.estimatedDuration} />
-      </View>
-      {trainingSections.map((section) => (
-        <SetBuilder key={section} section={section} sets={getSectionSets(section)} onChange={(nextSets) => updateSectionSets(section, nextSets)} />
-      ))}
-      <SectionInput label="Antrenör Notu" value={coachNote} onChange={setCoachNote} />
+      <Text style={styles.smallLabel}>Gün</Text>
+      <ChipGroup options={weekDays} value={day} onChange={setDay} />
+      <Text style={styles.smallLabel}>Grup / sporcu seçimi</Text>
+      <ChipGroup options={groups} value={group} onChange={(value) => setGroup(value as TrainingGroup)} />
+      <Text style={styles.smallLabel}>Plan türü</Text>
+      <ChipGroup options={types} value={type} onChange={(value) => setType(value as TrainingType)} />
+      <Text style={styles.smallLabel}>Havuz</Text>
+      <ChipGroup options={['25m', '50m']} value={pool} onChange={(value) => setPool(value as '25m' | '50m')} />
+      <SectionInput label="Ana set" value={mainSet} onChange={setMainSet} />
+      <SectionInput label="Teknik not" value={techniqueNote} onChange={setTechniqueNote} />
+      <SectionInput label="Kara antrenmanı" value={dryland} onChange={setDryland} />
+      <SectionInput label="Ekipman" value={equipment} onChange={setEquipment} />
+      {showManualDrill ? <SectionInput label="Manuel Drill" value={manualDrill} onChange={setManualDrill} /> : null}
+      <Pressable style={styles.secondaryButton} onPress={() => setShowManualDrill((value) => !value)}>
+        <Text style={styles.secondaryText}>Manuel Drill Ekle</Text>
+      </Pressable>
+      <SectionInput label="Antrenör notu" value={coachNote} onChange={setCoachNote} />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <AppButton title="Planı Kaydet" icon={Plus} onPress={create} />
     </GlassCard>
   );
@@ -232,28 +239,18 @@ function TrainingPlanCard({ plan, expanded, canEdit, isAthlete, isParent, onTogg
         </View>
         <View style={styles.planBody}>
           <Text style={styles.planTitle}>{plan.title}</Text>
-          <Text style={styles.planMeta}>{plan.time} • {plan.type} • {plan.group}</Text>
+          <Text style={styles.planMeta}>{plan.time || 'Saat yok'} • {plan.type} • {plan.group}</Text>
           <Text style={styles.planMeta}>{plan.totalMeters} • {plan.duration} • Zorluk {plan.difficulty}/10</Text>
         </View>
-        <StatusPill status={canEdit ? summary.completed === summary.total ? 'completed' : 'planned' : athleteStatus} />
+        <StatusPill status={canEdit ? summary.completed === summary.total && summary.total > 0 ? 'completed' : 'planned' : athleteStatus} />
       </View>
 
       {expanded ? (
         <View style={styles.detail}>
-          {plan.sets?.length ? trainingSections.map((section) => {
-            const sectionSets = plan.sets.filter((set) => set.section === section);
-            return sectionSets.length ? <ProgramSection key={section} title={section} body={sectionSets.map(formatTrainingSet).join('\n')} /> : null;
-          }) : (
-            <>
-              <ProgramSection title="Isınma" body={plan.sections.warmup} />
-              <ProgramSection title="Ana Set" body={plan.sections.mainSet} />
-              <ProgramSection title="Drill" body={plan.sections.drills} />
-              <ProgramSection title="Sprint Seti" body={plan.sections.sprint} />
-              <ProgramSection title="Teknik Odak" body={plan.sections.techniqueFocus} />
-              <ProgramSection title="Kara Antrenmanı" body={plan.sections.dryland} />
-              <ProgramSection title="Soğuma" body={plan.sections.cooldown} />
-            </>
-          )}
+          <ProgramSection title="Ana Set" body={plan.sections.mainSet} />
+          <ProgramSection title="Drill" body={plan.sections.drills} />
+          <ProgramSection title="Teknik Not" body={plan.sections.techniqueFocus} />
+          <ProgramSection title="Kara Antrenmanı" body={plan.sections.dryland} />
           <ProgramSection title="Antrenör Notu" body={plan.sections.coachNote} />
 
           {isAthlete ? (
@@ -323,7 +320,7 @@ function ProgramSection({ title, body }: { title: string; body: string }) {
   return (
     <View style={styles.sectionBox}>
       <Text style={styles.sectionLabel}>{title}</Text>
-      <Text style={styles.sectionBody}>{body}</Text>
+      <Text style={styles.sectionBody}>{body || 'Boş'}</Text>
     </View>
   );
 }
@@ -373,45 +370,48 @@ const styles = StyleSheet.create({
   header: { gap: spacing.sm },
   title: { ...typography.h1, color: colors.text },
   subtitle: { color: colors.muted, lineHeight: 22, fontWeight: '700' },
+  demoInfo: { color: colors.gold, fontWeight: '800', lineHeight: 19, fontSize: 12 },
   message: { color: colors.cyan, fontWeight: '900', backgroundColor: colors.cyanSoft, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, padding: spacing.md },
   createToggle: { minHeight: 50, borderRadius: 18, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   createText: { color: colors.background, fontWeight: '900', fontSize: 16 },
   formCard: { gap: spacing.md },
   cardTitle: { color: colors.text, fontWeight: '900', fontSize: 17 },
-  inputRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  input: { flex: 1, minWidth: 120, color: colors.text, backgroundColor: colors.surfaceSolid, borderRadius: 14, borderWidth: 1, borderColor: colors.border, minHeight: 46, paddingHorizontal: spacing.md, fontWeight: '800' },
-  textArea: { minHeight: 78, paddingTop: spacing.md, textAlignVertical: 'top' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: 8, backgroundColor: colors.glass },
-  chipActive: { backgroundColor: colors.cyanSoft, borderColor: colors.borderStrong },
-  chipText: { color: colors.muted, fontWeight: '900', fontSize: 12 },
-  chipTextActive: { color: colors.text },
+  input: { minHeight: 46, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, color: colors.text, paddingHorizontal: spacing.md, fontWeight: '800' },
+  textArea: { minHeight: 84, textAlignVertical: 'top', paddingTop: spacing.sm },
+  inputRow: { flexDirection: 'row', gap: spacing.sm },
+  smallLabel: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
+  secondaryButton: { minHeight: 44, borderRadius: 15, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
+  secondaryText: { color: colors.cyan, fontWeight: '900' },
+  errorText: { color: colors.danger, fontWeight: '900' },
   summaryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  summaryCard: { flex: 1, minWidth: 92, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.md },
-  summaryValue: { color: colors.cyan, fontWeight: '900', fontSize: 18 },
-  summaryLabel: { color: colors.muted, fontWeight: '800', marginTop: 3, fontSize: 12 },
+  summaryCard: { minWidth: '30%', flex: 1, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.md },
+  summaryValue: { color: colors.text, fontWeight: '900', fontSize: 18 },
+  summaryLabel: { color: colors.mutedStrong, fontWeight: '800', marginTop: 2, fontSize: 12 },
   pdfRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  setSummary: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 20 },
+  sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 19 },
   dayCard: { gap: spacing.md },
-  dayTitle: { color: colors.text, fontWeight: '900', fontSize: 18 },
-  emptyText: { color: colors.muted, fontWeight: '800' },
-  planCard: { borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md, gap: spacing.md },
-  planHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  planIcon: { width: 46, height: 46, borderRadius: 16, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
-  planBody: { flex: 1 },
-  planTitle: { color: colors.text, fontWeight: '900', fontSize: 17 },
-  planMeta: { color: colors.mutedStrong, fontWeight: '800', marginTop: 4, lineHeight: 18 },
-  statusPill: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.md, paddingVertical: 7 },
-  statusDone: { backgroundColor: 'rgba(52, 211, 153, 0.12)', borderColor: 'rgba(52, 211, 153, 0.36)' },
-  statusText: { color: colors.text, fontWeight: '900', fontSize: 12 },
-  detail: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md, gap: spacing.md },
-  sectionBox: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.md },
+  dayTitle: { color: colors.cyan, fontWeight: '900', fontSize: 18 },
+  planCard: { borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.md, gap: spacing.md },
+  planHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  planIcon: { width: 46, height: 46, borderRadius: 18, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
+  planBody: { flex: 1, gap: 3 },
+  planTitle: { color: colors.text, fontWeight: '900', fontSize: 16 },
+  planMeta: { color: colors.muted, fontWeight: '800', lineHeight: 19 },
+  statusPill: { borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, paddingHorizontal: spacing.sm, paddingVertical: 6 },
+  statusDone: { backgroundColor: colors.successSoft, borderColor: 'rgba(34, 197, 94, 0.45)' },
+  statusText: { color: colors.text, fontWeight: '900', fontSize: 11 },
+  detail: { gap: spacing.md },
+  sectionBox: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md, gap: 4 },
   sectionInput: { gap: spacing.sm },
-  sectionLabel: { color: colors.cyan, fontWeight: '900', marginBottom: 4 },
-  sectionBody: { color: colors.mutedStrong, fontWeight: '700', lineHeight: 20 },
-  feedbackBox: { borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface, padding: spacing.md, gap: spacing.md },
-  athleteRow: { gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md },
+  sectionLabel: { color: colors.cyan, fontWeight: '900', fontSize: 12 },
+  sectionBody: { color: colors.text, fontWeight: '800', lineHeight: 20 },
+  feedbackBox: { borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, padding: spacing.md, gap: spacing.sm },
+  athleteRow: { gap: spacing.sm, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, padding: spacing.md },
   athleteCopy: { gap: 2 },
   athleteName: { color: colors.text, fontWeight: '900' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: 8, backgroundColor: colors.glass },
+  chipActive: { backgroundColor: colors.cyan, borderColor: colors.cyan },
+  chipText: { color: colors.muted, fontWeight: '900', fontSize: 12 },
+  chipTextActive: { color: colors.background },
 });
