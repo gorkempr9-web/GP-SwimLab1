@@ -7,7 +7,7 @@ export function ClubBadge({ club, city, compact = false }: { club?: string; city
     <View style={[styles.badge, compact && styles.compact]}>
       <ClubLogo club={club} size={compact ? 28 : 42} />
       <View style={styles.copy}>
-        <Text style={styles.club} numberOfLines={1}>{club ?? 'GP SwimLab'}</Text>
+        <Text style={styles.club} numberOfLines={1}>{club ?? 'SwimLab'}</Text>
         {city ? <Text style={styles.city} numberOfLines={1}>{city}</Text> : null}
       </View>
     </View>

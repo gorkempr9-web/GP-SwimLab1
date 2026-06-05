@@ -107,17 +107,19 @@ export function isDemoLoginEnabled() {
 
 export function validateDemoAccessCode(code: string, role?: DemoLoginRole) {
   const normalized = code.trim().toUpperCase();
-  const mainCode = String(Constants.expoConfig?.extra?.demoAccessCode ?? 'GPSWIM-DEMO-2026').toUpperCase();
   const roleCodes: Record<string, DemoLoginRole> = {
-    'DEMO-ATHLETE-2026': 'athlete',
-    'DEMO-PARENT-2026': 'parent',
-    'DEMO-COACH-2026': 'coach',
-    'DEMO-CLUB-2026': 'club_admin',
+    SPORCU26: 'athlete',
+    VELI26: 'parent',
+    ANT26: 'coach',
+    KULUP26: 'club_admin',
   };
-
-  if (normalized === mainCode) return { valid: true, unlockedRole: null as DemoLoginRole | null };
   const unlockedRole = roleCodes[normalized] ?? null;
-  return { valid: Boolean(unlockedRole && (!role || role === unlockedRole)), unlockedRole };
+
+  return {
+    valid: Boolean(unlockedRole && (!role || role === unlockedRole)),
+    unlockedRole,
+    roleMismatch: Boolean(unlockedRole && role && role !== unlockedRole),
+  };
 }
 
 export function createDemoUser(role: DemoLoginRole): CurrentUser {

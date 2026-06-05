@@ -65,7 +65,7 @@ export default function LoginScreen() {
   const handleDemoLogin = (role: DemoLoginRole) => {
     const access = validateDemoAccessCode(demoAccessCode, role);
     if (!access.valid) {
-      setError(t('demoAccessCodeInvalid'));
+      setError(access.roleMismatch ? t('demoCodeRoleMismatch') : t('demoAccessCodeInvalid'));
       return;
     }
 

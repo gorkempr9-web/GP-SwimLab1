@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
 import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
+import { renderSafeTextChildren } from '@/components/SafeTextChildren';
 import {
   getAthletePB,
   getPreparedRosterGroups,
@@ -254,7 +255,7 @@ function InfoPanel({ title, children }: { title: string; children: React.ReactNo
   return (
     <View style={styles.infoPanel}>
       <Text style={styles.infoTitle}>{title}</Text>
-      <View style={styles.infoBody}>{children}</View>
+      <View style={styles.infoBody}>{renderSafeTextChildren(children)}</View>
     </View>
   );
 }

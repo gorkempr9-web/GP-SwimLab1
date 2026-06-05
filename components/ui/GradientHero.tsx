@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { PropsWithChildren } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { renderSafeTextChildren } from '@/components/SafeTextChildren';
 import { colors, spacing } from '@/theme/tokens';
 
 export function GradientHero({ children, style }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
@@ -9,7 +10,7 @@ export function GradientHero({ children, style }: PropsWithChildren<{ style?: St
       <View pointerEvents="none" style={styles.lanes}>
         {[0, 1, 2].map((item) => <View key={item} style={[styles.lane, { left: `${24 + item * 22}%` }]} />)}
       </View>
-      {children}
+      {renderSafeTextChildren(children)}
     </LinearGradient>
   );
 }

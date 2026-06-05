@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { Building2, CalendarClock, Dumbbell, Home, UserCircle } from 'lucide-react-native';
 import { ReactNode } from 'react';
 import { View } from 'react-native';
+import { renderSafeTextChildren } from '@/components/SafeTextChildren';
 import { useLocale } from '@/locales';
 import { useSession } from '@/services/session';
 import { colors } from '@/theme/tokens';
@@ -56,7 +57,7 @@ function TabIcon({ focused, children }: { focused: boolean; children: ReactNode 
       borderWidth: focused ? 1 : 0,
       borderColor: focused ? 'rgba(249, 115, 22, 0.24)' : 'transparent',
     }}>
-      {children}
+      {renderSafeTextChildren(children)}
     </View>
   );
 }

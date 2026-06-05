@@ -6,7 +6,7 @@ import { isOfficialTyfDomain, tyfOfficialLinks, TyfOfficialLink } from '@/servic
 import { colors, spacing, typography } from '@/theme/tokens';
 
 const warning =
-  'GP SwimLab, Türkiye Yüzme Federasyonu’nun resmi sistemi değildir. Resmi yarış başvuruları, lisans ve kulüp işlemleri TYF Portal üzerinden yapılmalıdır. GP SwimLab yalnızca resmi TYF sayfalarına yönlendirme sağlar.';
+  'SwimLab, Türkiye Yüzme Federasyonu’nun resmi sistemi değildir. Resmi yarış başvuruları, lisans ve kulüp işlemleri TYF Portal üzerinden yapılmalıdır. SwimLab yalnızca resmi TYF sayfalarına yönlendirme sağlar.';
 
 export default function TyfPortalScreen() {
   const openOfficialLink = async (link: TyfOfficialLink) => {
@@ -35,7 +35,7 @@ export default function TyfPortalScreen() {
         <GlassCard style={styles.securityCard}>
           <Text style={styles.securityTitle}>Güvenlik</Text>
           <Text style={styles.securityText}>• Sadece tyf.gov.tr ve portal.tyf.gov.tr domainlerine izin verilir.</Text>
-          <Text style={styles.securityText}>• TYF kullanıcı adı ve şifresi GP SwimLab içinde istenmez veya saklanmaz.</Text>
+          <Text style={styles.securityText}>• TYF kullanıcı adı ve şifresi SwimLab içinde istenmez veya saklanmaz.</Text>
           <Text style={styles.securityText}>• Linkler cihaz tarayıcısında açılır.</Text>
         </GlassCard>
 

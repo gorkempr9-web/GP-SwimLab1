@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/GlassCard';
+import { renderSafeTextChildren } from '@/components/SafeTextChildren';
 import { mockAthlete } from '@/data/mockUser';
 import { Language, useLocale } from '@/locales';
 import { roleLabel, useSession } from '@/services/session';
@@ -92,7 +93,7 @@ function SettingsSection({ title, children }: { title: string; children: ReactNo
   return (
     <GlassCard style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
+      {renderSafeTextChildren(children)}
     </GlassCard>
   );
 }

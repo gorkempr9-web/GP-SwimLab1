@@ -14,7 +14,7 @@ export type AppNotification = {
 let notificationsState: AppNotification[] = [
   { id: 'n-1', title: 'Bugünkü antrenman 17:30’da', description: 'Performans grubu ana havuzda toplanacak.', dateTime: '01.06.2026 10:00', category: 'training', read: false },
   { id: 'n-2', title: 'Örnek yarışa 18 gün kaldı', description: 'Hazırlık planını ve yarış listesini kontrol et.', dateTime: '01.06.2026 10:05', category: 'race', read: false },
-  { id: 'n-3', title: 'GP SwimLab Beta 1.1 yayınlandı', description: 'Bildirimler, rekorlar ve karşılaştırma ekranları eklendi.', dateTime: '01.06.2026 10:10', category: 'app', read: false },
+  { id: 'n-3', title: 'SwimLab Beta 1.1 yayınlandı', description: 'Bildirimler, rekorlar ve karşılaştırma ekranları eklendi.', dateTime: '01.06.2026 10:10', category: 'app', read: false },
   { id: 'n-4', title: 'Kulüp panosunda yeni duyuru var', description: 'Kulüp yöneticisinin son duyurusunu görüntüleyebilirsin.', dateTime: '01.06.2026 10:15', category: 'club', read: true },
   ...getAppAnnouncements().map((item) => ({
     id: `ann-${item.id}`,

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { ClubLogo } from '@/components/ClubLogo';
 import { EmptyState } from '@/components/EmptyState';
+import { renderSafeTextChildren } from '@/components/SafeTextChildren';
 import { nextRace, swimmerStats } from '@/data/mockData';
 import { getUpcomingMeetEntryForRole } from '@/services/meetEntries';
 import { getUnreadNotificationCount } from '@/services/notificationCenter';
@@ -27,6 +28,7 @@ export default function DashboardScreen() {
   const [unreadNotifications] = useState(() => getUnreadNotificationCount());
   const [quickActions, setQuickActions] = useState(() => getQuickActions(currentUser.role));
   const [editing, setEditing] = useState(false);
+  const [demoDataMessage, setDemoDataMessage] = useState('');
   const availableActions = useMemo(() => getAvailableQuickActions(currentUser.role), [currentUser.role]);
   const trainingSummary = getTrainingDashboardSummary(currentUser.role);
   const upcomingEntry = getUpcomingMeetEntryForRole(currentUser.role);
@@ -65,7 +67,7 @@ export default function DashboardScreen() {
           <View style={styles.headerCard}>
             <View style={styles.headerTop}>
               <View style={styles.identity}>
-                <AppLogo compact={true} size={36} showTitle={false} showSlogan={false} />
+                <AppLogo compact={true} size={34} showTitle={true} showSlogan={false} />
                 <View style={styles.headerCopy}>
                   <Text style={styles.greeting} numberOfLines={1}>Merhaba, {currentUser.firstName}</Text>
                   <Text style={styles.roleLine} numberOfLines={1}>{panelLabel(currentUser.role)} • {currentUser.club ?? 'SwimLab'}</Text>
@@ -82,6 +84,17 @@ export default function DashboardScreen() {
           </View>
 
           <RoleSummary role={currentUser.role} trainingSummary={trainingSummary} upcomingTitle={upcomingEntry?.competitionName || nextRace.name || 'Yaklaşan yarış yok'} />
+
+          {currentUser.id.startsWith('demo-') ? (
+            <GlassPanel>
+              <Text style={styles.sectionTitle}>Demo Veri</Text>
+              <Text style={styles.noticeLine}>Varsayılan demo girişte veriler boş gelir. İstersen pilot test için örnek veri yükleyebilirsin.</Text>
+              <Pressable style={styles.sampleButton} onPress={() => setDemoDataMessage('Örnek veri yükleme akışı hazır. Varsayılan demo verileri boş bırakıldı.')}>
+                <Text style={styles.sampleButtonText}>Örnek Veri Yükle</Text>
+              </Pressable>
+              {demoDataMessage ? <Text style={styles.noticeLine}>{demoDataMessage}</Text> : null}
+            </GlassPanel>
+          ) : null}
 
           {currentUser.role === 'athlete' || currentUser.role === 'parent' ? <PbCarousel /> : null}
 
@@ -139,20 +152,20 @@ function RoleSummary({ role, trainingSummary, upcomingTitle }: { role: UserRole;
   if (role === 'coach') {
     return (
       <SummaryCard title="Antrenör Özeti">
-        <MiniLink label="Bugünkü Antrenman" value="18:00 Performans" route="/(tabs)/plans" />
-        <MiniLink label="Bekleyen Sonuç Girişi" value="5" route="/features/live-race" />
-        <MiniLink label="Takım Listesi" value="3 hazır" route="/features/competition-roster" />
-        <MiniLink label="Yaklaşan Yarış" value={upcomingTitle} route="/(tabs)/races" />
+        <MiniLink label="Bugünkü Antrenman" value="-" route="/(tabs)/plans" />
+        <MiniLink label="Bekleyen Sonuç Girişi" value="0" route="/features/live-race" />
+        <MiniLink label="Takım Listesi" value="0" route="/features/competition-roster" />
+        <MiniLink label="Yaklaşan Yarış" value="Yok" route="/(tabs)/races" />
       </SummaryCard>
     );
   }
   if (role === 'club_admin') {
     return (
       <SummaryCard title="Kulüp Özeti">
-        <MiniLink label="Bu Haftaki Etkinlikler" value="8" route="/features/club-calendar" />
-        <MiniLink label="Aktif Sporcu" value="128" route="/features/my-athletes" />
-        <MiniLink label="Bekleyen Duyuru" value="2" route="/features/club-board" />
-        <MiniLink label="Yaklaşan Yarışlar" value={upcomingTitle} route="/(tabs)/races" />
+        <MiniLink label="Bugünkü Antrenman" value="-" route="/(tabs)/plans" />
+        <MiniLink label="Bekleyen Sonuç Girişi" value="0" route="/features/live-race" />
+        <MiniLink label="Takım Listesi" value="0" route="/features/competition-roster" />
+        <MiniLink label="Yaklaşan Yarış" value="Yok" route="/(tabs)/races" />
       </SummaryCard>
     );
   }
@@ -170,7 +183,7 @@ function SummaryCard({ title, children }: { title: string; children: ReactNode }
   return (
     <GlassPanel>
       <Text style={styles.summaryTitle}>{title}</Text>
-      <View style={styles.summaryGrid}>{children}</View>
+      <View style={styles.summaryGrid}>{renderSafeTextChildren(children)}</View>
     </GlassPanel>
   );
 }
@@ -235,7 +248,7 @@ function getActionTone(action: QuickAction) {
 }
 
 function GlassPanel({ children }: { children: ReactNode }) {
-  return <View style={styles.panel}>{children}</View>;
+  return <View style={styles.panel}>{renderSafeTextChildren(children)}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -283,5 +296,7 @@ const styles = StyleSheet.create({
   moveActions: { flexDirection: 'row', gap: 2 },
   moveText: { color: colors.background, fontWeight: '900', fontSize: 14 },
   noticeLine: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 20 },
+  sampleButton: { alignSelf: 'flex-start', borderRadius: 999, backgroundColor: colors.coral, paddingHorizontal: spacing.md, paddingVertical: 10 },
+  sampleButtonText: { color: colors.background, fontWeight: '900' },
   pressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
 });

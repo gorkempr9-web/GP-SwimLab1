@@ -1,9 +1,10 @@
 import { PropsWithChildren } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { renderSafeTextChildren } from '@/components/SafeTextChildren';
 import { colors, spacing } from '@/theme/tokens';
 
 export function GlassCard({ children, style }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  return <View style={[styles.card, style]}>{renderSafeTextChildren(children)}</View>;
 }
 
 const styles = StyleSheet.create({

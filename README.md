@@ -1,6 +1,6 @@
-# GP SwimLab
+# SwimLab
 
-GP SwimLab is an Expo React Native MVP for swimmers, parents, coaches and club managers. It focuses on race preparation, performance tracking, controlled achievement sharing, club communication, meet team management and PDF-ready reporting flows.
+SwimLab is an Expo React Native MVP for swimmers, parents, coaches and club managers. It focuses on race preparation, performance tracking, controlled achievement sharing, club communication, meet team management and PDF-ready reporting flows.
 
 ## Features
 

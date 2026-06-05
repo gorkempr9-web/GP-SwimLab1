@@ -8,7 +8,7 @@ import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 const securityTips = [
-  'GP SwimLab banka bilgisi istemez.',
+  'SwimLab banka bilgisi istemez.',
   'Şifrenizi kimseyle paylaşmayın.',
   'Şüpheli bağlantılara tıklamayın.',
   '18 yaş altı sporcular için veli kontrolü önerilir.',

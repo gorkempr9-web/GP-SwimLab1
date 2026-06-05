@@ -1,38 +1,30 @@
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Image, ImageStyle, StyleProp, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/theme/tokens';
+
+const logoDark = require('@/assets/branding/logo-dark.png');
+const appIcon = require('@/assets/branding/app-icon.png');
 
 type AppLogoProps = {
   compact?: boolean;
   size?: number;
   showTitle?: boolean;
   showSlogan?: boolean;
-  imageStyle?: StyleProp<ViewStyle>;
+  imageStyle?: StyleProp<ImageStyle>;
 };
 
 export function AppLogo({ compact = false, size, showTitle = true, showSlogan = true, imageStyle }: AppLogoProps) {
-  const markSize = size ?? (compact ? 22 : 34);
+  const markSize = size ?? (compact ? 26 : 44);
+  const logoWidth = showTitle ? Math.max(markSize * (compact ? 3.8 : 4.6), 120) : markSize;
+  const logoHeight = showTitle ? Math.max(markSize * 1.05, 42) : markSize;
 
   return (
     <View style={[styles.wrap, compact && styles.wrapCompact]}>
-      <View style={[styles.mark, { width: markSize, height: markSize * 0.7 }, imageStyle]}>
-        <View style={[styles.wave, { width: markSize * 0.7, top: markSize * 0.2 }]} />
-        <View style={[styles.wave, styles.waveSecond, { width: markSize * 0.7, top: markSize * 0.4 }]} />
-      </View>
-
-      {showTitle ? (
-        <View style={styles.titleWrap}>
-          <Text style={[styles.title, compact && styles.titleCompact]} numberOfLines={1}>
-            <Text style={styles.gp}>GP </Text>
-            <Text style={styles.swim}>Swim</Text>
-            <Text style={styles.lab}>Lab</Text>
-          </Text>
-          {showSlogan ? (
-            <Text style={[styles.slogan, compact && styles.sloganCompact]} numberOfLines={1}>
-              Train • Race • Improve
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
+      <Image
+        source={showTitle ? logoDark : appIcon}
+        resizeMode="contain"
+        style={[styles.logo, { width: logoWidth, height: logoHeight }, !showTitle && { borderRadius: Math.max(10, markSize * 0.22) }, imageStyle]}
+      />
+      {showTitle && showSlogan ? <Text style={[styles.slogan, compact && styles.sloganCompact]} numberOfLines={1}>Train Beyond Limits</Text> : null}
     </View>
   );
 }
@@ -41,40 +33,15 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    borderRadius: 18,
-    paddingHorizontal: 4,
-    paddingVertical: 3,
+    gap: 2,
   },
   wrapCompact: {
-    gap: 5,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+    alignItems: 'flex-start',
+    gap: 0,
   },
-  mark: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+  logo: {
+    overflow: 'hidden',
   },
-  wave: {
-    position: 'absolute',
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: colors.coral,
-    transform: [{ rotate: '-8deg' }],
-  },
-  waveSecond: {
-    opacity: 0.72,
-    backgroundColor: colors.info,
-    transform: [{ rotate: '8deg' }],
-  },
-  titleWrap: { alignItems: 'flex-start', justifyContent: 'center' },
-  title: { fontWeight: '900', fontSize: 28, letterSpacing: 0 },
-  titleCompact: { fontSize: 16 },
-  gp: { color: colors.coral },
-  swim: { color: colors.text },
-  lab: { color: colors.info },
-  slogan: { color: colors.mutedStrong, fontWeight: '900', fontSize: 11, letterSpacing: 0, marginTop: 2 },
+  slogan: { color: colors.coral, fontWeight: '900', fontSize: 11, letterSpacing: 0, marginTop: -2 },
   sloganCompact: { fontSize: 8 },
 });
