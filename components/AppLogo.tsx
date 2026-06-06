@@ -2,27 +2,28 @@ import { Image, ImageStyle, StyleProp, StyleSheet, Text, View } from 'react-nati
 import { colors } from '@/theme/tokens';
 
 const logoDark = require('@/assets/branding/logo-dark.png');
-const appIcon = require('@/assets/branding/app-icon.png');
+const logoLight = require('@/assets/branding/logo-light.png');
 
 type AppLogoProps = {
   compact?: boolean;
   size?: number;
   showTitle?: boolean;
   showSlogan?: boolean;
+  theme?: 'dark' | 'light';
   imageStyle?: StyleProp<ImageStyle>;
 };
 
-export function AppLogo({ compact = false, size, showTitle = true, showSlogan = true, imageStyle }: AppLogoProps) {
+export function AppLogo({ compact = false, size, showTitle = true, showSlogan = true, theme = 'dark', imageStyle }: AppLogoProps) {
   const markSize = size ?? (compact ? 26 : 44);
-  const logoWidth = showTitle ? Math.max(markSize * (compact ? 3.8 : 4.6), 120) : markSize;
-  const logoHeight = showTitle ? Math.max(markSize * 1.05, 42) : markSize;
+  const logoWidth = Math.max(markSize * (compact ? 3.8 : 4.6), 120);
+  const logoHeight = Math.max(markSize * 1.05, 42);
 
   return (
     <View style={[styles.wrap, compact && styles.wrapCompact]}>
       <Image
-        source={showTitle ? logoDark : appIcon}
+        source={theme === 'light' ? logoLight : logoDark}
         resizeMode="contain"
-        style={[styles.logo, { width: logoWidth, height: logoHeight }, !showTitle && { borderRadius: Math.max(10, markSize * 0.22) }, imageStyle]}
+        style={[styles.logo, { width: logoWidth, height: logoHeight }, imageStyle]}
       />
       {showTitle && showSlogan ? <Text style={[styles.slogan, compact && styles.sloganCompact]} numberOfLines={1}>Train Beyond Limits</Text> : null}
     </View>
