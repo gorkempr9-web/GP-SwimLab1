@@ -9,8 +9,9 @@ type ClubLogoProps = {
   onPress?: () => void;
 };
 
-export function ClubLogo({ club = 'GP Aquatics', size = 42, showName = true, onPress }: ClubLogoProps) {
+export function ClubLogo({ club, size = 42, showName = true, onPress }: ClubLogoProps) {
   const profile = getClubProfile(club);
+  const label = club ? profile.logoLabel : 'SL';
   const content = (
     <>
       <View style={[styles.logo, { width: size, height: size, borderRadius: Math.max(14, size / 3) }]}>
@@ -18,13 +19,11 @@ export function ClubLogo({ club = 'GP Aquatics', size = 42, showName = true, onP
           <Image source={{ uri: profile.logoUri }} style={styles.image} />
         ) : (
           <View style={styles.fallbackMark}>
-            <View style={[styles.wave, { width: size * 0.52 }]} />
-            <View style={[styles.wave, styles.waveSecond, { width: size * 0.52 }]} />
-            <Text style={[styles.logoText, { fontSize: Math.max(11, size * 0.22) }]}>{profile.logoLabel}</Text>
+            <Text style={[styles.logoText, { fontSize: Math.max(12, size * 0.28) }]}>{label}</Text>
           </View>
         )}
       </View>
-      {showName ? <Text style={styles.name} numberOfLines={1}>{profile.name}</Text> : null}
+      {showName ? <Text style={styles.name} numberOfLines={1}>{club ? profile.name : 'SwimLab Pilot'}</Text> : null}
     </>
   );
 
@@ -46,9 +45,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
   },
   image: { width: '100%', height: '100%' },
-  fallbackMark: { alignItems: 'center', justifyContent: 'center', gap: 2 },
-  wave: { height: 3, borderRadius: 999, backgroundColor: colors.cyan, transform: [{ rotate: '-8deg' }] },
-  waveSecond: { opacity: 0.62, transform: [{ rotate: '8deg' }] },
-  logoText: { color: colors.cyan, fontWeight: '900' },
+  fallbackMark: { alignItems: 'center', justifyContent: 'center' },
+  logoText: { color: colors.text, fontWeight: '900' },
   name: { color: colors.text, fontWeight: '900', flexShrink: 1 },
 });

@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ActionCard } from '@/components/ActionCard';
 import { AppLogo } from '@/components/AppLogo';
 import { ClubBadge } from '@/components/ClubBadge';
-import { ClubLogo } from '@/components/ClubLogo';
 import { GlassCard } from '@/components/GlassCard';
 import { GradientBadge } from '@/components/GradientBadge';
 import { canManageClub, useSession } from '@/services/session';
@@ -15,10 +14,12 @@ const clubModules: Array<{ title: string; detail: string; route: string; icon: L
   { title: 'Pano', detail: 'Duyuru, kamp ve acil bildirim', route: '/features/club-board', icon: Building2, tone: colors.cyan },
   { title: 'Takvim', detail: 'Haftalık ve aylık kulüp planı', route: '/features/club-calendar', icon: CalendarDays, tone: colors.blue },
   { title: 'TYF Panelleri', detail: 'Resmi TYF portal, takvim, sonuç ve baraj bağlantıları', route: '/features/tyf-portal', icon: CalendarDays, tone: colors.gold },
-  { title: 'Yarış Listesi', detail: 'Sporcu, branş, seri ve kulvar', route: '/features/competition-roster', icon: Trophy, tone: colors.gold, managerOnly: true },  { title: 'Sporcularım', detail: 'Sporcu atama ve takip', route: '/features/my-athletes', icon: BarChart3, tone: colors.success, managerOnly: true },
+  { title: 'Yarış Listesi', detail: 'Sporcu, branş, seri ve kulvar', route: '/features/competition-roster', icon: Trophy, tone: colors.gold, managerOnly: true },
+  { title: 'Sporcularım', detail: 'Sporcu atama ve takip', route: '/features/my-athletes', icon: BarChart3, tone: colors.success, managerOnly: true },
   { title: 'Raporlar', detail: 'PDF, mail ve pano paylaşımı', route: '/features/competition-report', icon: FileText, tone: colors.teal },
   { title: 'Reklam Paneli', detail: 'Sponsor ve kampanya kartları', route: '/features/club-ads', icon: Megaphone, tone: colors.violet },
-  { title: 'Özel Ders', detail: 'İlanlar ve ders talepleri', route: '/features/private-lessons', icon: Users, tone: colors.blue },];
+  { title: 'Özel Ders', detail: 'İlanlar ve ders talepleri', route: '/features/private-lessons', icon: Users, tone: colors.blue },
+];
 
 export default function ClubScreen() {
   const { currentUser } = useSession();
@@ -30,14 +31,14 @@ export default function ClubScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <AppLogo compact={true} size={26} />
-          <ClubLogo club={currentUser.club} size={42} />
         </View>
 
         <GlassCard style={styles.clubHero} tone={colors.coral}>
           <ClubBadge club={currentUser.club} city={currentUser.city ?? 'Ankara'} />
           <Text style={styles.title}>Kulüp</Text>
           <Text style={styles.subtitle}>Kulüp, antrenör ve yarış yönetimi için sade merkez.</Text>
-          <View style={styles.statsRow}>            <GradientBadge label={canUseManagement ? 'Yönetim aktif' : 'Görüntüleme'} tone={canUseManagement ? colors.success : colors.blue} />
+          <View style={styles.statsRow}>
+            <GradientBadge label={canUseManagement ? 'Yönetim aktif' : 'Görüntüleme'} tone={canUseManagement ? colors.success : colors.blue} />
           </View>
         </GlassCard>
 
@@ -128,4 +129,3 @@ const styles = StyleSheet.create({
   },
   rosterTextSecondary: { color: colors.text, fontWeight: '900' },
 });
-

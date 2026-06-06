@@ -7,7 +7,7 @@ import { formatTrainingSet, TrainingSection, TrainingSet } from '@/services/trai
 
 const repeats = Array.from({ length: 20 }, (_, index) => String(index + 1));
 const distances = ['25', '50', '75', '100', '150', '200', '300', '400', '800', '1500'];
-const strokes = ['Serbest', 'Sırtüstü', 'Kurbağalama', 'Kelebek', 'Karışık', 'Ayak', 'Kol', 'Drill'];
+const strokes = ['Serbest', 'Sırtüstü', 'Kurbağalama', 'Kelebek', 'Karışık', 'Ayak', 'Kol', 'Drill', 'Karışık Set'];
 const intervals = ['@0:30', '@0:45', '@1:00', '@1:15', '@1:30', '@1:45', '@2:00', '@2:30', '@3:00'];
 const intensities = ['Kolay', 'Orta', 'Sert', 'Sprint', 'Race Pace'];
 const equipment = ['Yok', 'Tahta', 'Pullbuoy', 'Palet', 'Şnorkel', 'Kürek', 'Lastik'];
@@ -73,8 +73,8 @@ export function SetBuilder({
       <ChipGroup options={repeats} value={repeat} onChange={setRepeat} compact={true} />
       <Text style={styles.label}>Mesafe</Text>
       <ChipGroup options={distances} value={distance} onChange={setDistance} />
-      <Text style={styles.label}>{section === 'Drill' ? 'Manuel Drill' : 'Stil'}</Text>
-      {section === 'Drill' ? (
+      <Text style={styles.label}>{section === 'Teknik' ? 'Manuel Drill' : 'Stil'}</Text>
+      {section === 'Teknik' ? (
         <TextInput value={stroke} onChangeText={setStroke} placeholder="Drill adını yaz" placeholderTextColor={colors.muted} style={styles.input} />
       ) : (
         <ChipGroup options={strokes} value={stroke} onChange={setStroke} />
@@ -117,7 +117,8 @@ function makeSet(section: TrainingSection, repeat: string, distance: string, str
     section,
     repeat: repeatValue,
     distance: distanceValue,
-    stroke: stroke || (section === 'Drill' ? 'Manuel Drill' : 'Serbest'),
+    stroke: stroke || (section === 'Teknik' ? 'Manuel Drill' : 'Serbest'),
+    drillDescription: section === 'Teknik' ? stroke : '',
     interval,
     intensity: intensity || 'Orta',
     equipment,

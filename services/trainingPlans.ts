@@ -1,7 +1,7 @@
 ﻿export type TrainingStatus = 'planned' | 'in_progress' | 'completed' | 'missed' | 'cancelled';
-export type TrainingType = 'Teknik' | 'Sprint' | 'Dayanıklılık' | 'Yarış Pace' | 'Recovery' | 'Kara Antrenmanı' | 'Mobilite';
+export type TrainingType = 'Teknik' | 'Dayanıklılık' | 'Hız' | 'Yarış' | 'Toparlanma';
 export type TrainingGroup = 'Tüm kulüp' | 'Performans grubu' | 'Küçük yaş grubu' | 'Yarış takımı' | 'Belirli sporcular';
-export type TrainingSection = 'Isınma' | 'Drill' | 'Ana Set' | 'Sprint Seti' | 'Teknik Odak' | 'Kara Antrenmanı' | 'Soğuma';
+export type TrainingSection = 'Isınma' | 'Ana Set' | 'Teknik' | 'Sprint' | 'Ayak' | 'Soğuma' | 'Kara Antrenmanı';
 
 export type TrainingSet = {
   id: string;
@@ -9,6 +9,7 @@ export type TrainingSet = {
   repeat: number;
   distance: number;
   stroke: string;
+  drillDescription: string;
   interval: string;
   intensity: string;
   equipment: string;
@@ -88,20 +89,53 @@ export function createTrainingPlan(input: Omit<TrainingPlan, 'planId' | 'assigne
   return plan;
 }
 
+export function updateTrainingPlanSets(planId: string, sets: TrainingSet[]) {
+  const summary = summarizeTrainingSets(sets);
+  trainingPlans = trainingPlans.map((plan) => {
+    if (plan.planId !== planId) return plan;
+    return {
+      ...plan,
+      sets,
+      totalMeters: `${summary.totalMeters}m`,
+      totalSetCount: summary.totalSetCount,
+      sprintMeters: summary.sprintMeters,
+      techniqueMeters: summary.techniqueMeters,
+      enduranceMeters: summary.enduranceMeters,
+      sections: makeSectionsFromSets(sets, plan.sections.coachNote),
+    };
+  });
+  persistTrainingPlans();
+}
+
 export function summarizeTrainingSets(sets: TrainingSet[]) {
   const totalMeters = sets.reduce((sum, set) => sum + set.calculatedMeters, 0);
-  const sprintMeters = sets.filter((set) => set.intensity === 'Sprint' || set.intensity === 'Race Pace' || set.section === 'Sprint Seti').reduce((sum, set) => sum + set.calculatedMeters, 0);
-  const techniqueMeters = sets.filter((set) => set.section === 'Drill' || set.section === 'Teknik Odak' || set.stroke.includes('Drill')).reduce((sum, set) => sum + set.calculatedMeters, 0);
+  const sprintMeters = sets.filter((set) => set.section === 'Sprint').reduce((sum, set) => sum + set.calculatedMeters, 0);
+  const techniqueMeters = sets.filter((set) => set.section === 'Teknik' || set.stroke.includes('Drill')).reduce((sum, set) => sum + set.calculatedMeters, 0);
   const enduranceMeters = Math.max(totalMeters - sprintMeters - techniqueMeters, 0);
   const estimatedDuration = `${Math.max(35, Math.round(totalMeters / 55))} dk`;
   return { totalMeters, totalSetCount: sets.length, sprintMeters, techniqueMeters, enduranceMeters, estimatedDuration };
 }
 
 export function formatTrainingSet(set: TrainingSet) {
-  const interval = set.interval ? ` ${set.interval}` : '';
-  const equipment = set.equipment && set.equipment !== 'Yok' ? ` - ${set.equipment}` : '';
+  const interval = set.interval ? `\nÇıkış: ${set.interval}` : '';
+  const drill = set.drillDescription ? `\nDrill: ${set.drillDescription}` : '';
+  const equipment = set.equipment ? `\nEkipman: ${set.equipment}` : '';
   const note = set.note ? `\nNot: ${set.note}` : '';
-  return `${set.repeat} x ${set.distance}m ${set.stroke}${interval} - ${set.intensity}${equipment}${note}`;
+  return `${set.repeat} x ${set.distance}m ${set.stroke}${drill}${interval}${equipment}${note}`;
+}
+
+export function makeSectionsFromSets(sets: TrainingSet[], coachNote = ''): TrainingPlan['sections'] {
+  const bySection = (section: TrainingSection) => sets.filter((set) => set.section === section).map(formatTrainingSet).join('\n\n');
+  return {
+    warmup: bySection('Isınma'),
+    mainSet: bySection('Ana Set'),
+    drills: bySection('Teknik'),
+    sprint: bySection('Sprint'),
+    techniqueFocus: bySection('Ayak'),
+    dryland: bySection('Kara Antrenmanı'),
+    cooldown: bySection('Soğuma'),
+    coachNote,
+  };
 }
 
 export function updateAthleteTrainingStatus(planId: string, athleteId: string, status: TrainingStatus, feedback?: { difficulty: number; feeling: string; note: string }) {
@@ -176,4 +210,3 @@ export async function generateTrainingPlanPdf() {
   };
 }
 import { getLocalData, saveLocalData } from '@/services/localStore';
-

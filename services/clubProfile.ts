@@ -42,16 +42,16 @@ export const mockClubProfiles: ClubProfile[] = [
 ];
 
 export const defaultClubProfile: ClubProfile = {
-  id: 'gp-aquatics',
-  name: 'GP Aquatics',
-  logoLabel: 'GP',
+  id: 'swimlab-pilot',
+  name: 'SwimLab Pilot',
+  logoLabel: 'SL',
   clubCode: 'GP-MEV001',
-  totalAthletes: 128,
-  totalCoaches: 9,
-  totalParents: 86,
+  totalAthletes: 0,
+  totalCoaches: 0,
+  totalParents: 0,
 };
 
-export function getClubProfile(clubName = 'GP Aquatics'): ClubProfile {
+export function getClubProfile(clubName = 'SwimLab Pilot'): ClubProfile {
   const profile = mockClubProfiles.find((club) => club.name === clubName) ?? defaultClubProfile;
   return {
     ...profile,
@@ -103,4 +103,3 @@ export const privateLessonAds: PrivateLessonAd[] = [
     public: true,
   },
 ];
-
