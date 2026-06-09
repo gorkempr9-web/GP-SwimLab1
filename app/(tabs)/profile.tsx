@@ -3,7 +3,6 @@ import { Award, Building2, CheckCircle2, LogOut, Settings, ShieldCheck, Trash2, 
 import { useMemo, useState } from 'react';
 import { Alert, DimensionValue, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppLogo } from '@/components/AppLogo';
 import { ClubLogo } from '@/components/ClubLogo';
 import { GlassCard } from '@/components/GlassCard';
 import { useLocale } from '@/locales';
@@ -93,7 +92,7 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <GlassCard style={styles.heroCard}>
           <View style={styles.avatar}>
-            <AppLogo size={52} showTitle={false} />
+            <Text style={styles.avatarText}>SL</Text>
           </View>
           <View style={styles.heroCopy}>
             <Text style={styles.title}>{fullName}</Text>
@@ -128,11 +127,13 @@ export default function ProfileScreen() {
         </View>
 
         {currentUser.role === 'parent' ? <ActionRow icon={Users} title="Veli görünümü" detail={`Sadece ${currentUser.childName ?? 'çocuğunuz'} verileri görüntülenir`} /> : null}
-        <ActionRow icon={Trophy} title={currentUser.role === 'parent' ? 'Çocuğumun Yarışları' : 'Yarışlarım'} detail="Geçmiş yarışlar ve PB kayıtları" onPress={() => router.push('/(tabs)/races')} />
+        {currentUser.role === 'athlete' || currentUser.role === 'parent' ? (
+          <ActionRow icon={Trophy} title={currentUser.role === 'parent' ? 'Çocuğumun Yarışları' : 'Yarışlarım'} detail="Geçmiş yarışlar ve PB kayıtları" onPress={() => router.push('/(tabs)/races')} />
+        ) : null}
         <ActionRow icon={Building2} title="Kulüp Bağlantısı" detail={currentUser.club ?? 'Kulüp bilgisi bekliyor'} />
         <ActionRow icon={ShieldCheck} title={t('privacy')} detail={t('privacySettingsDetail')} onPress={() => router.push('/features/privacy')} />
-        <ActionRow icon={ShieldCheck} title="Güvenlik Merkezi" detail="Güvenli Hesap • Telefon + E-posta doğrulandı" onPress={() => router.push('/features/security-center')} />
-        <ActionRow icon={Users} title="Veli iletişim bilgisi" detail={getGuardianDetail(currentUser)} />
+        <ActionRow icon={ShieldCheck} title="Güvenli Hesap" detail="Telefon + E-posta doğrulandı" onPress={() => router.push('/features/security-center')} />
+        {currentUser.role === 'athlete' ? <ActionRow icon={Users} title="Veli iletişim bilgisi" detail={getGuardianDetail(currentUser)} /> : null}
         <ActionRow icon={Trash2} title={t('deleteData')} detail="KVKK kapsamında talep oluştur" />
         <ActionRow icon={Trash2} title={t('clearDemoData')} detail="Cihazda saklanan pilot test verilerini temizle" onPress={handleClearDemoData} />
         <ActionRow icon={UserCircle} title="Uygulama Tanıtımını Tekrar Gör" detail="İlk kullanım rehberini yeniden aç" onPress={() => router.push('/onboarding-guide')} />
@@ -240,7 +241,7 @@ function calculateAge(birthYear: string) {
 
 function getGuardianDetail(user: CurrentUser) {
   if (user.role === 'parent') return `${getFullName(user)} • ${user.phone ?? user.email ?? 'İletişim bekliyor'}`;
-  return user.guardianName ? (user.guardianPhone ?? user.guardianEmail ?? user.guardianName) : 'Veli bilgisi eklenmedi';
+  return user.guardianName ? `${user.guardianName} • ${user.guardianPhone ?? user.guardianEmail ?? 'İletişim bekliyor'}` : 'Veli bilgisi eklenmedi';
 }
 
 const styles = StyleSheet.create({
@@ -248,6 +249,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: 110, gap: spacing.md },
   heroCard: { alignItems: 'center', gap: spacing.sm, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid },
   avatar: { width: 82, height: 82, borderRadius: 28, backgroundColor: colors.violetSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.24)', shadowColor: colors.violet, shadowOpacity: 0.12, shadowRadius: 18 },
+  avatarText: { color: colors.violet, fontWeight: '900', fontSize: 26 },
   heroCopy: { alignItems: 'center' },
   title: { ...typography.h1, color: colors.text, textAlign: 'center', marginTop: spacing.sm },
   roleText: { color: colors.gold, fontWeight: '900', textAlign: 'center' },

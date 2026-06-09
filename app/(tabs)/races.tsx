@@ -1,7 +1,7 @@
 ﻿import { router, useFocusEffect } from 'expo-router';
 import { BarChart3, CalendarClock, FileText, Gauge, LucideIcon, Medal, Trophy, Users } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { DimensionValue, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
@@ -12,6 +12,9 @@ import { colors, spacing, typography } from '@/theme/tokens';
 
 export default function RacesScreen() {
   const { currentUser } = useSession();
+  if (currentUser.role === 'super_admin') {
+    return <AdminSystemScreen />;
+  }
   if (currentUser.role === 'coach' || currentUser.role === 'club_admin') {
     return <ManagerRacesScreen role={currentUser.role} />;
   }
@@ -73,6 +76,28 @@ export default function RacesScreen() {
   );
 }
 
+function AdminSystemScreen() {
+  return (
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Trophy color={colors.gold} size={28} />
+          <View style={styles.headerCopy}>
+            <Text style={styles.title}>Sistem</Text>
+            <Text style={styles.subtitle}>Admin için pilot veri, sistem durumu ve yönetim kayıtlarına hızlı erişim.</Text>
+          </View>
+        </View>
+        <View style={styles.managerGrid}>
+          <ManagerActionCard title="Admin Paneli" detail="Tüm yönetim sekmeleri" icon={BarChart3} route="/features/admin-panel" width="48%" />
+          <ManagerActionCard title="Demo Verileri" detail="Kulüp bazlı veri temizliği" icon={FileText} route="/features/admin-panel" width="48%" />
+          <ManagerActionCard title="Bildirim Kayıtları" detail="Kulüp bildirimlerini izle" icon={CalendarClock} route="/features/admin-panel" width="48%" />
+          <ManagerActionCard title="Yarış Sonuçları" detail="Tüm kulüp sonuçları" icon={Medal} route="/features/admin-panel" width="48%" />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
 function ManagerRacesScreen({ role }: { role: 'coach' | 'club_admin' }) {
   const { width } = useWindowDimensions();
   const cardWidth = (width - spacing.lg * 2 - spacing.sm) / 2;
@@ -106,7 +131,7 @@ function ManagerRacesScreen({ role }: { role: 'coach' | 'club_admin' }) {
   );
 }
 
-function ManagerActionCard({ title, detail, icon: Icon, route, width }: { title: string; detail: string; icon: LucideIcon; route: string; width: number }) {
+function ManagerActionCard({ title, detail, icon: Icon, route, width }: { title: string; detail: string; icon: LucideIcon; route: string; width: DimensionValue }) {
   return (
     <Pressable style={({ pressed }) => [styles.managerCard, { width }, pressed && styles.pressed]} onPress={() => router.push(route as never)}>
       <View style={styles.managerIcon}>

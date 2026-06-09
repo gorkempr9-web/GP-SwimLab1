@@ -1,4 +1,5 @@
-import { getLocalData, saveLocalData } from '@/services/localStore';
+import { readClubCollection, writeClubDocument } from '@/services/firestoreData';
+import { getClubStorageKey, getLocalData, saveLocalData } from '@/services/localStore';
 
 export type RaceResult = {
   id: string;
@@ -37,14 +38,16 @@ export type TrainingResult = {
   coach?: string;
 };
 
-const raceResultsKey = 'gp-swimlab-race-results';
+const legacyRaceResultsKey = 'gp-swimlab-race-results';
 const trainingResultsKey = 'gp-swimlab-training-results';
+const raceResultsKey = () => getClubStorageKey('raceResults');
 
 let raceResults: RaceResult[] = [];
 let trainingResults: TrainingResult[] = [];
 
 export async function hydrateResults() {
-  raceResults = await getLocalData<RaceResult[]>(raceResultsKey, []);
+  const legacyRaceResults = await getLocalData<RaceResult[]>(legacyRaceResultsKey, []);
+  raceResults = await readClubCollection<RaceResult>('raceResults', legacyRaceResults);
   trainingResults = await getLocalData<TrainingResult[]>(trainingResultsKey, []);
   return { raceResults, trainingResults };
 }
@@ -61,7 +64,8 @@ export function addRaceResult(input: Omit<RaceResult, 'id' | 'isPB'>) {
   const isPB = checkRacePB(input.athleteId, input.stroke, input.distance, input.poolType, input.officialTime);
   const result: RaceResult = { ...input, id: `race-result-${Date.now()}`, isPB };
   raceResults = [result, ...raceResults];
-  void saveLocalData(raceResultsKey, raceResults);
+  void saveLocalData(raceResultsKey(), raceResults);
+  void writeClubDocument('raceResults', result.id, result as unknown as Record<string, unknown>);
   return result;
 }
 

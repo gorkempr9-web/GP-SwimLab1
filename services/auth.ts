@@ -1,9 +1,11 @@
 import Constants from 'expo-constants';
+import { writeRootDocument } from '@/services/firestoreData';
 import { joinClubByCode } from '@/services/invitations';
+import { resolveClubIdFromCode, resolveClubIdFromName } from '@/services/localStore';
 import { CurrentUser } from '@/services/session';
 
 export type MockLoginResult = { success: true; user: CurrentUser } | { success: false; message: string };
-export type DemoLoginRole = 'athlete' | 'parent' | 'coach' | 'club_admin';
+export type DemoLoginRole = 'athlete' | 'parent' | 'coach' | 'club_admin' | 'super_admin';
 
 export type RegisterUserData = {
   fullName: string;
@@ -30,8 +32,9 @@ const mockCredentials: Record<string, { password: string; user: CurrentUser }> =
       id: 'pilot-admin-gorkem',
       firstName: 'Pilot',
       lastName: 'Admin',
-      role: 'club_admin',
+      role: 'super_admin',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       specialty: 'Pilot yönetimi',
       email: 'admin@swimlab.pilot',
       hasSeenAppGuide: false,
@@ -46,6 +49,7 @@ const mockCredentials: Record<string, { password: string; user: CurrentUser }> =
       lastName: 'Antrenör',
       role: 'coach',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       specialty: 'Yüzme antrenörü',
       email: 'coach@swimlab.pilot',
       hasSeenAppGuide: false,
@@ -60,6 +64,7 @@ const mockCredentials: Record<string, { password: string; user: CurrentUser }> =
       lastName: 'Sporcu',
       role: 'athlete',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       specialty: 'Profil oluşturulacak',
       email: 'athlete@swimlab.pilot',
       hasSeenAppGuide: false,
@@ -74,6 +79,7 @@ const mockCredentials: Record<string, { password: string; user: CurrentUser }> =
       lastName: 'Veli',
       role: 'parent',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       childAthleteId: 'pilot-athlete',
       childName: 'Profil oluşturulacak',
       email: 'parent@swimlab.pilot',
@@ -112,6 +118,7 @@ export function validateDemoAccessCode(code: string, role?: DemoLoginRole) {
     VELI26: 'parent',
     ANT26: 'coach',
     KULUP26: 'club_admin',
+    ADMIN26: 'super_admin',
   };
   const unlockedRole = roleCodes[normalized] ?? null;
 
@@ -130,6 +137,7 @@ export function createDemoUser(role: DemoLoginRole): CurrentUser {
       lastName: 'Sporcu',
       role: 'athlete',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       specialty: 'Demo profil',
       hasSeenAppGuide: true,
       profileCreated: true,
@@ -140,6 +148,7 @@ export function createDemoUser(role: DemoLoginRole): CurrentUser {
       lastName: 'Veli',
       role: 'parent',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       childAthleteId: 'demo-athlete',
       childName: 'Demo Sporcu',
       hasSeenAppGuide: true,
@@ -151,6 +160,7 @@ export function createDemoUser(role: DemoLoginRole): CurrentUser {
       lastName: 'Antrenör',
       role: 'coach',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       specialty: 'Demo antrenör hesabı',
       hasSeenAppGuide: true,
       profileCreated: true,
@@ -161,7 +171,19 @@ export function createDemoUser(role: DemoLoginRole): CurrentUser {
       lastName: 'Kulüp Yöneticisi',
       role: 'club_admin',
       club: 'SwimLab Pilot',
+      clubId: 'pilot-club',
       specialty: 'Demo yönetici hesabı',
+      hasSeenAppGuide: true,
+      profileCreated: true,
+    },
+    super_admin: {
+      id: 'demo-super-admin',
+      firstName: 'SwimLab',
+      lastName: 'Admin',
+      role: 'super_admin',
+      club: 'Tüm kulüpler',
+      clubId: 'all-clubs',
+      specialty: 'Kurucu / yönetici hesabı',
       hasSeenAppGuide: true,
       profileCreated: true,
     },
@@ -183,6 +205,7 @@ export async function registerWithInviteCode(userData: RegisterUserData, inviteC
     lastName: restName.join(' '),
     role: invite.role,
     club: invite.clubName,
+    clubId: resolveClubIdFromCode(invite.code) ?? resolveClubIdFromName(invite.clubName),
     groupName: invite.groupName,
     inviteCode: invite.code,
     email: userData.email?.trim() || undefined,
@@ -199,6 +222,7 @@ export async function registerWithInviteCode(userData: RegisterUserData, inviteC
     consentAcceptedAt: new Date().toISOString(),
   };
 
+  void writeRootDocument('users', user.id, user as unknown as Record<string, unknown>);
   return { success: true, user };
 }
 
@@ -214,6 +238,7 @@ export async function getCurrentUser() {
 
 export async function setCurrentUser(user: CurrentUser) {
   const AsyncStorage = await getAsyncStorage();
+  void writeRootDocument('users', user.id, user as unknown as Record<string, unknown>);
   await Promise.all([AsyncStorage.setItem(roleStorageKey, user.role), AsyncStorage.setItem(userStorageKey, JSON.stringify(user))]);
 }
 

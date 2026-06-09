@@ -1,6 +1,8 @@
 import { PropsWithChildren, createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { writeRootDocument } from '@/services/firestoreData';
+import { resolveClubIdFromCode, resolveClubIdFromName, setActiveClubContext } from '@/services/localStore';
 
-export type UserRole = 'athlete' | 'parent' | 'coach' | 'club_admin';
+export type UserRole = 'athlete' | 'parent' | 'coach' | 'club_admin' | 'super_admin';
 
 export type CurrentUser = {
   id: string;
@@ -12,6 +14,7 @@ export type CurrentUser = {
   childAthleteId?: string;
   childName?: string;
   club?: string;
+  clubId?: string;
   groupName?: string;
   specialty?: string;
   guardianEmail?: string;
@@ -93,6 +96,16 @@ export const mockUsersByRole: Record<UserRole, CurrentUser> = {
     hasSeenAppGuide: true,
     profileCreated: false,
   },
+  super_admin: {
+    id: 'super-admin',
+    firstName: 'SwimLab',
+    lastName: 'Admin',
+    role: 'super_admin',
+    club: 'Tüm kulüpler',
+    specialty: 'Kurucu / yönetici',
+    hasSeenAppGuide: true,
+    profileCreated: true,
+  },
 };
 
 const defaultUser = mockUsersByRole.athlete;
@@ -118,6 +131,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         if (savedUser) {
           const parsedUser = parseStoredUser(savedUser);
           if (mounted && parsedUser) {
+            setActiveClubContext(parsedUser.clubId ?? resolveClubIdFromCode(parsedUser.inviteCode) ?? resolveClubIdFromName(parsedUser.club));
             setCurrentUser(parsedUser);
             return;
           }
@@ -125,6 +139,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
         const savedRole = await AsyncStorage.getItem(roleStorageKey);
         if (mounted && isUserRole(savedRole)) {
+          setActiveClubContext(mockUsersByRole[savedRole].clubId ?? resolveClubIdFromName(mockUsersByRole[savedRole].club));
           setCurrentUser(mockUsersByRole[savedRole]);
         }
       } catch {
@@ -144,7 +159,9 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const value = useMemo(() => {
     const setRole = (role: UserRole) => {
-      setCurrentUser(mockUsersByRole[role]);
+      const user = mockUsersByRole[role];
+      setActiveClubContext(user.clubId ?? resolveClubIdFromName(user.club));
+      setCurrentUser(user);
       getAsyncStorage()
         .then((AsyncStorage) => Promise.all([AsyncStorage.setItem(roleStorageKey, role), AsyncStorage.removeItem(userStorageKey)]))
         .catch(() => {});
@@ -152,6 +169,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
     const setCurrentUserProfile = (user: CurrentUser) => {
       const normalizedUser = normalizeCurrentUser(user);
+      setActiveClubContext(normalizedUser.clubId ?? resolveClubIdFromCode(normalizedUser.inviteCode) ?? resolveClubIdFromName(normalizedUser.club));
       setCurrentUser(normalizedUser);
       getAsyncStorage()
         .then((AsyncStorage) =>
@@ -161,6 +179,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
           ]),
         )
         .catch(() => {});
+      void writeRootDocument('users', normalizedUser.id, normalizedUser as unknown as Record<string, unknown>);
     };
 
     const logout = () => {
@@ -186,6 +205,7 @@ export function roleLabel(role: UserRole) {
     parent: 'Veli',
     coach: 'Antrenör',
     club_admin: 'Kulüp Yöneticisi',
+    super_admin: 'Admin',
   };
   return labels[role];
 }
@@ -196,6 +216,7 @@ export function panelLabel(role: UserRole) {
     parent: 'Veli Paneli',
     coach: 'Antrenör Paneli',
     club_admin: 'Kulüp Paneli',
+    super_admin: 'Admin Paneli',
   };
   return labels[role];
 }
@@ -208,7 +229,7 @@ export function roleFromUserType(userType: string): UserRole {
 }
 
 export function canManageClub(role: UserRole) {
-  return role === 'coach' || role === 'club_admin';
+  return role === 'coach' || role === 'club_admin' || role === 'super_admin';
 }
 
 function parseStoredUser(value: string) {
@@ -226,9 +247,11 @@ function isStoredCurrentUser(value: Partial<CurrentUser>): value is CurrentUser 
 }
 
 function normalizeCurrentUser(user: CurrentUser) {
+  const clubId = user.clubId ?? resolveClubIdFromCode(user.inviteCode) ?? resolveClubIdFromName(user.club);
   return {
     ...mockUsersByRole[user.role],
     ...user,
+    clubId,
     firstName: user.firstName.trim() || mockUsersByRole[user.role].firstName,
     lastName: user.lastName.trim(),
     club: user.club?.trim() || mockUsersByRole[user.role].club,
@@ -236,5 +259,5 @@ function normalizeCurrentUser(user: CurrentUser) {
 }
 
 function isUserRole(value: string | null | undefined): value is UserRole {
-  return value === 'athlete' || value === 'parent' || value === 'coach' || value === 'club_admin';
+  return value === 'athlete' || value === 'parent' || value === 'coach' || value === 'club_admin' || value === 'super_admin';
 }

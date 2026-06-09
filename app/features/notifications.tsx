@@ -1,18 +1,30 @@
+import { router } from 'expo-router';
 import { BellRing, CheckCircle2 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/GlassCard';
-import { AppNotification, markAllNotificationsRead, markNotificationRead, getNotifications } from '@/services/notificationCenter';
+import { AppNotification, hydrateNotifications, markAllNotificationsRead, markNotificationRead, getNotifications } from '@/services/notificationCenter';
 import { colors, spacing, typography } from '@/theme/tokens';
 
-const tabs = ['Tüm bildirimler', 'Okunmamışlar', 'Kulüp duyuruları', 'Yarış hatırlatmaları', 'Antrenman hatırlatmaları', 'Uygulama duyuruları'];
+const allNotificationsLabel = 'Tüm bildirimler';
+const unreadNotificationsLabel = 'Okunmamışlar';
+const clubNotificationsLabel = 'Kulüp duyuruları';
+const raceNotificationsLabel = 'Yarış hatırlatmaları';
+const trainingNotificationsLabel = 'Antrenman hatırlatmaları';
+const appNotificationsLabel = 'Uygulama duyuruları';
+
+const tabs = [allNotificationsLabel, unreadNotificationsLabel, clubNotificationsLabel, raceNotificationsLabel, trainingNotificationsLabel, appNotificationsLabel];
 
 export default function NotificationsScreen() {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [notifications, setNotifications] = useState(() => getNotifications());
   const unreadCount = notifications.filter((item) => !item.read).length;
   const visible = useMemo(() => notifications.filter((item) => matchesTab(item, activeTab)), [activeTab, notifications]);
+
+  useEffect(() => {
+    hydrateNotifications().then((items) => setNotifications(items));
+  }, []);
 
   const markRead = (id: string) => setNotifications(markNotificationRead(id));
   const markAllRead = () => setNotifications(markAllNotificationsRead());
@@ -52,17 +64,24 @@ export default function NotificationsScreen() {
 }
 
 function matchesTab(item: AppNotification, tab: string) {
-  if (tab === 'Okunmamışlar') return !item.read;
-  if (tab === 'Kulüp duyuruları') return item.category === 'club';
-  if (tab === 'Yarış hatırlatmaları') return item.category === 'race';
-  if (tab === 'Antrenman hatırlatmaları') return item.category === 'training';
-  if (tab === 'Uygulama duyuruları') return item.category === 'app';
+  if (tab === unreadNotificationsLabel) return !item.read;
+  if (tab === clubNotificationsLabel) return item.category === 'club';
+  if (tab === raceNotificationsLabel) return item.category === 'race';
+  if (tab === trainingNotificationsLabel) return item.category === 'training';
+  if (tab === appNotificationsLabel) return item.category === 'app';
   return true;
 }
 
 function NotificationCard({ item, onRead }: { item: AppNotification; onRead: () => void }) {
+  const openNotification = () => {
+    if (!item.read) onRead();
+    const route = item.route ?? routeForCategory(item.category);
+    if (route) router.push(route as never);
+  };
+
   return (
-    <GlassCard style={[styles.card, !item.read && styles.unreadCard]}>
+    <Pressable onPress={openNotification}>
+      <GlassCard style={[styles.card, !item.read && styles.unreadCard]}>
       <View style={styles.cardHeader}>
         <View style={styles.cardCopy}>
           <Text style={styles.cardTitle}>{item.title}</Text>
@@ -75,11 +94,12 @@ function NotificationCard({ item, onRead }: { item: AppNotification; onRead: () 
         <Text style={styles.type}>{categoryLabel(item.category)}</Text>
       </View>
       {!item.read ? (
-        <Pressable style={styles.readButton} onPress={onRead}>
+        <Pressable style={styles.readButton} onPress={(event) => { event.stopPropagation(); onRead(); }}>
           <Text style={styles.readButtonText}>Okundu olarak işaretle</Text>
         </Pressable>
       ) : null}
-    </GlassCard>
+      </GlassCard>
+    </Pressable>
   );
 }
 
@@ -87,7 +107,20 @@ function categoryLabel(category: AppNotification['category']) {
   if (category === 'club') return 'Kulüp duyurusu';
   if (category === 'race') return 'Yarış hatırlatması';
   if (category === 'training') return 'Antrenman hatırlatması';
+  if (category === 'academy') return 'Akademi';
+  if (category === 'privateLesson') return 'Özel Ders';
+  if (category === 'admin') return 'Admin';
   return 'Uygulama duyurusu';
+}
+
+function routeForCategory(category: AppNotification['category']) {
+  if (category === 'training') return '/(tabs)/plans';
+  if (category === 'race') return '/(tabs)/races';
+  if (category === 'club') return '/(tabs)/club';
+  if (category === 'academy') return '/features/swim-academy';
+  if (category === 'privateLesson') return '/features/private-lessons';
+  if (category === 'admin') return '/features/admin-panel';
+  return '';
 }
 
 const styles = StyleSheet.create({

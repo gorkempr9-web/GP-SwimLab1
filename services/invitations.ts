@@ -1,4 +1,5 @@
 import { UserRole } from '@/services/session';
+import { writeRootDocument } from '@/services/firestoreData';
 
 export type InviteCodeType = 'club' | 'coach' | 'athlete' | 'parent';
 
@@ -30,7 +31,7 @@ export type ManualInviteCodeInput = {
 
 export const inviteClubs: InviteClub[] = [
   { id: 'mev-koleji', name: 'MEV Koleji' },
-  { id: 'bcsk', name: 'Başkent Çankaya Spor Kulübü' },
+  { id: 'baskent-cankaya', name: 'Başkent Çankaya Spor Kulübü' },
 ];
 
 const roleByType: Record<InviteCodeType, UserRole> = {
@@ -53,11 +54,11 @@ let inviteCodes: InviteCodeRecord[] = [
   createInviteRecord({ code: 'COACH-MEV', type: 'coach', usageCount: 3, clubId: 'mev-koleji' }),
   createInviteRecord({ code: 'ATH-MEV', type: 'athlete', usageCount: 17, clubId: 'mev-koleji' }),
   createInviteRecord({ code: 'PAR-MEV', type: 'parent', usageCount: 6, clubId: 'mev-koleji' }),
-  createInviteRecord({ code: 'GP-BCSK001', type: 'club', usageCount: 5, clubId: 'bcsk' }),
-  createInviteRecord({ code: 'BCSK-PERF', type: 'athlete', usageCount: 11, clubId: 'bcsk', groupName: 'Performans Grubu' }),
-  createInviteRecord({ code: 'COACH-BCSK', type: 'coach', usageCount: 2, clubId: 'bcsk' }),
-  createInviteRecord({ code: 'ATH-BCSK', type: 'athlete', usageCount: 12, clubId: 'bcsk' }),
-  createInviteRecord({ code: 'PAR-BCSK', type: 'parent', usageCount: 4, clubId: 'bcsk' }),
+  createInviteRecord({ code: 'GP-BCSK001', type: 'club', usageCount: 5, clubId: 'baskent-cankaya' }),
+  createInviteRecord({ code: 'BCSK-PERF', type: 'athlete', usageCount: 11, clubId: 'baskent-cankaya', groupName: 'Performans Grubu' }),
+  createInviteRecord({ code: 'COACH-BCSK', type: 'coach', usageCount: 2, clubId: 'baskent-cankaya' }),
+  createInviteRecord({ code: 'ATH-BCSK', type: 'athlete', usageCount: 12, clubId: 'baskent-cankaya' }),
+  createInviteRecord({ code: 'PAR-BCSK', type: 'parent', usageCount: 4, clubId: 'baskent-cankaya' }),
 ];
 
 export function generateClubCode(clubId?: string, groupName?: string) {
@@ -97,6 +98,7 @@ export function createManualInviteCode(inputOrCode: ManualInviteCodeInput | stri
     maxUses: input.maxUses,
   });
   inviteCodes = [record, ...inviteCodes];
+  syncInviteCode(record);
   return { success: true as const, record };
 }
 
@@ -104,6 +106,7 @@ export function joinClubByCode(code: string) {
   const result = validateInviteCode(code);
   if (!result.valid) return result;
   result.record.usageCount += 1;
+  syncInviteCode(result.record);
   return {
     valid: true as const,
     clubId: result.record.clubId,
@@ -142,6 +145,7 @@ function generateInviteCode(type: InviteCodeType, clubId?: string, groupName?: s
 
   const record = createInviteRecord({ code, type, usageCount: 0, clubId, groupName });
   inviteCodes = [record, ...inviteCodes];
+  syncInviteCode(record);
   return record;
 }
 
@@ -170,6 +174,10 @@ function createInviteRecord(input: {
 
 function normalizeCode(code: string) {
   return code.trim().toUpperCase();
+}
+
+function syncInviteCode(record: InviteCodeRecord) {
+  void writeRootDocument('inviteCodes', record.code, record as unknown as Record<string, unknown>);
 }
 
 // Firestore-ready structure:

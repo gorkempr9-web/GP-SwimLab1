@@ -1,188 +1,273 @@
-import { router } from 'expo-router';
-import { BrainCircuit, FileText, Heart, Search } from 'lucide-react-native';
+import { Dumbbell, Plus, Waves, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GlassCard } from '@/components/GlassCard';
-import { AcademyItem, AcademySection, academyItems, academySections } from '@/data/swimAcademy';
+import { AcademyInfographicCard } from '@/components/AcademyInfographicCard';
+import { AppLogo } from '@/components/AppLogo';
+import { getSwimAcademyDrillDetail, SwimAcademyCard, SwimAcademyDrillDetail, swimAcademyCards, SwimStyle, swimStyles } from '@/data/swimAcademy';
 import { useLocale } from '@/locales';
-import { colors, spacing, typography } from '@/theme/tokens';
+import { addAcademyDrillToTrainingPlan } from '@/services/academyTraining';
+import { spacing, typography } from '@/theme/tokens';
 
-const sectionLabels: Record<AcademySection, { tr: string; en: string }> = {
-  glossary: { tr: 'Yüzme Sözlüğü', en: 'Swimming Glossary' },
-  competition: { tr: 'Yarışma Sistemi', en: 'Competition System' },
-  performance: { tr: 'Performans Analizi', en: 'Performance Analysis' },
-  parent: { tr: 'Veli Rehberi', en: 'Parent Guide' },
+const palette = {
+  navy: '#071626',
+  cyan: '#38BDF8',
+  orange: '#F97316',
+  white: '#FFFFFF',
 };
 
 export default function SwimAcademyScreen() {
-  const { language, t } = useLocale();
-  const [activeSection, setActiveSection] = useState<AcademySection>('glossary');
-  const [query, setQuery] = useState('');
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const visibleItems = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase('tr-TR');
-    return academyItems.filter((item) => {
-      const sectionMatch = item.section === activeSection;
-      if (!normalized) return sectionMatch;
-      const haystack = `${item.title} ${item.description} ${item.example}`.toLocaleLowerCase('tr-TR');
-      return haystack.includes(normalized);
-    });
-  }, [activeSection, query]);
-
-  const toggleFavorite = (id: string) => {
-    setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
-  };
+  const { t } = useLocale();
+  const [activeStyle, setActiveStyle] = useState<SwimStyle>('freestyle');
+  const [selectedCard, setSelectedCard] = useState<SwimAcademyCard | null>(null);
+  const [message, setMessage] = useState('');
+  const visibleCards = useMemo(() => swimAcademyCards.filter((card) => card.style === activeStyle), [activeStyle]);
+  const activeLabel = swimStyles.find((style) => style.id === activeStyle)?.label ?? 'Serbest';
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.iconHero}>
-            <FileText color={colors.cyan} size={28} />
-          </View>
-          <View style={styles.headerCopy}>
-            <Text style={styles.title}>{t('swimAcademy')}</Text>
-            <Text style={styles.subtitle}>Yüzme terimleri, yarış sistemi, performans puanları ve veli rehberi.</Text>
-          </View>
+        <View style={styles.hero}>
+          <AppLogo compact={true} size={42} showSlogan={false} />
+          <Text style={styles.heroKicker}>Swim Academy</Text>
+          <Text style={styles.heroTitle}>{t('swimAcademyLibrary')}</Text>
+          <Text style={styles.heroText}>4 temel stil için profesyonel eğitim kartları, antrenör notları ve uygulama adımları.</Text>
         </View>
 
-        <View style={styles.searchBox}>
-          <Search color={colors.mutedStrong} size={18} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="FINA, Rudolph, DQ, Split, SEM..."
-            placeholderTextColor={colors.muted}
-            style={styles.searchInput}
-          />
-        </View>
-
-        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-          {academySections.map((section) => {
-            const active = activeSection === section.id;
+        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.styleTabs}>
+          {swimStyles.map((style) => {
+            const active = activeStyle === style.id;
             return (
-              <Pressable key={section.id} style={[styles.tab, active && { backgroundColor: section.color, borderColor: section.color }]} onPress={() => setActiveSection(section.id)}>
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>{sectionLabels[section.id][language]}</Text>
+              <Pressable key={style.id} style={[styles.styleTab, active && styles.styleTabActive]} onPress={() => setActiveStyle(style.id)}>
+                <Waves color={active ? palette.navy : style.color} size={16} />
+                <Text style={[styles.styleTabText, active && styles.styleTabTextActive]}>{style.label}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
 
-        {activeSection === 'competition' ? (
-          <Text style={styles.officialNotice}>Resmi yarış başvuruları ve duyurular için TYF’nin resmi sayfaları kontrol edilmelidir.</Text>
-        ) : null}
-        {activeSection === 'parent' ? (
-          <Text style={styles.healthNotice}>Bu içerikler bilgilendirme amaçlıdır. Sağlık, sakatlık ve beslenme konularında uzman görüşü alınmalıdır.</Text>
-        ) : null}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{activeLabel}</Text>
+          <Text style={styles.sectionMeta}>{visibleCards.length} kart</Text>
+        </View>
 
-        {visibleItems.map((item) => (
-          <AcademyCard
-            key={item.id}
-            item={item}
-            expanded={expandedId === item.id}
-            favorite={favorites.includes(item.id)}
-            onToggleExpand={() => setExpandedId((current) => current === item.id ? null : item.id)}
-            onToggleFavorite={() => toggleFavorite(item.id)}
-            favoriteLabel={t('addToFavorites')}
-            askAiLabel={t('askAiCoach')}
-          />
+        {message ? <Text style={styles.message}>{message}</Text> : null}
+
+        {visibleCards.map((card) => (
+          <AcademyInfographicCard key={card.id} card={card} styleName={activeLabel} compact={true} onPress={() => setSelectedCard(card)} />
         ))}
-
-        {!visibleItems.length ? <Text style={styles.empty}>Bu aramada sonuç bulunamadı.</Text> : null}
       </ScrollView>
+
+      <DetailModal
+        card={selectedCard}
+        styleName={activeLabel}
+        onClose={() => setSelectedCard(null)}
+        closeLabel={t('close')}
+        addLabel={t('addToTrainingPlan')}
+        onAddToPlan={() => {
+          if (selectedCard) addAcademyDrillToTrainingPlan(selectedCard);
+          setMessage(t('academyDrillAdded'));
+        }}
+      />
     </SafeAreaView>
   );
 }
 
-function AcademyCard({
-  item,
-  expanded,
-  favorite,
-  onToggleExpand,
-  onToggleFavorite,
-  favoriteLabel,
-  askAiLabel,
-}: {
-  item: AcademyItem;
-  expanded: boolean;
-  favorite: boolean;
-  onToggleExpand: () => void;
-  onToggleFavorite: () => void;
-  favoriteLabel: string;
-  askAiLabel: string;
-}) {
-  const section = academySections.find((entry) => entry.id === item.section);
+const detailTabs = ['Özet', 'Driller', 'Kara Çalışması', 'Sık Hatalar', 'Antrenör Notu'] as const;
+type DetailTab = typeof detailTabs[number];
 
+function DetailModal({ card, styleName, onClose, closeLabel, addLabel, onAddToPlan }: { card: SwimAcademyCard | null; styleName: string; onClose: () => void; closeLabel: string; addLabel: string; onAddToPlan: () => void }) {
+  const [activeTab, setActiveTab] = useState<DetailTab>('Özet');
+  const [selectedDrill, setSelectedDrill] = useState<SwimAcademyDrillDetail | null>(null);
   return (
-    <GlassCard style={styles.card}>
-      <Pressable onPress={onToggleExpand} style={styles.cardPress}>
-        <View style={styles.cardHeader}>
-          <View style={[styles.categoryLine, { backgroundColor: section?.color ?? colors.cyan }]} />
-          <View style={styles.cardTitleWrap}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardDescription} numberOfLines={expanded ? undefined : 2}>{item.description}</Text>
-          </View>
+    <Modal visible={Boolean(card)} animationType="slide" transparent={true} onRequestClose={onClose}>
+      <View style={styles.modalBackdrop}>
+        <View style={styles.modalCard}>
+          {card ? (
+            <>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalTitleGroup}>
+                  <Text style={styles.modalKicker}>Swim Academy</Text>
+                  <Text style={styles.modalTitle}>{card.title}</Text>
+                </View>
+                <Pressable style={styles.closeButton} onPress={onClose}>
+                  <X color={palette.white} size={20} />
+                </Pressable>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalContent}>
+                <AcademyInfographicCard card={card} styleName={styleName} />
+                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.detailTabs}>
+                  {detailTabs.map((tab) => (
+                    <Pressable key={tab} style={[styles.detailTab, activeTab === tab && styles.detailTabActive]} onPress={() => setActiveTab(tab)}>
+                      <Text style={[styles.detailTabText, activeTab === tab && styles.detailTabTextActive]}>{tab}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+                <DetailTabContent card={card} activeTab={activeTab} onSelectDrill={setSelectedDrill} />
+                <Pressable
+                  style={styles.addPlanButton}
+                  onPress={() => {
+                    onAddToPlan();
+                    onClose();
+                  }}
+                >
+                  <Plus color={palette.navy} size={18} />
+                  <Text style={styles.addPlanText}>{addLabel}</Text>
+                </Pressable>
+                <Pressable style={styles.closeWide} onPress={onClose}>
+                  <Text style={styles.closeWideText}>{closeLabel}</Text>
+                </Pressable>
+              </ScrollView>
+            </>
+          ) : null}
         </View>
-
-        {expanded ? (
-          <View style={styles.detailBox}>
-            <Text style={styles.exampleLabel}>Örnek kullanım</Text>
-            <Text style={styles.exampleText}>{item.example}</Text>
-            {item.warning ? <Text style={styles.warning}>{item.warning}</Text> : null}
-          </View>
-        ) : null}
-      </Pressable>
-
-      <View style={styles.actions}>
-        <Pressable style={[styles.actionButton, favorite && styles.favoriteActive]} onPress={onToggleFavorite}>
-          <Heart color={favorite ? colors.background : colors.cyan} size={15} fill={favorite ? colors.cyan : 'transparent'} />
-          <Text style={[styles.actionText, favorite && styles.favoriteText]}>{favoriteLabel}</Text>
-        </Pressable>
-        <Pressable style={styles.aiButton} onPress={() => router.push('/features/ai-coach')}>
-          <BrainCircuit color={colors.background} size={15} />
-          <Text style={styles.aiText}>{item.aiPrompt ?? askAiLabel}</Text>
-        </Pressable>
       </View>
-    </GlassCard>
+      <DrillDetailModal drill={selectedDrill} onClose={() => setSelectedDrill(null)} />
+    </Modal>
+  );
+}
+
+function DetailTabContent({ card, activeTab, onSelectDrill }: { card: SwimAcademyCard; activeTab: DetailTab; onSelectDrill: (drill: SwimAcademyDrillDetail) => void }) {
+  if (activeTab === 'Driller') return <DrillDetailList drills={card.waterDrills} onSelectDrill={onSelectDrill} />;
+  if (activeTab === 'Kara \u00c7al\u0131\u015fmas\u0131') return <DetailSection title="Kara \u00e7al\u0131\u015fmas\u0131" items={card.dryland} />;
+  if (activeTab === 'S\u0131k Hatalar') return <DetailSection title="S\u0131k yap\u0131lan hatalar" items={card.commonMistakes} danger={true} />;
+  if (activeTab === 'Antren\u00f6r Notu') {
+    return (
+      <View style={styles.tipBox}>
+        <Dumbbell color={palette.orange} size={18} />
+        <Text style={styles.tipText}>{card.coachTip}</Text>
+      </View>
+    );
+  }
+  return (
+    <>
+      <Text style={styles.modalDescription}>{card.description}</Text>
+      <DetailSection title="Ad\u0131m ad\u0131m uygulama" items={card.steps} />
+      <DetailSection title="Faydalar" items={card.benefits} />
+    </>
+  );
+}
+
+function DrillDetailList({ drills, onSelectDrill }: { drills: string[]; onSelectDrill: (drill: SwimAcademyDrillDetail) => void }) {
+  return (
+    <View style={styles.drillList}>
+      {drills.map((drill, index) => {
+        const detail = getSwimAcademyDrillDetail(drill);
+        return (
+          <Pressable key={drill} style={styles.drillDetailCard} onPress={() => onSelectDrill(detail)}>
+            <Text style={styles.drillTitle}>{index + 1}. {detail.name}</Text>
+            <Text style={styles.drillText}>{detail.purpose}</Text>
+            <Text style={styles.drillMeta}>\u00d6nerilen uygulama: {detail.recommendedPractice}</Text>
+            <Text style={styles.drillMeta}>Seviye: {detail.level}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function DetailSection({ title, items, danger = false }: { title: string; items: string[]; danger?: boolean }) {
+  return (
+    <View style={styles.detailSection}>
+      <Text style={[styles.detailTitle, danger && styles.dangerTitle]}>{title}</Text>
+      {items.map((item, index) => (
+        <Text key={`${title}-${item}`} style={styles.detailItem}>{index + 1}. {item}</Text>
+      ))}
+    </View>
+  );
+}
+
+function DrillDetailModal({ drill, onClose }: { drill: SwimAcademyDrillDetail | null; onClose: () => void }) {
+  return (
+    <Modal visible={Boolean(drill)} animationType="fade" transparent={true} onRequestClose={onClose}>
+      <View style={styles.drillModalBackdrop}>
+        <View style={styles.drillModalCard}>
+          {drill ? (
+            <ScrollView contentContainerStyle={styles.drillModalContent} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalTitleGroup}>
+                  <Text style={styles.modalKicker}>{'Drill Detay\u0131'}</Text>
+                  <Text style={styles.modalTitle}>{drill.name}</Text>
+                </View>
+                <Pressable style={styles.closeButton} onPress={onClose}>
+                  <X color={palette.white} size={20} />
+                </Pressable>
+              </View>
+              <DrillInfo label={'Ama\u00e7'} value={drill.purpose} />
+              <DrillInfo label={'Nas\u0131l Yap\u0131l\u0131r'} value={drill.howTo} />
+              <View style={styles.detailSection}>
+                <Text style={styles.detailTitle}>{'Teknik Kazan\u0131m'}</Text>
+                {drill.technicalGain.map((item) => <Text key={item} style={styles.detailItem}>{'\u2022 '}{item}</Text>)}
+              </View>
+              <DrillInfo label={'\u00d6nerilen Uygulama'} value={drill.recommendedPractice} />
+              <DrillInfo label="Seviye" value={drill.level} />
+              <DrillInfo label={'S\u0131k Yap\u0131lan Hata'} value={drill.commonMistake} danger={true} />
+              <Pressable style={styles.closeWide} onPress={onClose}>
+                <Text style={styles.closeWideText}>Kapat</Text>
+              </Pressable>
+            </ScrollView>
+          ) : null}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function DrillInfo({ label, value, danger = false }: { label: string; value: string; danger?: boolean }) {
+  return (
+    <View style={styles.detailSection}>
+      <Text style={[styles.detailTitle, danger && styles.dangerTitle]}>{label}</Text>
+      <Text style={styles.detailItem}>{value}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1, backgroundColor: palette.navy },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 110 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  iconHero: { width: 52, height: 52, borderRadius: 20, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
-  headerCopy: { flex: 1, minWidth: 0 },
-  title: { ...typography.h1, color: colors.text },
-  subtitle: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 20, marginTop: 4 },
-  searchBox: { minHeight: 48, borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
-  searchInput: { flex: 1, color: colors.text, fontWeight: '800', minHeight: 46 },
-  tabs: { gap: spacing.sm, paddingRight: spacing.lg },
-  tab: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, paddingHorizontal: spacing.md, paddingVertical: 9 },
-  tabText: { color: colors.mutedStrong, fontWeight: '900' },
-  tabTextActive: { color: colors.background },
-  officialNotice: { color: colors.gold, fontWeight: '900', backgroundColor: colors.goldSoft, borderRadius: 16, padding: spacing.md, lineHeight: 20 },
-  healthNotice: { color: colors.danger, fontWeight: '900', backgroundColor: colors.dangerSoft, borderRadius: 16, padding: spacing.md, lineHeight: 20 },
-  card: { gap: spacing.md },
-  cardPress: { gap: spacing.md },
-  cardHeader: { flexDirection: 'row', gap: spacing.md },
-  categoryLine: { width: 5, borderRadius: 999 },
-  cardTitleWrap: { flex: 1, minWidth: 0 },
-  cardTitle: { color: colors.text, fontWeight: '900', fontSize: 18 },
-  cardDescription: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 21, marginTop: 6 },
-  detailBox: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md, gap: spacing.sm },
-  exampleLabel: { color: colors.cyan, fontWeight: '900', fontSize: 12 },
-  exampleText: { color: colors.text, fontWeight: '800', lineHeight: 21 },
-  warning: { color: colors.gold, fontWeight: '900', lineHeight: 20, backgroundColor: colors.goldSoft, borderRadius: 14, padding: spacing.sm },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  actionButton: { minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  favoriteActive: { backgroundColor: colors.cyan },
-  actionText: { color: colors.cyan, fontWeight: '900', fontSize: 12 },
-  favoriteText: { color: colors.background },
-  aiButton: { minHeight: 36, borderRadius: 999, backgroundColor: colors.cyan, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  aiText: { color: colors.background, fontWeight: '900', fontSize: 12 },
-  empty: { color: colors.muted, fontWeight: '800', textAlign: 'center', padding: spacing.lg },
+  hero: { borderRadius: 26, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.34)', backgroundColor: 'rgba(255,255,255,0.04)', padding: spacing.lg, gap: spacing.sm },
+  heroKicker: { color: palette.orange, fontWeight: '900', fontSize: 12 },
+  heroTitle: { ...typography.h1, color: palette.white },
+  heroText: { color: 'rgba(255,255,255,0.76)', fontWeight: '800', lineHeight: 21 },
+  styleTabs: { gap: spacing.sm, paddingRight: spacing.lg },
+  styleTab: { minHeight: 42, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.34)', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  styleTabActive: { backgroundColor: palette.cyan, borderColor: palette.cyan },
+  styleTabText: { color: palette.white, fontWeight: '900' },
+  styleTabTextActive: { color: palette.navy },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  sectionTitle: { color: palette.white, fontWeight: '900', fontSize: 22 },
+  sectionMeta: { color: palette.cyan, fontWeight: '900' },
+  message: { color: palette.white, fontWeight: '900', backgroundColor: 'rgba(249, 115, 22, 0.16)', borderRadius: 16, padding: spacing.md },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.58)', justifyContent: 'flex-end' },
+  drillModalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.70)', justifyContent: 'center', padding: spacing.lg },
+  drillModalCard: { maxHeight: '86%', borderRadius: 28, backgroundColor: palette.navy, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.35)', padding: spacing.lg },
+  drillModalContent: { gap: spacing.md, paddingBottom: spacing.md },
+  modalCard: { maxHeight: '88%', borderTopLeftRadius: 30, borderTopRightRadius: 30, backgroundColor: palette.navy, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.35)', padding: spacing.lg },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, alignItems: 'flex-start' },
+  modalTitleGroup: { flex: 1, minWidth: 0 },
+  modalKicker: { color: palette.orange, fontWeight: '900', fontSize: 12 },
+  modalTitle: { color: palette.white, fontWeight: '900', fontSize: 27, lineHeight: 32, marginTop: 4 },
+  closeButton: { width: 38, height: 38, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
+  modalContent: { gap: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xl },
+  modalDescription: { color: 'rgba(255,255,255,0.82)', fontWeight: '800', lineHeight: 22 },
+  detailSection: { borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', backgroundColor: 'rgba(255,255,255,0.05)', padding: spacing.md, gap: 8 },
+  detailTabs: { gap: spacing.sm, paddingRight: spacing.lg },
+  detailTab: { borderRadius: 999, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.28)', paddingHorizontal: spacing.md, paddingVertical: 9, backgroundColor: 'rgba(255,255,255,0.05)' },
+  detailTabActive: { backgroundColor: palette.cyan, borderColor: palette.cyan },
+  detailTabText: { color: palette.white, fontWeight: '900', fontSize: 12 },
+  detailTabTextActive: { color: palette.navy },
+  detailTitle: { color: palette.cyan, fontWeight: '900', fontSize: 15 },
+  dangerTitle: { color: palette.orange },
+  detailItem: { color: palette.white, fontWeight: '800', lineHeight: 20 },
+  tipBox: { borderRadius: 20, backgroundColor: 'rgba(249, 115, 22, 0.12)', padding: spacing.md, flexDirection: 'row', gap: spacing.sm },
+  tipText: { color: palette.white, flex: 1, fontWeight: '900', lineHeight: 20 },
+  drillList: { gap: spacing.sm },
+  drillDetailCard: { borderRadius: 18, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.22)', backgroundColor: 'rgba(255,255,255,0.05)', padding: spacing.md, gap: 7 },
+  drillTitle: { color: palette.cyan, fontWeight: '900', fontSize: 15 },
+  drillText: { color: palette.white, fontWeight: '800', lineHeight: 20 },
+  drillMeta: { color: 'rgba(255,255,255,0.72)', fontWeight: '800', lineHeight: 18 },
+  addPlanButton: { minHeight: 46, borderRadius: 16, backgroundColor: palette.orange, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  addPlanText: { color: palette.navy, fontWeight: '900' },
+  closeWide: { minHeight: 46, borderRadius: 16, backgroundColor: palette.cyan, alignItems: 'center', justifyContent: 'center' },
+  closeWideText: { color: palette.navy, fontWeight: '900' },
 });

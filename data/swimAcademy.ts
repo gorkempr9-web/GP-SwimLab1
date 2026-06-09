@@ -1,80 +1,349 @@
-export type AcademySection = 'glossary' | 'competition' | 'performance' | 'parent';
+export type SwimStyle = 'freestyle' | 'breaststroke' | 'backstroke' | 'butterfly';
 
-export type AcademyItem = {
+export type SwimAcademyCard = {
   id: string;
-  section: AcademySection;
+  style: SwimStyle;
   title: string;
+  subtitle: string;
+  benefits: string[];
+  waterDrills: string[];
+  dryland: string[];
+  commonMistakes: string[];
+  level: string;
+  duration: string;
+  equipment: string;
+  coachNote: string;
   description: string;
-  example: string;
-  aiPrompt?: string;
-  warning?: string;
+  steps: string[];
+  coachTip: string;
 };
 
-export const glossaryTerms: AcademyItem[] = [
-  { id: 'pb', section: 'glossary', title: 'PB', description: 'Personal Best / Kişisel En İyi Derece. Sporcunun ilgili mesafe, stil ve havuz tipindeki en iyi derecesidir.', example: '50m Serbest PB: 32.23' },
-  { id: 'sb', section: 'glossary', title: 'SB', description: 'Season Best / Sezonun En İyi Derecesi. Sporcunun sezon içindeki en iyi yarış sonucudur.', example: 'Bu sezon 100m Serbest SB: 1:10.44' },
-  { id: 'split', section: 'glossary', title: 'Split', description: 'Yarış içindeki ara geçiş derecesidir. Tempo ve düşüş analizi için kullanılır.', example: '100m yarışta 50m split: 34.20' },
-  { id: 'dq', section: 'glossary', title: 'DQ', description: 'Diskalifiye. Kurala aykırı çıkış, dönüş veya stil hatası sonrası sonuç geçersiz olur.', example: 'Kurbağalama dönüş ihlali nedeniyle DQ.' },
-  { id: 'dns', section: 'glossary', title: 'DNS', description: 'Did Not Start / Yarışa çıkmadı. Sporcu start listesinde olup yarışa başlamamıştır.', example: 'Seri 2, Kulvar 4: DNS' },
-  { id: 'nt', section: 'glossary', title: 'NT', description: 'No Time / Derecesiz. Sporcunun o branş için kayıtlı resmi derecesi bulunmaz.', example: 'İlk 200m Karışık yarışı NT ile girildi.' },
-  { id: 'im', section: 'glossary', title: 'IM', description: 'Individual Medley / Karışık yüzme. Kelebek, sırtüstü, kurbağalama ve serbest stilleri birlikte yüzülür.', example: '200 IM = 200m Karışık' },
-  { id: 'scm', section: 'glossary', title: 'SCM', description: 'Short Course Meters. 25m kısa kulvar havuz yarışlarını ifade eder.', example: '100m SCM derecesi kısa kulvar derecesidir.' },
-  { id: 'lcm', section: 'glossary', title: 'LCM', description: 'Long Course Meters. 50m uzun kulvar havuz yarışlarını ifade eder.', example: 'Türkiye Şampiyonası LCM yapılabilir.' },
-  { id: 'tyf', section: 'glossary', title: 'TYF', description: 'Türkiye Yüzme Federasyonu. Resmi yarış, lisans ve reglaman süreçleri TYF üzerinden yürür.', example: 'Faaliyet takvimi TYF sayfasından kontrol edilir.' },
-  { id: 'sem', section: 'glossary', title: 'SEM', description: 'Sporcu Eğitim Merkezi. Belirli kriterleri sağlayan sporcular için gelişim yapısıdır.', example: 'SEM barajı yaş grubuna göre takip edilir.' },
-  { id: 'thom', section: 'glossary', title: 'THOM', description: 'Türkiye Olimpiyat Hazırlık Merkezi. Üst performans hedefli sporcular için hazırlık sistemidir.', example: 'THOM hedefleri uzun dönem gelişim planına girer.' },
-  { id: 'baraj', section: 'glossary', title: 'Baraj', description: 'Yarışa katılım veya seçme için gereken minimum derece standardıdır.', example: '50m Serbest il barajı: 31.50' },
-  { id: 'heat', section: 'glossary', title: 'Seri', description: 'Yarışta aynı anda yüzen sporcu grubudur. İngilizcede heat olarak geçer.', example: 'Seri 3, Kulvar 5' },
-  { id: 'lane', section: 'glossary', title: 'Kulvar', description: 'Sporcunun yarış sırasında yüzdüğü havuz yoludur.', example: 'Kulvar 4 merkez kulvarlardan biridir.' },
-  { id: 'start', section: 'glossary', title: 'Start', description: 'Yarışın çıkış bölümüdür. Reaksiyon ve suya giriş kalitesi süreyi etkiler.', example: 'Start reaksiyonu 0.69' },
-  { id: 'turn', section: 'glossary', title: 'Turn', description: 'Dönüş. Duvar yaklaşımı, itiş ve su altı bölümü toplam süreyi etkiler.', example: '50m dönüş sonrası tempo korunmalı.' },
-  { id: 'finish', section: 'glossary', title: 'Finish', description: 'Yarışın bitiriş bölümüdür. Son kulaç ve duvara uzanma önemlidir.', example: 'Finish erken kesilmemeli.' },
-  { id: 'stroke-count', section: 'glossary', title: 'Stroke Count', description: 'Kulaç sayısı. Mesafe boyunca atılan kulaç sayısını gösterir.', example: '25m için 18 kulaç.' },
-  { id: 'swolf', section: 'glossary', title: 'SWOLF', description: 'Süre ve kulaç sayısını birlikte yorumlayan verimlilik puanıdır.', example: 'Daha düşük SWOLF daha verimli yüzüş anlamına gelebilir.' },
+export const swimStyles: Array<{ id: SwimStyle; label: string; color: string }> = [
+  { id: 'freestyle', label: 'Serbest', color: '#38BDF8' },
+  { id: 'breaststroke', label: 'Kurbağalama', color: '#F97316' },
+  { id: 'backstroke', label: 'Sırtüstü', color: '#FFFFFF' },
+  { id: 'butterfly', label: 'Kelebek', color: '#38BDF8' },
 ];
 
-export const competitionGuides: AcademyItem[] = [
-  { id: 'city-standard', section: 'competition', title: 'İl barajı nedir?', description: 'İl düzeyindeki yarışlara katılım veya sınıflandırma için kullanılan derece standardıdır.', example: 'Sporcu il barajını geçerse ilgili yarışa katılım hakkı kazanabilir.' },
-  { id: 'sem-guide', section: 'competition', title: 'SEM nedir?', description: 'Sporcu Eğitim Merkezi, yaş grubu sporcularının gelişimini destekleyen performans yapılarından biridir.', example: 'SEM hedefi için yaş, branş ve derece birlikte değerlendirilir.' },
-  { id: 'thom-guide', section: 'competition', title: 'THOM nedir?', description: 'Türkiye Olimpiyat Hazırlık Merkezi, yüksek performans hedefli sporculara yönelik hazırlık sistemidir.', example: 'THOM hedefleri antrenör ve kulüp planlamasında takip edilebilir.' },
-  { id: 'national-trials', section: 'competition', title: 'Milli takım seçmeleri nedir?', description: 'Milli takım adaylarının belirli yarış ve kriterlerle değerlendirildiği seçme süreçleridir.', example: 'Seçme kriterleri resmi duyurulardan kontrol edilir.' },
-  { id: 'turkey-championship', section: 'competition', title: 'Türkiye Şampiyonası’na nasıl katılım sağlanır?', description: 'Katılım koşulları yaş grubu, lisans, baraj ve reglamana göre belirlenir.', example: 'Kulüp, resmi başvuru sürecini TYF Portal üzerinden takip eder.' },
-  { id: 'tyf-portal-guide', section: 'competition', title: 'TYF Portal ne için kullanılır?', description: 'Resmi yarış başvuruları, lisans ve kulüp işlemleri için kullanılan federasyon portalıdır.', example: 'SwimLab sadece resmi TYF sayfalarına yönlendirme sağlar.' },
-  { id: 'regulation', section: 'competition', title: 'Reglaman nedir?', description: 'Yarışın katılım, yaş grubu, program, ödül ve teknik kurallarını açıklayan resmi dokümandır.', example: 'Yarıştan önce reglaman mutlaka okunmalıdır.' },
-  { id: 'live-results', section: 'competition', title: 'Canlı sonuçlar nedir?', description: 'Yarış sırasında veya sonrasında derecelerin yayınlandığı resmi sonuç akışıdır.', example: 'Seri, kulvar, derece ve sıralama canlı sonuçlarda görülebilir.' },
+const defaults = {
+  benefits: ['Teknik verimi artırır', 'Yarış ritmini güçlendirir', 'Enerji kaybını azaltır', 'Hareket kalitesini geliştirir'],
+  dryland: ['Core aktivasyon', 'Mobilite akışı', 'Elastik bant kontrolü'],
+  commonMistakes: ['Pozisyonu aceleye getirmek', 'Ritmi bozmak', 'Drilli yarış temposuna fazla hızlı taşımak'],
+  steps: ['Tekniği düşük tempoda kur.', 'Drill sırasında tek odak seç.', 'Kısa tekrarlarla kaliteyi koru.', 'Tam stile geçip hissi test et.'],
+};
+
+function makeCard(input: {
+  id: string;
+  style: SwimStyle;
+  title: string;
+  subtitle: string;
+  waterDrills: string[];
+  description: string;
+  benefits?: string[];
+  dryland?: string[];
+  commonMistakes?: string[];
+  level?: string;
+  duration?: string;
+  equipment?: string;
+  coachNote?: string;
+  steps?: string[];
+  coachTip?: string;
+}): SwimAcademyCard {
+  return {
+    benefits: defaults.benefits,
+    dryland: defaults.dryland,
+    commonMistakes: defaults.commonMistakes,
+    level: 'Orta',
+    duration: '12-18 dk',
+    equipment: 'Opsiyonel ekipman',
+    coachNote: 'Drill kalitesi düşerse tekrar sayısını azalt, tekniği temiz tut.',
+    steps: defaults.steps,
+    coachTip: 'Önce hissi, sonra hızı inşa et.',
+    ...input,
+  };
+}
+
+export const swimAcademyCards: SwimAcademyCard[] = [
+  makeCard({
+    id: 'freestyle-high-elbow-catch',
+    style: 'freestyle',
+    title: 'High Elbow Catch',
+    subtitle: 'Ön kolu erken dikleştir, suyu geriye taşı.',
+    benefits: ['Daha güçlü su tutuşu', 'Daha verimli çekiş', 'Daha az enerji kaybı', 'Daha uzun kulaç'],
+    waterDrills: ['Tek Kol Serbest', 'Catch-Up Drill', 'Fist Drill', 'Paddle Kontrollü Çekiş'],
+    dryland: ['Elastik Bant Çekiş', 'Plank Reach', 'Lat Aktivasyon'],
+    commonMistakes: ['Dirseği düşürmek', 'Eli aşağı bastırmak', 'Baş pozisyonunu oynatmak'],
+    level: 'Orta / Performans',
+    duration: '15-20 dk',
+    equipment: 'Şnorkel, pull buoy, lastik',
+    coachNote: 'Her 25m sonunda sporcudan su tutuş hissini tarif etmesini iste.',
+    description: 'Serbest stilde suyu kaybetmeden etkili çekiş başlatmayı öğretir.',
+    steps: ['Omuzu gevşek tut.', 'El suya girdikten sonra bileği sabitle.', 'Dirseği yüksek bırakıp ön kolu dikleştir.', 'Suyu kalçaya doğru geriye taşı.'],
+    coachTip: 'Tempo artmadan önce formu kilitle; hız sonradan gelir.',
+  }),
+  makeCard({
+    id: 'freestyle-body-position',
+    style: 'freestyle',
+    title: 'Body Position',
+    subtitle: 'Yüksek kalça, uzun hat, düşük direnç.',
+    waterDrills: ['Superman Glide', '6 Kick Switch', 'Side Kick', 'Streamline Push'],
+    benefits: ['Daha az sürtünme', 'Daha iyi nefes kontrolü', 'Ekonomik yüzüş', 'Daha stabil yön'],
+    dryland: ['Hollow body hold', 'Glute bridge', 'Dead bug'],
+    commonMistakes: ['Kalçayı düşürmek', 'Çeneyi kaldırmak', 'Fazla bel çukuru'],
+    level: 'Başlangıç / Orta',
+    equipment: 'Tahta, şnorkel',
+    description: 'Doğru vücut pozisyonu tüm serbest teknik çalışmalarının temelidir.',
+    coachTip: 'Baş düzelse bile kalça düşüyorsa core aktivasyonuna dön.',
+  }),
+  makeCard({
+    id: 'freestyle-kick-power',
+    style: 'freestyle',
+    title: 'Freestyle Kick Power',
+    subtitle: 'Kalçadan başlayan küçük ve hızlı ayak.',
+    waterDrills: ['Vertical Kick', 'Kick Board Sprint', 'Side Kick', 'Fin Sprint'],
+    benefits: ['Daha iyi denge', 'Sprintte hız artışı', 'Ritim kontrolü', 'Kalça pozisyonu'],
+    dryland: ['Hip flexor band kick', 'Single-leg bridge', 'Ankle mobility'],
+    commonMistakes: ['Dizden tekme atmak', 'Ayağı çok geniş açmak', 'Bileği sert tutmak'],
+    level: 'Tüm seviyeler',
+    equipment: 'Tahta, palet',
+    description: 'Serbest ayak gücü hem su üstü ritmi hem de vücut pozisyonunu destekler.',
+    coachTip: 'Güçlü ayak her zaman büyük ayak değildir; küçük ve hızlı düşün.',
+  }),
+  makeCard({
+    id: 'freestyle-breathing-timing',
+    style: 'freestyle',
+    title: 'Breathing Timing',
+    subtitle: 'Nefes geç değil, ritim içinde alınır.',
+    waterDrills: ['3 Kulaç Nefes', '5 Kulaç Nefes', 'Yan Nefes', 'Bilateral Breathing'],
+    benefits: ['Tempo kaybı azalır', 'Baş pozisyonu korunur', 'Yarışta daha sakin ritim', 'Rotasyon kalitesi artar'],
+    dryland: ['Thoracic rotation', 'Neck mobility', 'Box breathing'],
+    commonMistakes: ['Baş kaldırmak', 'Nefesi çok geç almak', 'Kol girişini geciktirmek'],
+    level: 'Başlangıç / Orta',
+    equipment: 'Şnorkel opsiyonel',
+    description: 'Nefes zamanlaması serbest stilde ritim ve yön kontrolünü doğrudan etkiler.',
+    coachTip: 'Nefesi başı kaldırmak yerine rotasyona eşlik etmek gibi anlat.',
+  }),
+  makeCard({
+    id: 'freestyle-start-technique',
+    style: 'freestyle',
+    title: 'Start Technique',
+    subtitle: 'Patlayıcı çıkış, temiz giriş, güçlü breakout.',
+    waterDrills: ['Track Start', 'Reaction Start', 'Streamline Dive', 'Underwater Kick'],
+    benefits: ['İlk 15m hızlanır', 'Reaksiyon gelişir', 'Yarış başlangıcı netleşir', 'Breakout kalitesi artar'],
+    dryland: ['Box jump', 'Split squat jump', 'Med ball throw'],
+    commonMistakes: ['Çok derin giriş', 'Streamline bozmak', 'Breakoutta erken nefes'],
+    level: 'Orta / Performans',
+    equipment: 'Start bloğu',
+    description: 'Start tekniği yarışın ilk metrelerinde ücretsiz hız kazanma alanıdır.',
+    coachTip: 'Kötü giriş iyi reaksiyonu boşa harcar; kaliteyi öncele.',
+  }),
+  makeCard({
+    id: 'breast-frog-kick-mobility',
+    style: 'breaststroke',
+    title: 'Frog Kick Mobility',
+    subtitle: 'Kalça ve ayak bileği mobilitesiyle etkili itiş.',
+    waterDrills: ['Frog Mobility', 'Frog Hold', 'Frog Pulse', 'Resistance Band Kick'],
+    benefits: ['Daha güçlü itiş', 'Diz yükü azalır', 'Glide daha verimli olur', 'Ayak tabanı suyu daha iyi yakalar'],
+    dryland: ['Hip opener', 'Adductor rockback', 'Ankle external rotation'],
+    commonMistakes: ['Dizi çok açmak', 'Ayağı içe kapatmak', 'İtişi yarım bırakmak'],
+    level: 'Başlangıç / Orta',
+    equipment: 'Tahta',
+    description: 'Kurbağalama ayak stilin ana itiş kaynağıdır ve mobiliteyle desteklenmelidir.',
+    coachTip: 'Diz değil ayak tabanı suyu iter.',
+  }),
+  makeCard({
+    id: 'breast-glide-position',
+    style: 'breaststroke',
+    title: 'Glide Position',
+    subtitle: 'Her itişten sonra uzun ve sakin süzül.',
+    waterDrills: ['Long Glide', 'Kick Glide Count', 'Streamline Breast Kick', 'Pause Glide Drill'],
+    benefits: ['Daha ekonomik yüzüş', 'Tempo kontrolü', 'Direnç azalır', 'Süzülme kalitesi artar'],
+    description: 'Glide pozisyonu kurbağalamada hızın korunmasını sağlar.',
+    coachTip: 'Fazla glide de hız öldürür; amaç uzun ama canlı kalmak.',
+  }),
+  makeCard({
+    id: 'breast-pull-out',
+    style: 'breaststroke',
+    title: 'Pull-Out Technique',
+    subtitle: 'Su altında tek güçlü çekiş ve kontrollü çıkış.',
+    waterDrills: ['Pull-Out Sequence', 'Dolphin + Pull', 'Breakout Timing', 'Streamline Pull-Out'],
+    benefits: ['Dönüş sonrası hız', 'Start sonrası avantaj', 'Daha iyi streamline', 'Breakout verimi'],
+    level: 'Performans',
+    equipment: 'Lastik, pull buoy',
+    description: 'Pull-out start ve dönüşlerden sonra kritik hız bölümüdür.',
+    coachTip: 'Yüzeye çıkışta ilk kulaç suyu kaçırmamalı.',
+  }),
+  makeCard({
+    id: 'breast-timing',
+    style: 'breaststroke',
+    title: 'Breaststroke Timing',
+    subtitle: 'Çek, nefes, ayak, süzül ritmini bağla.',
+    waterDrills: ['1 Pull 2 Kick', 'Timing Count', 'Pause Drill', 'Fast Hands Drill'],
+    benefits: ['Stil akıcılığı', 'Enerji tasarrufu', 'Diskalifiye riski azalır', 'Ritim netleşir'],
+    description: 'Kurbağalama zamanlaması stilin hız ve verimliliğini belirler.',
+    coachTip: 'Kurbağalama güçten önce zamanlama stilidir.',
+  }),
+  makeCard({
+    id: 'breast-turn-finish',
+    style: 'breaststroke',
+    title: 'Turn & Finish',
+    subtitle: 'Çift el temas, hızlı dönüş, net bitiriş.',
+    waterDrills: ['Two-Hand Touch', 'Compact Turn', 'Finish Reach', 'Wall Push Streamline'],
+    benefits: ['Kural güvenliği', 'Dönüş hızı', 'Finish kalitesi', 'Son metre kontrolü'],
+    description: 'Kurbağalama dönüş ve bitiriş, teknik kural hassasiyeti yüksek bölümlerdir.',
+    coachTip: 'Son metrelerde panik değil uzunluk kazandır.',
+  }),
+  makeCard({
+    id: 'back-body-rotation',
+    style: 'backstroke',
+    title: 'Body Rotation',
+    subtitle: 'Omuz-kalça rotasyonu ile uzun çekiş.',
+    waterDrills: ['6 Kick Switch', 'Single Arm Backstroke', 'Shoulder Roll Drill', 'Rotation Line Drill'],
+    benefits: ['Daha uzun kulaç', 'Omuz rahatlığı', 'Daha iyi yön kontrolü', 'Su tutuşu güçlenir'],
+    description: 'Sırtüstü rotasyon kolun suyu daha etkili yakalamasını sağlar.',
+    coachTip: 'Sırtüstünde rota baştan değil gövdeden gelir.',
+  }),
+  makeCard({
+    id: 'back-kick',
+    style: 'backstroke',
+    title: 'Backstroke Kick',
+    subtitle: 'Yüzeye yakın, sürekli ve küçük ayak.',
+    waterDrills: ['Streamline Back Kick', 'Cup on Forehead', 'Kick Tempo Build', 'Wall Kick Hold'],
+    benefits: ['Kalça pozisyonu', 'Ritim sürekliliği', 'Yön stabilitesi', 'Daha temiz çizgi'],
+    description: 'Sırtüstü ayak vücut çizgisini ve yarış ritmini korur.',
+    coachTip: 'Sıçrayan su çoksa diz fazla çalışıyor olabilir.',
+  }),
+  makeCard({
+    id: 'back-entry-position',
+    style: 'backstroke',
+    title: 'Entry Position',
+    subtitle: 'Serçe parmakla temiz giriş, omuz çizgisiyle çekiş.',
+    waterDrills: ['Single Arm Entry', '12 O’clock Line', 'Catch Hold Drill', 'Pinkie Entry Drill'],
+    benefits: ['Su tutuşu iyileşir', 'Omuz stresi azalır', 'Çapraz yüzüş azalır', 'Çekiş yönü netleşir'],
+    description: 'Doğru giriş sırtüstünde çekişin yönünü ve dengeyi belirler.',
+    coachTip: 'Geniş giriş güç değil yön kaybı yaratır.',
+  }),
+  makeCard({
+    id: 'back-start',
+    style: 'backstroke',
+    title: 'Start Technique',
+    subtitle: 'Patlayıcı itiş ve temiz sırtüstü giriş.',
+    waterDrills: ['Back Start Repeats', 'Arch Entry', 'Underwater Breakout', 'Reaction Start'],
+    benefits: ['İlk 15m avantajı', 'Daha hızlı breakout', 'Güvenli başlangıç', 'Streamline kalitesi'],
+    level: 'Performans',
+    description: 'Sırtüstü start patlayıcı kuvvet ve vücut yayını birlikte ister.',
+    coachTip: 'Yüksek kalça daha temiz giriş demektir.',
+  }),
+  makeCard({
+    id: 'back-turn',
+    style: 'backstroke',
+    title: 'Backstroke Turn',
+    subtitle: 'Son kulaç sayımı ve hızlı takla dönüş.',
+    waterDrills: ['Flag Count', 'Flip Turn Timing', 'Underwater Push-Off', 'Backstroke Finish Count'],
+    benefits: ['Dönüş hızı', 'Mesafe kontrolü', 'Diskalifiye riski azalır', 'İtiş kalitesi artar'],
+    description: 'Sırtüstü dönüş mesafe algısı ve takla hızını birleştirir.',
+    coachTip: 'Dönüşte hız, duvara yakınlık kadar kompaktlıktan gelir.',
+  }),
+  makeCard({
+    id: 'fly-body-dolphin',
+    style: 'butterfly',
+    title: 'Body Dolphin',
+    subtitle: 'Dalga gövdeden başlar, ayakta tamamlanır.',
+    waterDrills: ['Body Dolphin', 'Vertical Dolphin', 'Streamline Dolphin', 'Chest Press Drill'],
+    benefits: ['Daha akıcı kelebek', 'Bel yükü azalır', 'Ritim güçlenir', 'Ayak-gövde bağlantısı kurulur'],
+    description: 'Body dolphin kelebek stilinin temel ritim motorudur.',
+    coachTip: 'Kelebekte dalga büyük değil akıllı olmalı.',
+  }),
+  makeCard({
+    id: 'fly-double-kick',
+    style: 'butterfly',
+    title: 'Double Kick Timing',
+    subtitle: 'Birinci ayak girişte, ikinci ayak itişte.',
+    waterDrills: ['2 Kick 1 Pull', 'Single Arm Fly', 'Kick-Pull Timing', 'Rhythm Fly Drill'],
+    benefits: ['Ritim netleşir', 'Kol toparlanması kolaylaşır', 'Yorgunluk azalır', 'Tempo korunur'],
+    description: 'Çift ayak zamanlaması kelebekte akıcılığın anahtarıdır.',
+    coachTip: 'İkinci ayak yoksa kollar sudan ağır çıkar.',
+  }),
+  makeCard({
+    id: 'fly-breathing',
+    style: 'butterfly',
+    title: 'Breathing Rhythm',
+    subtitle: 'Nefes kısa, baş düşük, ritim kesintisiz.',
+    waterDrills: ['2 Down 1 Breathe', 'Low Breath Fly', 'Single Arm Breath Timing', 'No Breath 25'],
+    benefits: ['Kalça düşmez', 'Tempo korunur', 'Daha az enerji kaybı', 'Toparlanma rahatlar'],
+    description: 'Kelebek nefesi ritmi bozmayacak kadar kısa ve kontrollü olmalıdır.',
+    coachTip: 'Nefes için yukarı değil ileri bak.',
+  }),
+  makeCard({
+    id: 'fly-arm-recovery',
+    style: 'butterfly',
+    title: 'Arm Recovery',
+    subtitle: 'Rahat omuz, geniş toparlanma, yumuşak giriş.',
+    waterDrills: ['One Arm Fly', '3 Right 3 Left 3 Full', 'Relaxed Recovery', 'Wide Recovery Drill'],
+    benefits: ['Omuz yorgunluğu azalır', 'Giriş kalitesi artar', 'Ritim korunur', 'Suda akış güçlenir'],
+    description: 'Arm recovery omuz sağlığı ve ritim için kritik fazdır.',
+    coachTip: 'Toparlanma güç gösterisi değil dinlenme fazıdır.',
+  }),
+  makeCard({
+    id: 'fly-underwater-dolphin',
+    style: 'butterfly',
+    title: 'Underwater Dolphin',
+    subtitle: 'Streamline içinde güçlü ve kontrollü su altı.',
+    waterDrills: ['Streamline Dolphin', '8 Kick Breakout', 'Depth Control Dolphin', '15m Underwater Drill'],
+    benefits: ['Start/dönüş hızı', 'Yarış avantajı', 'Core kuvveti', 'Breakout kontrolü'],
+    level: 'Performans',
+    description: 'Underwater dolphin kelebek ve sırtüstü yarışlarda önemli hız alanıdır.',
+    coachTip: '15m kuralını değil hız kalitesini antrenman odağı yap.',
+  }),
 ];
 
-export const performanceGuides: AcademyItem[] = [
-  { id: 'fina-guide', section: 'performance', title: 'FINA puanı nedir?', description: 'FINA puanı, yüzücünün derecesini dünya seviyesindeki referans derecelerle karşılaştırarak performans puanı verir. Yaşa göre değil, mutlak performansa göre yorumlanır.', example: '500-700 arası güçlü performans olarak okunabilir.', aiPrompt: 'FINA puanımı yorumla' },
-  { id: 'rudolph-guide', section: 'performance', title: 'Rudolph puanı nedir?', description: 'Rudolph puanı, özellikle yaş grubu yüzücülerinde yaş faktörünü dikkate alarak performansı değerlendirmeye yardımcı olur.', example: '10-15 arası çok iyi yaş grubu performansı olarak yorumlanabilir.', aiPrompt: 'Rudolph puanımı yorumla' },
-  { id: 'pb-progress', section: 'performance', title: 'PB gelişimi nasıl yorumlanır?', description: 'PB gelişimi, sporcunun aynı mesafe, stil ve havuz tipindeki önceki en iyi derecesine göre ilerlemesini gösterir.', example: '32.90 -> 32.23 gelişim: 0.67 sn' },
-  { id: 'split-analysis', section: 'performance', title: 'Split analizi nedir?', description: 'Splitler yarışın hangi bölümünde hızlanma veya düşüş yaşandığını gösterir.', example: 'İlk 50m 32.0, ikinci 50m 36.5 ise tempo düşüşü incelenir.' },
-  { id: 'race-drop', section: 'performance', title: 'Yarış düşüşü nedir?', description: 'Yarışın son bölümünde temponun belirgin düşmesi veya hedef ritmin kaybedilmesidir.', example: 'Son 25m’de kulaç frekansı düşerse finish planı çalışılır.' },
-  { id: 'last-15', section: 'performance', title: 'Son 15m performansı neden önemlidir?', description: 'Son 15m, yorgunluk altında tekniğin ve mental dayanıklılığın en çok göründüğü bölümdür.', example: 'Son 15m tempo korunursa derece ciddi şekilde iyileşebilir.' },
-  { id: 'attendance-performance', section: 'performance', title: 'Antrenman katılımı performansı nasıl etkiler?', description: 'Düzenli katılım teknik tekrar, dayanıklılık ve yarış ritmini güçlendirir.', example: 'Haftalık katılım yüzde 90 üzerindeyse gelişim takibi daha sağlıklı olur.' },
-];
 
-export const parentGuides: AcademyItem[] = [
-  { id: 'race-bag', section: 'parent', title: 'Yarış günü çantasında ne olmalı?', description: 'Yedek mayo, havlu, bone, gözlük, su, hafif atıştırmalık ve kulüp kıyafeti hazır olmalıdır.', example: 'Yarıştan bir gece önce çanta kontrol listesi yapılabilir.' },
-  { id: 'pre-race-nutrition', section: 'parent', title: 'Yarıştan önce beslenme', description: 'Ağır ve alışılmadık yiyeceklerden kaçınmak, yeterli sıvı almak ve düzenli öğün planı önemlidir.', example: 'Yeni bir besini yarış günü ilk kez denememek gerekir.', warning: 'Bu içerikler bilgilendirme amaçlıdır. Sağlık, sakatlık ve beslenme konularında uzman görüşü alınmalıdır.' },
-  { id: 'post-race-recovery', section: 'parent', title: 'Yarıştan sonra toparlanma', description: 'Sıvı alımı, hafif beslenme, aktif dinlenme ve uyku toparlanmanın temel parçalarıdır.', example: 'Yarış sonrası ilk saat toparlanma için değerlidir.', warning: 'Bu içerikler bilgilendirme amaçlıdır. Sağlık, sakatlık ve beslenme konularında uzman görüşü alınmalıdır.' },
-  { id: 'pressure', section: 'parent', title: 'Sporcuyu yarış baskısından koruma', description: 'Sonuca değil çabaya, plana ve öğrenmeye odaklanan iletişim sporcuyu destekler.', example: '“Elinden geleni yap” yaklaşımı “Mutlaka kazan” baskısından daha sağlıklıdır.' },
-  { id: 'sleep-performance', section: 'parent', title: 'Uyku ve performans', description: 'Yeterli uyku reaksiyon, koordinasyon, toparlanma ve odaklanmayı destekler.', example: 'Yarış haftasında düzenli uyku saati korunmalıdır.' },
-  { id: 'injury-signs', section: 'parent', title: 'Sakatlık belirtisi varsa ne yapılmalı?', description: 'Ağrı, şişlik veya hareket kısıtlılığı varsa antrenöre bilgi verilmeli ve uzman görüşü alınmalıdır.', example: 'Omuz ağrısı görmezden gelinmemelidir.', warning: 'Bu içerikler bilgilendirme amaçlıdır. Sağlık, sakatlık ve beslenme konularında uzman görüşü alınmalıdır.' },
-  { id: 'coach-parent', section: 'parent', title: 'Antrenör-veli iletişimi nasıl olmalı?', description: 'Kısa, saygılı, zamanında ve sporcunun gelişimine odaklı iletişim en sağlıklı modeldir.', example: 'Teknik kararlar antrenörle uygun zamanda konuşulmalıdır.' },
-  { id: 'race-day-support', section: 'parent', title: 'Yarış günü çocuğa nasıl destek olunur?', description: 'Sakin kalmak, planı hatırlatmak ve sonuçtan bağımsız destek vermek sporcunun güvenini artırır.', example: 'Yarış sonrası önce çabasını takdir etmek önemlidir.' },
-];
+export type SwimAcademyDrillDetail = {
+  name: string;
+  purpose: string;
+  howTo: string;
+  technicalGain: string[];
+  recommendedPractice: string;
+  level: string;
+  commonMistake: string;
+};
 
-export const academySections = [
-  { id: 'glossary' as const, title: 'Yüzme Sözlüğü', color: '#19E7FF' },
-  { id: 'competition' as const, title: 'Yarışma Sistemi', color: '#FBBF24' },
-  { id: 'performance' as const, title: 'Performans Analizi', color: '#22C55E' },
-  { id: 'parent' as const, title: 'Veli Rehberi', color: '#FB7185' },
-];
+const drillDetailMap: Record<string, SwimAcademyDrillDetail> = {
+  'Catch-Up Drill': detail('Catch-Up Drill', 'Kula? uzunlu?unu ve ?ndeki kol stabilitesini geli?tirmek.', 'Bir kol ?nde beklerken di?er kol tam kula? yapar. Kollar sadece ?nde bulu?unca de?i?ir.', ['Daha uzun kula?', 'Daha iyi denge', 'Daha verimli ?eki?'], '4 x 50m d???k-orta tempo', 'Ba?lang?? / Orta', 'Kollar? ?nde bulu?turmadan erken de?i?tirmek.'),
+  'Fist Drill': detail('Fist Drill', '?n kol ile su tutu? hissini geli?tirmek.', 'Eller yumruk yap?l?r ve y?z?c? ?eki?i avu? yerine ?n koluyla hissetmeye ?al???r.', ['?n kol fark?ndal???', 'Daha temiz catch', 'Su kayb?n? azaltma'], '4 x 25m + 4 x 25m normal y?z??', 'Orta', 'Yumrukla h?z? zorlay?p v?cut pozisyonunu bozmak.'),
+  'Single Arm': detail('Single Arm', 'Tek kol ?eki? yolunu izole etmek.', 'Bir kol ?nde veya yanda sabit kal?rken di?er kol tam kula? yapar.', ['?eki? yolu kontrol?', 'Rotasyon dengesi', 'Nefes zamanlamas?'], '6 x 25m sa?/sol d?n???ml?', 'Ba?lang?? / Orta', 'Sabit kolu d???rmek veya g?vdeyi fazla d?nd?rmek.'),
+  'Tek Kol Serbest': detail('Single Arm', 'Tek kol ?eki? yolunu izole etmek.', 'Bir kol ?nde veya yanda sabit kal?rken di?er kol tam kula? yapar.', ['?eki? yolu kontrol?', 'Rotasyon dengesi', 'Nefes zamanlamas?'], '6 x 25m sa?/sol d?n???ml?', 'Ba?lang?? / Orta', 'Sabit kolu d???rmek veya g?vdeyi fazla d?nd?rmek.'),
+  '6 Kick Switch': detail('6 Kick Switch', 'Yan pozisyon dengesi ve rotasyon zamanlamas?n? geli?tirmek.', 'Y?z?c? yan pozisyonda 6 ayak vurur, sonra kontroll? kula?la di?er yana ge?er.', ['Rotasyon kontrol?', 'Yan denge', 'Nefes pozisyonu'], '6 x 25m teknik tempo', 'Ba?lang?? / Orta', 'Ge?i? s?ras?nda ba?? kald?rmak.'),
+  'Superman Glide': detail('Superman Glide', 'Uzun v?cut hatt? ve d???k diren? pozisyonu kurmak.', '?ki kol ?nde uzat?l?r, y?z?c? streamline?a yak?n pozisyonda sakin ayakla ilerler.', ['V?cut hatt?', 'Kal?a y?ksekli?i', 'Denge'], '4 x 25m', 'Ba?lang??', 'Kal?ay? d???rmek veya ?eneyi kald?rmak.'),
+  'Side Kick': detail('Side Kick', 'Yan pozisyonda denge ve nefes kontrol?n? geli?tirmek.', 'Y?z?c? bir kol ?nde, di?er kol yanda olacak ?ekilde yan pozisyonda ayak vurur.', ['Yan denge', 'Kal?a pozisyonu', 'Nefes rahatl???'], '4 x 25m sa?/sol', 'Ba?lang?? / Orta', 'Omzu suya g?mmek veya ba?? fazla ?evirmek.'),
+  'Vertical Kick': detail('Vertical Kick', 'Ayak g?c? ve kal?a kaynakl? vuru?u geli?tirmek.', 'Derin alanda dik pozisyonda, eller g???ste veya yukar?da ayak vurulur.', ['Ayak g?c?', 'Core kontrol?', 'Ritim'], '6 x 20 sn, 20 sn dinlenme', 'Orta / Performans', 'Dizden tekme atmak.'),
+  'Bilateral Breathing': detail('Bilateral Breathing', '?ki tarafa nefes alarak simetrik y?z?? geli?tirmek.', 'Y?z?c? 3 veya 5 kula?ta bir d?n???ml? nefes al?r.', ['Simetri', 'Ritim', 'Y?n kontrol?'], '6 x 50m 3/5 nefes d?zeni', 'Orta', 'Nefes al?rken ba?? yukar? kald?rmak.'),
+  'Body Rotation': detail('Body Rotation', 'S?rt?st?nde g?vde rotasyonunu ve omuz rahatl???n? geli?tirmek.', 'Y?z?c? kal?a ve omzu birlikte d?nd?rerek kontroll? s?rt?st? y?zer.', ['Uzun kula?', 'Omuz rahatl???', 'Su tutu?u'], '6 x 25m teknik tempo', 'Orta', 'Sadece omuzla d?n?p kal?ay? sabit b?rakmak.'),
+  'Single Arm Backstroke': detail('Single Arm Backstroke', 'S?rt?st? tek kol giri? ve ?eki? yolunu izole etmek.', 'Bir kol yanda veya yukar?da sabitken di?er kol s?rt?st? kula? yapar.', ['Giri? pozisyonu', '?eki? yolu', 'Rotasyon'], '6 x 25m sa?/sol', 'Ba?lang?? / Orta', 'Kol giri?ini ba??n arkas?na ?aprazlamak.'),
+  '6 Kick Rotation': detail('6 Kick Rotation', 'S?rt?st?nde rotasyon ge?i?ini ayak ritmiyle ba?lamak.', 'Y?z?c? 6 ayak sonras? kontroll? rotasyonla di?er yana ge?er.', ['Rotasyon zamanlamas?', 'Ayak ritmi', 'Denge'], '4 x 50m', 'Orta', 'Ge?i?te ba?? oynatmak.'),
+  'Frog Mobility': detail('Frog Mobility', 'Kurba?alama ayak i?in kal?a ve ayak bile?i a??kl???n? geli?tirmek.', 'Kara veya suda kurba?a pozisyonunda kontroll? d?? rotasyon yap?l?r.', ['Mobilite', 'Diz y?k?n? azaltma', 'Ayak taban? y?n?'], '2-3 set x 8 tekrar', 'Ba?lang?? / Orta', 'A?r?ya ra?men hareketi zorlamak.'),
+  'Frog Hold': detail('Frog Hold', 'Kurba?alama ayak pozisyonunu statik olarak hissettirmek.', 'Ayaklar d??a d?n?k pozisyonda k?sa s?re kontroll? beklenir.', ['Pozisyon fark?ndal???', 'Kal?a kontrol?', 'Ayak a??s?'], '3 x 20 sn', 'Ba?lang??', 'Bel bo?lu?unu art?rmak.'),
+  'Frog Pulse': detail('Frog Pulse', 'Kurba?alama ayakta k???k iti? hissini ??retmek.', 'Frog pozisyonunda k?sa ve kontroll? pulse hareketleri yap?l?r.', ['?ti? hissi', 'Ayak taban? kullan?m?', 'Mobilite kontrol?'], '3 x 10 tekrar', 'Orta', 'Dizi fazla a?mak.'),
+  'Resistance Band Kick': detail('Resistance Band Kick', 'Kurba?alama ayak kuvvetini kontroll? diren?le geli?tirmek.', 'Lastik diren?le ayak d??a-d?n?? ve iti? hareketi kontroll? yap?l?r.', ['Kuvvet', 'Hareket yolu', 'Kontroll? iti?'], '3 x 8 tekrar', 'Orta / Performans', 'Direnci art?r?p formu bozmak.'),
+  'Glide Drill': detail('Glide Drill', 'Kurba?alama s?z?lme pozisyonunu geli?tirmek.', 'Her ayak iti?inden sonra streamline?da k?sa s?re ak?? korunur.', ['S?z?lme', 'Diren? azaltma', 'Tempo kontrol?'], '6 x 25m', 'Ba?lang?? / Orta', 'Fazla bekleyip h?z? tamamen ?ld?rmek.'),
+  'Body Dolphin': detail('Body Dolphin', 'Kelebek dalga hareketini g?vdeden ba?latmak.', 'Kollar streamline veya yanda, dalga g???s-kal?a-ayak s?ras?yla uygulan?r.', ['G?vde dalgas?', 'Core kontrol?', 'Ritim'], '6 x 25m', 'Ba?lang?? / Orta', 'Dalga yerine sadece dizden ayak vurmak.'),
+  'Double Kick Drill': detail('Double Kick Drill', 'Kelebekte iki ayak zamanlamas?n? ??retmek.', 'Birinci ayak kol giri?inde, ikinci ayak ?eki? sonunda vurgulan?r.', ['Zamanlama', 'Ritim', 'Kol toparlanmas?'], '4 x 25m + 4 x 25m tam stil', 'Orta', '?kinci aya?? atlay?p kollar? a??r ??karmak.'),
+  'Single Arm Fly': detail('Single Arm Fly', 'Kelebek kol yolunu ve nefes ritmini izole etmek.', 'Tek kol kelebek yap?l?r, di?er kol ?nde veya yanda sabit kal?r.', ['Kol yolu', 'Nefes ritmi', 'G?vde dalgas?'], '6 x 25m sa?/sol', 'Orta', 'Tek kolu serbest koluna ?evirmek.'),
+  'Underwater Dolphin': detail('Underwater Dolphin', 'Streamline i?inde g??l? su alt? dalgas? geli?tirmek.', 'Y?z?c? streamline pozisyonunda kontroll? dolphin kick yapar.', ['Su alt? h?z?', 'Core g?c?', 'Breakout kontrol?'], '6 x 15m', 'Orta / Performans', 'Streamline?? bozmak veya ?ok derine inmek.'),
+};
 
-export const academyItems = [
-  ...glossaryTerms,
-  ...competitionGuides,
-  ...performanceGuides,
-  ...parentGuides,
-];
+function detail(name: string, purpose: string, howTo: string, technicalGain: string[], recommendedPractice: string, level: string, commonMistake: string): SwimAcademyDrillDetail {
+  return { name, purpose, howTo, technicalGain, recommendedPractice, level, commonMistake };
+}
+
+export function getSwimAcademyDrillDetail(name: string): SwimAcademyDrillDetail {
+  return drillDetailMap[name] ?? detail(
+    name,
+    'Tekni?in belirli bir b?l?m?n? izole ederek hareket kalitesini geli?tirmek.',
+    'Drill d???k tempoda uygulan?r. Sporcu tek bir teknik oda?a dikkat eder ve form bozulursa tekrar k?sa tutulur.',
+    ['Teknik fark?ndal?k', 'Daha kontroll? ritim', 'Daha temiz uygulama'],
+    '4 x 25m teknik tempo',
+    'Ba?lang?? / Orta',
+    'Drilli yar?? temposunda aceleyle yapmak.'
+  );
+}

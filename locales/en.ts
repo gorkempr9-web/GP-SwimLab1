@@ -1,6 +1,10 @@
 export const en = {
   appName: 'SwimLab',
   swimAcademy: 'Swim Academy',
+  swimAcademyLibrary: 'Technique, drill and dryland training library',
+  addToTrainingPlan: 'Add to Training Plan',
+  academyDrillAdded: 'This drill was added to the training plan.',
+  close: 'Close',
   swimmingGlossary: 'Swimming Glossary',
   competitionSystem: 'Competition System',
   performanceAnalysis: 'Performance Analysis',
@@ -20,6 +24,7 @@ export const en = {
   parentDemo: 'Parent Demo',
   coachDemo: 'Coach Demo',
   clubManagerDemo: 'Club Manager Demo',
+  adminDemo: 'Admin Login',
   monthly: 'Monthly',
   weekly: 'Weekly',
   daily: 'Daily',

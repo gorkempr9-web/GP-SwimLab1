@@ -1,10 +1,11 @@
-import { BellRing, BrainCircuit, CalendarClock, ClipboardList, Dumbbell, FileText, Gauge, LucideIcon, Trophy, Users } from 'lucide-react-native';
+import { BellRing, BrainCircuit, CalendarClock, ClipboardList, Dumbbell, FileText, Gauge, LucideIcon, ShieldCheck, Trophy, Users } from 'lucide-react-native';
 import { UserRole } from '@/services/session';
 
 export type QuickActionId =
   | 'add-result'
   | 'my-pbs'
   | 'training-plan'
+  | 'training-log'
   | 'ai-coach'
   | 'pdf-report'
   | 'notifications'
@@ -20,7 +21,13 @@ export type QuickActionId =
   | 'tyf-calendar'
   | 'athlete-report'
   | 'private-lesson-request'
-  | 'athlete-search';
+  | 'athlete-search'
+  | 'swim-academy'
+  | 'admin-panel'
+  | 'admin-clubs'
+  | 'admin-users'
+  | 'admin-demo-data'
+  | 'admin-system';
 
 export type QuickAction = {
   id: QuickActionId;
@@ -32,7 +39,8 @@ export type QuickAction = {
 const allActions: Record<QuickActionId, QuickAction> = {
   'add-result': { id: 'add-result', title: 'Derece Ekle', route: '/(tabs)/races', icon: Trophy },
   'my-pbs': { id: 'my-pbs', title: "PB'lerim", route: '/(tabs)/races', icon: Gauge },
-  'training-plan': { id: 'training-plan', title: 'Antrenman Planım', route: '/(tabs)/plans', icon: Dumbbell },
+  'training-plan': { id: 'training-plan', title: 'Antrenman Planı', route: '/(tabs)/plans', icon: Dumbbell },
+  'training-log': { id: 'training-log', title: 'Antrenman Günlüğüm', route: '/features/training-log', icon: CalendarClock },
   'ai-coach': { id: 'ai-coach', title: 'AI Koç', route: '/features/ai-coach', icon: BrainCircuit },
   'pdf-report': { id: 'pdf-report', title: 'PDF Rapor', route: '/features/reports', icon: FileText },
   notifications: { id: 'notifications', title: 'Bildirimler', route: '/features/notifications', icon: BellRing },
@@ -49,16 +57,23 @@ const allActions: Record<QuickActionId, QuickAction> = {
   'athlete-report': { id: 'athlete-report', title: 'Sporcu Raporu', route: '/features/reports', icon: FileText },
   'private-lesson-request': { id: 'private-lesson-request', title: 'Özel Ders Talebi', route: '/features/private-lessons', icon: CalendarClock },
   'athlete-search': { id: 'athlete-search', title: 'Sporcu Ara', route: '/features/search', icon: Users },
+  'swim-academy': { id: 'swim-academy', title: 'Swim Academy', route: '/features/swim-academy', icon: FileText },
+  'admin-panel': { id: 'admin-panel', title: 'Admin Paneli', route: '/features/admin-panel', icon: ShieldCheck },
+  'admin-clubs': { id: 'admin-clubs', title: 'Kulüpler', route: '/features/admin-panel', icon: ClipboardList },
+  'admin-users': { id: 'admin-users', title: 'Kullanıcılar', route: '/features/admin-panel', icon: Users },
+  'admin-demo-data': { id: 'admin-demo-data', title: 'Demo Verileri', route: '/features/admin-panel', icon: ShieldCheck },
+  'admin-system': { id: 'admin-system', title: 'Sistem Durumu', route: '/features/admin-panel', icon: Gauge },
 };
 
 let quickActionPrefs: Partial<Record<UserRole, QuickActionId[]>> = {};
 
 export function getDefaultQuickActionsByRole(role: UserRole): QuickAction[] {
   const ids: Record<UserRole, QuickActionId[]> = {
-    athlete: ['add-result', 'my-pbs', 'athlete-search', 'ai-coach', 'pdf-report', 'notifications'],
-    coach: ['live-entry', 'competition-roster', 'athlete-search', 'athlete-compare', 'athlete-reports', 'notifications'],
-    club_admin: ['club-board', 'club-calendar', 'athlete-search', 'club-reports', 'tyf-calendar', 'notifications'],
-    parent: ['notifications', 'athlete-search', 'club-calendar', 'athlete-report', 'private-lesson-request', 'pdf-report'],
+    athlete: ['add-result', 'my-pbs', 'swim-academy', 'ai-coach', 'pdf-report', 'notifications'],
+    coach: ['training-plan', 'training-log', 'live-entry', 'competition-roster', 'swim-academy', 'notifications'],
+    club_admin: ['training-plan', 'training-log', 'club-board', 'club-calendar', 'swim-academy', 'notifications'],
+    super_admin: ['admin-panel', 'admin-clubs', 'admin-users', 'admin-demo-data', 'admin-system'],
+    parent: ['notifications', 'swim-academy', 'club-calendar', 'athlete-report', 'private-lesson-request', 'pdf-report'],
   };
   return ids[role].map((id) => allActions[id]);
 }
@@ -83,8 +98,10 @@ export function resetQuickActions(role: UserRole) {
 
 export function getAvailableQuickActions(role: UserRole) {
   const defaults = getDefaultQuickActionsByRole(role);
-  const extra = role === 'athlete' || role === 'parent'
-    ? [allActions['athlete-search'], allActions['tyf-calendar'], allActions['private-lesson-request']]
-    : [allActions['athlete-search'], allActions['tyf-calendar'], allActions['club-calendar'], allActions['private-lesson-calendar']];
+  const extra = role === 'super_admin'
+    ? [allActions['admin-panel'], allActions['admin-clubs'], allActions['admin-users'], allActions['admin-demo-data'], allActions['admin-system']]
+    : role === 'athlete' || role === 'parent'
+    ? [allActions['swim-academy'], allActions['athlete-search'], allActions['tyf-calendar'], allActions['private-lesson-request']]
+    : [allActions['training-plan'], allActions['training-log'], allActions['swim-academy'], allActions['athlete-search'], allActions['tyf-calendar'], allActions['club-calendar'], allActions['private-lesson-calendar']];
   return [...defaults, ...extra].filter((action, index, list) => list.findIndex((item) => item.id === action.id) === index);
 }

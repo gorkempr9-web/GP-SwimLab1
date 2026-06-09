@@ -1,16 +1,15 @@
-import { router } from 'expo-router';
-import { BellRing, CheckCircle2, LucideIcon } from 'lucide-react-native';
-import { ReactNode } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { BellRing, CheckCircle2, LucideIcon, ShieldCheck } from 'lucide-react-native';
+import { ReactNode, useCallback } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppLogo } from '@/components/AppLogo';
 import { ClubLogo } from '@/components/ClubLogo';
 import { EmptyState } from '@/components/EmptyState';
 import { renderSafeTextChildren } from '@/components/SafeTextChildren';
 import { nextRace, swimmerStats } from '@/data/mockData';
 import { getUpcomingMeetEntryForRole } from '@/services/meetEntries';
-import { getUnreadNotificationCount } from '@/services/notificationCenter';
+import { getUnreadNotificationCount, hydrateNotifications } from '@/services/notificationCenter';
 import { panelLabel, useSession, UserRole } from '@/services/session';
 import { getTrainingDashboardSummary } from '@/services/trainingPlans';
 import { getAvailableQuickActions, getQuickActions, QuickAction, resetQuickActions, saveQuickActions } from '@/services/userPreferences';
@@ -25,7 +24,7 @@ export default function DashboardScreen() {
   const actionWidth = (width - spacing.lg * 2 - spacing.sm * (actionColumns - 1)) / actionColumns;
   const fade = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(10)).current;
-  const [unreadNotifications] = useState(() => getUnreadNotificationCount());
+  const [unreadNotifications, setUnreadNotifications] = useState(() => getUnreadNotificationCount());
   const [quickActions, setQuickActions] = useState(() => getQuickActions(currentUser.role));
   const [editing, setEditing] = useState(false);
   const [demoDataMessage, setDemoDataMessage] = useState('');
@@ -36,6 +35,16 @@ export default function DashboardScreen() {
   useEffect(() => {
     setQuickActions(getQuickActions(currentUser.role));
   }, [currentUser.role]);
+
+  useEffect(() => {
+    hydrateNotifications().then(() => setUnreadNotifications(getUnreadNotificationCount()));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setUnreadNotifications(getUnreadNotificationCount());
+    }, []),
+  );
 
   useEffect(() => {
     Animated.parallel([
@@ -67,7 +76,12 @@ export default function DashboardScreen() {
           <View style={styles.headerCard}>
             <View style={styles.headerTop}>
               <View style={styles.identity}>
-                <AppLogo compact={true} size={34} showTitle={true} showSlogan={false} />
+                <View style={styles.brandLockup}>
+                  <View style={styles.monogramBadge}>
+                    <Text style={styles.monogramText}>SL</Text>
+                  </View>
+                  <Text style={styles.brandText}>SwimLab</Text>
+                </View>
                 <View style={styles.headerCopy}>
                   <Text style={styles.greeting} numberOfLines={1}>Merhaba, {currentUser.firstName}</Text>
                   <Text style={styles.roleLine} numberOfLines={1}>{panelLabel(currentUser.role)} • {currentUser.club ?? 'SwimLab'}</Text>
@@ -98,14 +112,16 @@ export default function DashboardScreen() {
 
           {currentUser.role === 'athlete' || currentUser.role === 'parent' ? <PbCarousel /> : null}
 
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
-            <Pressable style={styles.editButton} onPress={() => setEditing((value) => !value)}>
-              <Text style={styles.editText}>{editing ? 'Tamam' : 'Hızlı İşlemleri Düzenle'}</Text>
-            </Pressable>
-          </View>
+          {currentUser.role !== 'super_admin' ? (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
+              <Pressable style={styles.editButton} onPress={() => setEditing((value) => !value)}>
+                <Text style={styles.editText}>{editing ? 'Tamam' : 'Hızlı İşlemleri Düzenle'}</Text>
+              </Pressable>
+            </View>
+          ) : null}
 
-          {editing ? (
+          {editing && currentUser.role !== 'super_admin' ? (
             <GlassPanel>
               <View style={styles.editorHeader}>
                 <Text style={styles.editorTitle}>İşlem ekle / çıkar</Text>
@@ -133,9 +149,11 @@ export default function DashboardScreen() {
             </GlassPanel>
           ) : null}
 
-          <View style={styles.quickGrid}>
-            {quickActions.slice(0, 6).map((action) => <QuickActionCard key={action.id} action={action} width={actionWidth} />)}
-          </View>
+          {currentUser.role !== 'super_admin' ? (
+            <View style={styles.quickGrid}>
+              {quickActions.slice(0, 6).map((action) => <QuickActionCard key={action.id} action={action} width={actionWidth} />)}
+            </View>
+          ) : null}
 
           <GlassPanel>
             <Text style={styles.sectionTitle}>Mini Bildirimler</Text>
@@ -149,6 +167,16 @@ export default function DashboardScreen() {
 }
 
 function RoleSummary({ role, trainingSummary, upcomingTitle }: { role: UserRole; trainingSummary: string; upcomingTitle: string }) {
+  if (role === 'super_admin') {
+    return (
+      <SummaryCard title="Admin Özeti">
+        <MiniInfo label="Toplam Kulüp" value="3" />
+        <MiniInfo label="Pilot Veri" value="Local" />
+        <MiniInfo label="Sistem Durumu" value="Hazır" />
+        <MiniInfo label="Admin Yetkisi" value="Aktif" />
+      </SummaryCard>
+    );
+  }
   if (role === 'coach') {
     return (
       <SummaryCard title="Antrenör Özeti">
@@ -174,7 +202,7 @@ function RoleSummary({ role, trainingSummary, upcomingTitle }: { role: UserRole;
       <MiniLink label="Yaklaşan Yarış" value={upcomingTitle} route="/(tabs)/races" />
       <MiniLink label="Son PB" value={swimmerStats.personalBest} route="/(tabs)/races" />
       <MiniLink label="Haftalık Antrenman" value={trainingSummary} route="/(tabs)/plans" />
-      <MiniLink label="Kısa Gelişim" value="+4.7%" route="/features/reports" />
+      <MiniInfo label="Kısa Gelişim" value="Henüz veri yok" />
     </SummaryCard>
   );
 }
@@ -197,9 +225,18 @@ function MiniLink({ label, value, route }: { label: string; value: string; route
   );
 }
 
+function MiniInfo({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.summaryItem}>
+      <Text style={styles.summaryLabel}>{label}</Text>
+      <Text style={styles.summaryValue} numberOfLines={1}>{value}</Text>
+    </View>
+  );
+}
+
 function PbCarousel() {
   if (!pbs.length) {
-    return <EmptyState title="Henüz PB kaydı yok" detail="İlk yarış sonucu eklendiğinde kişisel en iyi dereceler burada görünecek." icon={CheckCircle2} tone={colors.gold} />;
+    return <EmptyState title="Henüz gelişim verisi yok" detail="İlk yarış sonucu eklendiğinde PB ve gelişim kartları burada görünecek." icon={ShieldCheck} tone={colors.gold} />;
   }
 
   return (
@@ -239,6 +276,7 @@ function QuickActionCard({ action, width }: { action: QuickAction; width: number
 
 function getActionTone(action: QuickAction) {
   if (action.id.includes('result') || action.id.includes('pb') || action.id.includes('roster') || action.id.includes('tyf')) return colors.gold;
+  if (action.id.includes('academy')) return colors.violet;
   if (action.id.includes('ai') || action.id.includes('compare')) return colors.violet;
   if (action.id.includes('pdf') || action.id.includes('report')) return colors.teal;
   if (action.id.includes('lesson') || action.id.includes('calendar') || action.id.includes('plan')) return colors.blue;
@@ -258,6 +296,10 @@ const styles = StyleSheet.create({
   headerCard: { borderRadius: 22, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, padding: spacing.md, gap: spacing.sm, shadowColor: colors.text, shadowOpacity: 0.08, shadowRadius: 18, elevation: 4 },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   identity: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  brandLockup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  monogramBadge: { width: 34, height: 34, borderRadius: 14, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
+  monogramText: { color: colors.cyan, fontWeight: '900', fontSize: 13 },
+  brandText: { color: colors.text, fontWeight: '900', fontSize: 16 },
   headerCopy: { flex: 1, minWidth: 0 },
   greeting: { ...typography.h2, color: colors.text },
   roleLine: { color: colors.mutedStrong, fontWeight: '800', marginTop: 3 },

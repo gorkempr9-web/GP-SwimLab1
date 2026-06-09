@@ -11,11 +11,12 @@ import { createDemoUser, DemoLoginRole, getCurrentUser, isDemoLoginEnabled, logi
 import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme/tokens';
 
-const demoOptions: Array<{ role: DemoLoginRole; labelKey: 'athleteDemo' | 'parentDemo' | 'coachDemo' | 'clubManagerDemo' }> = [
+const demoOptions: Array<{ role: DemoLoginRole; labelKey: 'athleteDemo' | 'parentDemo' | 'coachDemo' | 'clubManagerDemo' | 'adminDemo' }> = [
   { role: 'athlete', labelKey: 'athleteDemo' },
   { role: 'parent', labelKey: 'parentDemo' },
   { role: 'coach', labelKey: 'coachDemo' },
   { role: 'club_admin', labelKey: 'clubManagerDemo' },
+  { role: 'super_admin', labelKey: 'adminDemo' },
 ];
 
 export default function LoginScreen() {

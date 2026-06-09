@@ -1,4 +1,4 @@
-﻿import { Download, FileText, Send, ShieldAlert } from 'lucide-react-native';
+import { BarChart3, CalendarClock, Download, FileText, Send, ShieldAlert, Trophy, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +22,10 @@ export default function ReportsScreen() {
   const { currentUser } = useSession();
   const [message, setMessage] = useState('');
   const fullName = `${currentUser.firstName} ${currentUser.lastName}`.trim();
+
+  if (currentUser.role === 'club_admin') {
+    return <ClubReportCenter message={message} setMessage={setMessage} />;
+  }
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -72,6 +76,47 @@ export default function ReportsScreen() {
         <View style={styles.actions}>
           <AppButton title="PDF Oluştur" icon={FileText} onPress={() => setMessage('Rapor hazırlandı')} />
           <AppButton title="PDF Paylaş" icon={Send} variant="secondary" onPress={() => setMessage('Paylaşım bağlantısı hazırlandı')} />
+          <AppButton title="PDF İndir" icon={Download} variant="secondary" onPress={() => setMessage('İndirme özelliği yakında aktif olacak')} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function ClubReportCenter({ message, setMessage }: { message: string; setMessage: (message: string) => void }) {
+  const cards = [
+    { title: 'Kulüp Raporları', detail: 'Kulüp genel özetleri ve pilot veriler', icon: Users, tone: colors.cyan },
+    { title: 'Antrenman Raporları', detail: 'Plan, katılım ve antrenman metrikleri', icon: CalendarClock, tone: colors.blue },
+    { title: 'Yarış Raporları', detail: 'Yarış sonuçları, PB ve derece listeleri', icon: Trophy, tone: colors.gold },
+    { title: 'Katılım Raporları', detail: 'Grup ve sporcu bazlı devam takibi', icon: BarChart3, tone: colors.success },
+    { title: 'PDF Dışa Aktar', detail: 'PDF/CSV dışa aktarım hazırlığı', icon: FileText, tone: colors.coral },
+  ];
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View>
+          <Text style={styles.title}>Rapor Merkezi</Text>
+          <Text style={styles.subtitle}>Kulüp yönetimi için rapor başlıkları ve dışa aktarım hazırlığı.</Text>
+        </View>
+        <View style={styles.reportCenterGrid}>
+          {cards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <View key={card.title} style={[styles.reportCenterCard, { borderColor: `${card.tone}55` }]}>
+                <View style={[styles.reportCenterIcon, { backgroundColor: `${card.tone}22` }]}>
+                  <Icon color={card.tone} size={22} />
+                </View>
+                <Text style={styles.reportCenterTitle}>{card.title}</Text>
+                <Text style={styles.reportCenterDetail}>{card.detail}</Text>
+              </View>
+            );
+          })}
+        </View>
+        {message ? <Text style={styles.message}>{message}</Text> : null}
+        <View style={styles.actions}>
+          <AppButton title="PDF Oluştur" icon={FileText} onPress={() => setMessage('Kulüp raporu hazırlandı')} />
+          <AppButton title="PDF Paylaş" icon={Send} variant="secondary" onPress={() => setMessage('Kulüp raporu paylaşım bağlantısı hazırlandı')} />
           <AppButton title="PDF İndir" icon={Download} variant="secondary" onPress={() => setMessage('İndirme özelliği yakında aktif olacak')} />
         </View>
       </ScrollView>
@@ -133,5 +178,10 @@ const styles = StyleSheet.create({
   warningText: { flex: 1, color: colors.background, lineHeight: 21, fontWeight: '700' },
   message: { color: colors.cyan, fontWeight: '900', textAlign: 'center', backgroundColor: colors.cyanSoft, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, padding: spacing.md },
   actions: { gap: spacing.md },
+  reportCenterGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  reportCenterCard: { width: '48%', minHeight: 150, borderRadius: 20, borderWidth: 1, backgroundColor: colors.surfaceSolid, padding: spacing.md, gap: spacing.sm },
+  reportCenterIcon: { width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  reportCenterTitle: { color: colors.text, fontWeight: '900', fontSize: 15 },
+  reportCenterDetail: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 19, fontSize: 12 },
 });
 

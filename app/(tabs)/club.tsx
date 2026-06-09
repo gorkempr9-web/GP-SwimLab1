@@ -3,10 +3,10 @@ import { BarChart3, BellRing, Building2, CalendarDays, FileText, LucideIcon, Meg
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ActionCard } from '@/components/ActionCard';
-import { AppLogo } from '@/components/AppLogo';
 import { ClubBadge } from '@/components/ClubBadge';
 import { GlassCard } from '@/components/GlassCard';
 import { GradientBadge } from '@/components/GradientBadge';
+import { adminClubs } from '@/services/adminPanel';
 import { canManageClub, useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
@@ -23,16 +23,16 @@ const clubModules: Array<{ title: string; detail: string; route: string; icon: L
 
 export default function ClubScreen() {
   const { currentUser } = useSession();
+  if (currentUser.role === 'super_admin') {
+    return <AdminClubsScreen />;
+  }
+
   const canUseManagement = canManageClub(currentUser.role);
   const visibleModules = clubModules.filter((module) => canUseManagement || !module.managerOnly);
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <AppLogo compact={true} size={26} />
-        </View>
-
         <GlassCard style={styles.clubHero} tone={colors.coral}>
           <ClubBadge club={currentUser.club} city={currentUser.city ?? 'Ankara'} />
           <Text style={styles.title}>Kulüp</Text>
@@ -75,6 +75,33 @@ export default function ClubScreen() {
             </Pressable>
           </>
         ) : null}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function AdminClubsScreen() {
+  return (
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <GlassCard style={styles.clubHero} tone={colors.cyan}>
+          <Text style={styles.title}>Kulüpler</Text>
+          <Text style={styles.subtitle}>Pilot kulüpleri, kulüp kodlarını ve yönetim özetlerini görüntüle.</Text>
+          <Pressable style={styles.adminPanelButton} onPress={() => router.push('/features/admin-panel')}>
+            <Text style={styles.adminPanelText}>Admin Paneli</Text>
+          </Pressable>
+        </GlassCard>
+        {adminClubs.map((club) => (
+          <GlassCard key={club.id} style={styles.adminClubCard}>
+            <View style={styles.adminClubBadge}>
+              <Text style={styles.adminClubBadgeText}>{club.name.split(' ').map((part) => part[0]).join('').slice(0, 3)}</Text>
+            </View>
+            <View style={styles.adminClubCopy}>
+              <Text style={styles.adminClubName}>{club.name}</Text>
+              <Text style={styles.adminClubCode}>Kod: {club.code}</Text>
+            </View>
+          </GlassCard>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -128,4 +155,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   rosterTextSecondary: { color: colors.text, fontWeight: '900' },
+  adminPanelButton: { alignSelf: 'flex-start', borderRadius: 999, backgroundColor: colors.cyan, paddingHorizontal: spacing.md, paddingVertical: 10 },
+  adminPanelText: { color: colors.background, fontWeight: '900' },
+  adminClubCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  adminClubBadge: { width: 48, height: 48, borderRadius: 18, backgroundColor: colors.cyanSoft, borderWidth: 1, borderColor: colors.borderStrong, alignItems: 'center', justifyContent: 'center' },
+  adminClubBadgeText: { color: colors.cyan, fontWeight: '900' },
+  adminClubCopy: { flex: 1, minWidth: 0 },
+  adminClubName: { color: colors.text, fontWeight: '900', fontSize: 17 },
+  adminClubCode: { color: colors.mutedStrong, fontWeight: '800', marginTop: 4 },
 });

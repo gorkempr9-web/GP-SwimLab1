@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Building2, CalendarClock, Dumbbell, Home, UserCircle } from 'lucide-react-native';
+import { BarChart3, Building2, CalendarClock, Dumbbell, Home, Settings, UserCircle, Users } from 'lucide-react-native';
 import { ReactNode } from 'react';
 import { View } from 'react-native';
 import { renderSafeTextChildren } from '@/components/SafeTextChildren';
@@ -10,7 +10,7 @@ import { colors } from '@/theme/tokens';
 export default function TabLayout() {
   const { t } = useLocale();
   const { currentUser } = useSession();
-  const isClubAdmin = currentUser.role === 'club_admin';
+  const isSuperAdmin = currentUser.role === 'super_admin';
 
   return (
     <Tabs
@@ -35,11 +35,11 @@ export default function TabLayout() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '900' },
       }}
     >
-      <Tabs.Screen name="dashboard" options={{ title: t('home'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><Home color={color} size={22} /></TabIcon> }} />
-      <Tabs.Screen name="plans" options={{ title: isClubAdmin ? t('reportCenter') : t('plan'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><Dumbbell color={color} size={22} /></TabIcon> }} />
-      <Tabs.Screen name="races" options={{ title: t('raceCenter'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><CalendarClock color={color} size={22} /></TabIcon> }} />
-      <Tabs.Screen name="club" options={{ title: isClubAdmin ? t('club') : t('calendarCenter'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><Building2 color={color} size={22} /></TabIcon> }} />
-      <Tabs.Screen name="analytics" options={{ title: 'Analiz' }} />
+      <Tabs.Screen name="dashboard" options={{ title: isSuperAdmin ? 'Admin' : t('home'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><Home color={color} size={22} /></TabIcon> }} />
+      <Tabs.Screen name="plans" options={isSuperAdmin ? { href: null } : { title: t('plan'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><Dumbbell color={color} size={22} /></TabIcon> }} />
+      <Tabs.Screen name="races" options={{ title: isSuperAdmin ? 'Sistem' : t('raceCenter'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}>{isSuperAdmin ? <Settings color={color} size={22} /> : <CalendarClock color={color} size={22} />}</TabIcon> }} />
+      <Tabs.Screen name="club" options={{ title: isSuperAdmin ? 'Kulüpler' : t('club'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><Building2 color={color} size={22} /></TabIcon> }} />
+      <Tabs.Screen name="analytics" options={{ title: isSuperAdmin ? 'Kullanıcılar' : 'Analiz', tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}>{isSuperAdmin ? <Users color={color} size={22} /> : <BarChart3 color={color} size={22} />}</TabIcon> }} />
       <Tabs.Screen name="profile" options={{ title: t('profile'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><UserCircle color={color} size={22} /></TabIcon> }} />
     </Tabs>
   );

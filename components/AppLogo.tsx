@@ -1,5 +1,4 @@
-import { Image, ImageStyle, StyleProp, StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/theme/tokens';
+import { Image, ImageStyle, StyleProp, StyleSheet, View } from 'react-native';
 
 const logoDark = require('@/assets/branding/logo-dark.png');
 const logoLight = require('@/assets/branding/logo-light.png');
@@ -14,18 +13,17 @@ type AppLogoProps = {
 };
 
 export function AppLogo({ compact = false, size, showTitle = true, showSlogan = true, theme = 'dark', imageStyle }: AppLogoProps) {
-  const markSize = size ?? (compact ? 26 : 44);
-  const logoWidth = Math.max(markSize * (compact ? 3.8 : 4.6), 120);
-  const logoHeight = Math.max(markSize * 1.05, 42);
+  const logoHeight = size ?? (compact ? 34 : 68);
+  const source = theme === 'light' ? logoLight : logoDark;
+  const logoWidth = Math.round(logoHeight * (showTitle || showSlogan ? 3.4 : 3.0));
 
   return (
-    <View style={[styles.wrap, compact && styles.wrapCompact]}>
+    <View style={styles.wrap}>
       <Image
-        source={theme === 'light' ? logoLight : logoDark}
+        source={source}
         resizeMode="contain"
         style={[styles.logo, { width: logoWidth, height: logoHeight }, imageStyle]}
       />
-      {showTitle && showSlogan ? <Text style={[styles.slogan, compact && styles.sloganCompact]} numberOfLines={1}>Train Beyond Limits</Text> : null}
     </View>
   );
 }
@@ -34,15 +32,10 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-  },
-  wrapCompact: {
-    alignItems: 'flex-start',
-    gap: 0,
+    overflow: 'visible',
   },
   logo: {
-    overflow: 'hidden',
+    flexShrink: 0,
+    overflow: 'visible',
   },
-  slogan: { color: colors.coral, fontWeight: '900', fontSize: 11, letterSpacing: 0, marginTop: -2 },
-  sloganCompact: { fontSize: 8 },
 });
