@@ -108,3 +108,4 @@ Never commit real credentials, service account files or mobile signing keys.
 - This is an MVP with mock data and mock PDF/AI/OTP flows.
 - `npm audit fix --force` should not be used because it may break Expo SDK compatibility.
 - Sensitive files such as `.env`, `google-services.json`, `GoogleService-Info.plist`, keystores and build outputs are ignored by git.
+- Firestore test mode must not stay open for pilot or production usage. Use `firestore.rules` as the role-based access draft, review it in Firebase Emulator/Security Rules Simulator, then deploy only after confirming athlete, parent, coach, club admin and super admin access paths.

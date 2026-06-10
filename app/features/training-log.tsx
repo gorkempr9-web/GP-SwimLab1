@@ -80,6 +80,8 @@ export default function TrainingLogScreen() {
 
 function TrainingLogCard({ entry, onRepeat }: { entry: TrainingLogEntry; onRepeat: () => void }) {
   const stylesLabel = (entry.styles ?? []).join(', ') || '-';
+  const poolSets = entry.plan.sets ?? [];
+  const drylandExercises = entry.plan.drylandExercises ?? [];
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -89,9 +91,21 @@ function TrainingLogCard({ entry, onRepeat }: { entry: TrainingLogEntry; onRepea
         <View style={styles.cardBody}>
           <Text style={styles.cardTitle}>{entry.title}</Text>
           <Text style={styles.cardMeta}>{entry.date} • {entry.groupLabel}</Text>
-          <Text style={styles.cardMeta}>{entry.totalMeters} • {entry.duration} • {entry.pool}</Text>
+          <Text style={styles.cardMeta}>Toplam süre: {entry.duration}</Text>
         </View>
       </View>
+      {poolSets.length ? (
+        <View style={styles.trainingBlock}>
+          <Text style={styles.blockTitle}>Havuz Antrenmanı</Text>
+          <Text style={styles.cardMeta}>Havuz: {entry.totalMeters} • Set: {poolSets.length} • {entry.pool}</Text>
+        </View>
+      ) : null}
+      {drylandExercises.length ? (
+        <View style={styles.trainingBlock}>
+          <Text style={styles.blockTitle}>Kara Antrenmanı</Text>
+          <Text style={styles.cardMeta}>Kara: {drylandExercises.length} egzersiz</Text>
+        </View>
+      ) : null}
       <View style={styles.infoGrid}>
         <Info label="Hedef" value={entry.target} />
         <Info label="Set" value={String(entry.setCount)} />
@@ -160,6 +174,8 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, gap: 3 },
   cardTitle: { color: colors.text, fontWeight: '900', fontSize: 17 },
   cardMeta: { color: colors.muted, fontWeight: '800', lineHeight: 19 },
+  trainingBlock: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.sm, gap: 3 },
+  blockTitle: { color: colors.text, fontWeight: '900' },
   infoGrid: { flexDirection: 'row', gap: spacing.sm },
   infoBox: { flex: 1, borderRadius: 16, backgroundColor: colors.cyanSoft, padding: spacing.sm },
   infoValue: { color: colors.text, fontWeight: '900' },

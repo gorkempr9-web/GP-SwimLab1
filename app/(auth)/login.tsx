@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppLogo } from '@/components/AppLogo';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useLocale } from '@/locales';
-import { createDemoUser, DemoLoginRole, getCurrentUser, isDemoLoginEnabled, loginWithMockCredentials, validateDemoAccessCode } from '@/services/auth';
+import { createDemoUser, DemoLoginRole, getCurrentUser, isDemoLoginEnabled, loginWithMockCredentials, validateDemoAccessCodeAsync } from '@/services/auth';
+import { InviteCodeRecord, redeemInviteCode } from '@/services/invitations';
 import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme/tokens';
 
@@ -27,6 +28,7 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [demoAccessCode, setDemoAccessCode] = useState('');
   const [demoUnlockedRole, setDemoUnlockedRole] = useState<DemoLoginRole | null>(null);
+  const [demoInviteRecord, setDemoInviteRecord] = useState<InviteCodeRecord | null>(null);
   const [showDemoOptions, setShowDemoOptions] = useState(false);
   const demoEnabled = isDemoLoginEnabled();
 
@@ -49,31 +51,33 @@ export default function LoginScreen() {
     router.replace(user.profileCreated ? (user.hasSeenAppGuide ? '/(tabs)/dashboard' : '/onboarding-guide') : '/(auth)/create-profile');
   };
 
-  const unlockDemoOptions = () => {
-    const access = validateDemoAccessCode(demoAccessCode);
+  const unlockDemoOptions = async () => {
+    const access = await validateDemoAccessCodeAsync(demoAccessCode);
     if (!access.valid) {
       setShowDemoOptions(false);
       setDemoUnlockedRole(null);
+      setDemoInviteRecord(null);
       setError(t('demoAccessCodeInvalid'));
       return;
     }
 
     setError('');
     setDemoUnlockedRole(access.unlockedRole);
+    setDemoInviteRecord(access.record ?? null);
     setShowDemoOptions(true);
   };
 
-  const handleDemoLogin = (role: DemoLoginRole) => {
-    const access = validateDemoAccessCode(demoAccessCode, role);
+  const handleDemoLogin = async (role: DemoLoginRole) => {
+    const access = await redeemInviteCode(demoAccessCode, role);
     if (!access.valid) {
-      setError(access.roleMismatch ? t('demoCodeRoleMismatch') : t('demoAccessCodeInvalid'));
+      setError(access.message === 'Bu kod seçilen rol için geçerli değildir.' ? t('demoCodeRoleMismatch') : access.message);
       return;
     }
 
-    const user = createDemoUser(role);
+    const user = createDemoUser(role, undefined, access.record);
     setCurrentUserProfile(user);
     setError('');
-    router.replace('/(tabs)/dashboard');
+    router.replace(role === 'super_admin' ? '/(tabs)/dashboard' : '/(auth)/create-profile');
   };
 
   return (
@@ -132,10 +136,12 @@ export default function LoginScreen() {
                     setDemoAccessCode(value.toUpperCase());
                     setShowDemoOptions(false);
                     setDemoUnlockedRole(null);
+                    setDemoInviteRecord(null);
                   }}
                   autoCapitalize="characters"
                   style={styles.demoCodeInput}
                 />
+                {showDemoOptions && demoInviteRecord ? <Text style={styles.demoWarning}>{demoInviteRecord.clubName} • {demoInviteRecord.role}</Text> : null}
                 <Pressable style={styles.demoToggle} onPress={unlockDemoOptions}>
                   <User color={colors.background} size={18} />
                   <Text style={styles.demoToggleText}>{t('demoLogin')}</Text>

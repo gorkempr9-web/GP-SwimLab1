@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+﻿import { Tabs } from 'expo-router';
 import { BarChart3, Building2, CalendarClock, Dumbbell, Home, Settings, UserCircle, Users } from 'lucide-react-native';
 import { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -40,7 +40,7 @@ export default function TabLayout() {
       <Tabs.Screen name="races" options={{ title: isSuperAdmin ? 'Sistem' : t('raceCenter'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}>{isSuperAdmin ? <Settings color={color} size={22} /> : <CalendarClock color={color} size={22} />}</TabIcon> }} />
       <Tabs.Screen name="club" options={{ title: isSuperAdmin ? 'Kulüpler' : t('club'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><Building2 color={color} size={22} /></TabIcon> }} />
       <Tabs.Screen name="analytics" options={{ title: isSuperAdmin ? 'Kullanıcılar' : 'Analiz', tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}>{isSuperAdmin ? <Users color={color} size={22} /> : <BarChart3 color={color} size={22} />}</TabIcon> }} />
-      <Tabs.Screen name="profile" options={{ title: t('profile'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><UserCircle color={color} size={22} /></TabIcon> }} />
+      <Tabs.Screen name="profile" options={isSuperAdmin ? { href: null } : { title: t('profile'), tabBarIcon: ({ color, focused }) => <TabIcon focused={focused}><UserCircle color={color} size={22} /></TabIcon> }} />
     </Tabs>
   );
 }

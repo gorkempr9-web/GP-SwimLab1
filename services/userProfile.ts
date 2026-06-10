@@ -1,4 +1,6 @@
 import { CurrentUser } from '@/services/session';
+import { ensurePilotClubDocuments, writeRootDocument } from '@/services/firestoreData';
+import { resolveClubIdFromCode, resolveClubIdFromName } from '@/services/localStore';
 
 export type UserProfileInput = {
   firstName: string;
@@ -21,6 +23,8 @@ export type UserProfileInput = {
   kvkkAccepted?: boolean;
   explicitConsentAccepted?: boolean;
   consentAcceptedAt?: string;
+  clubId?: string;
+  inviteCode?: string;
 };
 
 const profileStorageKey = 'gp-swimlab-user-profile';
@@ -68,10 +72,13 @@ export async function getProfile() {
 async function saveProfile(profile: CurrentUser) {
   const AsyncStorage = await getAsyncStorage();
   await AsyncStorage.setItem(profileStorageKey, JSON.stringify(profile));
+  await ensurePilotClubDocuments();
+  void writeRootDocument('users', profile.id, profile as unknown as Record<string, unknown>);
 }
 
 function buildProfile(baseUser: CurrentUser, input: UserProfileInput): CurrentUser {
   const age = calculateAge(input.birthYear);
+  const clubId = input.clubId ?? resolveClubIdFromCode(input.inviteCode) ?? baseUser.clubId ?? resolveClubIdFromCode(baseUser.inviteCode) ?? resolveClubIdFromName(input.club);
   return {
     ...baseUser,
     firstName: input.firstName.trim() || 'SwimLab',
@@ -81,6 +88,8 @@ function buildProfile(baseUser: CurrentUser, input: UserProfileInput): CurrentUs
     age: age ? String(age) : undefined,
     gender: input.gender,
     club: input.club.trim() || 'SwimLab Pilot',
+    clubId,
+    inviteCode: input.inviteCode ?? baseUser.inviteCode,
     coachName: input.coachName.trim() || undefined,
     city: input.city.trim() || undefined,
     category: input.category.trim() || undefined,

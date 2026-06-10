@@ -11,7 +11,7 @@ type ClubLogoProps = {
 
 export function ClubLogo({ club, size = 42, showName = true, onPress }: ClubLogoProps) {
   const profile = getClubProfile(club);
-  const label = club ? profile.logoLabel : 'SL';
+  const label = club ? profile.logoLabel : 'K';
   const content = (
     <>
       <View style={[styles.logo, { width: size, height: size, borderRadius: Math.max(14, size / 3) }]}>

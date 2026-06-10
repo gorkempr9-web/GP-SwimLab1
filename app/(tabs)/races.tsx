@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
 import { ScoreInfoButton } from '@/components/ScoreInfoButton';
 import { AthleteRaceResult, CompetitionRosterEntry, getAthleteRaceHistory, getUpcomingRacesForAthlete } from '@/services/clubCompetition';
+import { getDataSourceStatus } from '@/services/firestoreData';
 import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
@@ -77,21 +78,37 @@ export default function RacesScreen() {
 }
 
 function AdminSystemScreen() {
+  const dataSource = getDataSourceStatus();
+  const rows = [
+    { label: 'Firestore bağlantı durumu', value: dataSource.firestoreEnabled ? 'Aktif' : 'Pasif' },
+    { label: 'Local fallback durumu', value: 'Aktif' },
+    { label: 'Son senkron zamanı', value: new Date().toLocaleString('tr-TR') },
+    { label: 'App version', value: 'Beta 1.4' },
+    { label: 'Build profile', value: dataSource.firestoreEnabled ? 'Pilot / Firebase' : 'Expo Go / Local' },
+    { label: 'Storage durumu', value: 'Kulüp bazlı cache hazır' },
+    { label: 'Security rules uyarısı', value: 'Firestore rules taslağını yayına almadan kontrol edin' },
+  ];
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Trophy color={colors.gold} size={28} />
+          <Gauge color={colors.cyan} size={28} />
           <View style={styles.headerCopy}>
             <Text style={styles.title}>Sistem</Text>
-            <Text style={styles.subtitle}>Admin için pilot veri, sistem durumu ve yönetim kayıtlarına hızlı erişim.</Text>
+            <Text style={styles.subtitle}>Admin için bağlantı, cache, build ve güvenlik durumu.</Text>
           </View>
         </View>
+        <GlassCard style={styles.systemCard}>
+          {rows.map((row) => (
+            <View key={row.label} style={styles.systemRow}>
+              <Text style={styles.systemLabel}>{row.label}</Text>
+              <Text style={styles.systemValue}>{row.value}</Text>
+            </View>
+          ))}
+        </GlassCard>
         <View style={styles.managerGrid}>
-          <ManagerActionCard title="Admin Paneli" detail="Tüm yönetim sekmeleri" icon={BarChart3} route="/features/admin-panel" width="48%" />
-          <ManagerActionCard title="Demo Verileri" detail="Kulüp bazlı veri temizliği" icon={FileText} route="/features/admin-panel" width="48%" />
-          <ManagerActionCard title="Bildirim Kayıtları" detail="Kulüp bildirimlerini izle" icon={CalendarClock} route="/features/admin-panel" width="48%" />
-          <ManagerActionCard title="Yarış Sonuçları" detail="Tüm kulüp sonuçları" icon={Medal} route="/features/admin-panel" width="48%" />
+          <ManagerActionCard title="Demo data temizleme" detail="Admin Panel > Demo Verileri" icon={FileText} route="/features/admin-panel" width="48%" />
+          <ManagerActionCard title="Admin Paneli" detail="Kulüp, kullanıcı ve davet kodu yönetimi" icon={BarChart3} route="/features/admin-panel" width="48%" />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -242,6 +259,10 @@ const styles = StyleSheet.create({
   empty: { color: colors.muted, fontWeight: '800', textAlign: 'center', padding: spacing.md },
   managerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   managerCard: { minHeight: 148, borderRadius: 22, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid, padding: spacing.md, gap: spacing.sm, justifyContent: 'space-between' },
+  systemCard: { gap: spacing.sm },
+  systemRow: { borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 8, gap: 3 },
+  systemLabel: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
+  systemValue: { color: colors.text, fontWeight: '900', lineHeight: 20 },
   managerIcon: { width: 42, height: 42, borderRadius: 16, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
   managerTitle: { color: colors.text, fontWeight: '900', fontSize: 16, lineHeight: 20 },
   managerDetail: { color: colors.mutedStrong, fontWeight: '800', lineHeight: 18, fontSize: 12 },

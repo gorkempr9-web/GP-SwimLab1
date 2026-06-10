@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/GlassCard';
+import { writeClubDocument } from '@/services/firestoreData';
 import { activateInviteCode, cancelInviteCode, createManualInviteCode, generateAthleteCode, generateClubCode, generateCoachCode, generateParentCode, getInviteCodes, inviteClubs, InviteCodeType } from '@/services/invitations';
 import { getLocalData, saveLocalData } from '@/services/localStore';
+import { useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 type CoachDuty = 'Baş Antrenör' | 'Yardımcı Antrenör' | 'Kara Antrenörü' | 'Performans Antrenörü' | 'Fizyoterapist' | 'Diyetisyen';
@@ -47,6 +49,7 @@ const codeTypes: Array<{ type: InviteCodeType; label: string }> = [
 ];
 
 export default function ClubAdminScreen() {
+  const { currentUser } = useSession();
   const [codes, setCodes] = useState(() => getInviteCodes());
   const [coaches, setCoaches] = useState<ManagedCoach[]>([]);
   const [manualCode, setManualCode] = useState('');
@@ -104,6 +107,7 @@ export default function ClubAdminScreen() {
     const nextCoaches = [nextCoach, ...coaches];
     setCoaches(nextCoaches);
     void saveLocalData(coachStorageKey, nextCoaches);
+    void writeClubDocument('coaches', nextCoach.id, { ...nextCoach, club: currentUser.club ?? 'SwimLab Pilot Kulüp' } as unknown as Record<string, unknown>, currentUser.clubId);
     setCoachDraft({ id: '', firstName: '', lastName: '', phone: '', email: '', duty: 'Yardımcı Antrenör', group: 'Gelişim', permission: 'Sadece görüntüle' });
     setMessage('Antrenör listeye eklendi.');
   };

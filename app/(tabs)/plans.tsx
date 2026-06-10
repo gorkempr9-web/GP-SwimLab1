@@ -7,6 +7,7 @@ import { AppButton } from '@/components/AppButton';
 import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
 import { canManageClub, useSession } from '@/services/session';
+import { readClubCollection } from '@/services/firestoreData';
 import { addPlanToTrainingLog } from '@/services/trainingLog';
 import {
   AssignedAthlete,
@@ -36,7 +37,7 @@ import { colors, spacing, typography } from '@/theme/tokens';
 
 const groups: TrainingGroup[] = ['Performans', 'Gelişim', 'Temel Eğitim', 'Yarış Grubu', 'Özel Ders', 'Belirli Sporcular'];
 const targets: TrainingType[] = ['Teknik', 'Dayanıklılık', 'Hız', 'Yarış', 'Toparlanma'];
-const setSections: TrainingSection[] = ['Isınma', 'Teknik', 'Ana Set', 'Sprint', 'Ayak', 'Soğuma', 'Kara Antrenmanı'];
+const setSections: TrainingSection[] = ['Isınma', 'Teknik', 'Ana Set', 'Sprint', 'Ayak', 'Soğuma'];
 const strokes = ['Serbest', 'Sırtüstü', 'Kurbağalama', 'Kelebek', 'Karışık', 'Ayak', 'Kol', 'Drill'];
 const drylandTargets = ['Kuvvet', 'Patlayıcı Kuvvet', 'Mobilite', 'Core', 'Esneklik', 'Rehabilitasyon'];
 
@@ -91,12 +92,20 @@ export default function PlansScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [prefill, setPrefill] = useState<TrainingPlanInput | null>(null);
+  const [availableGroups, setAvailableGroups] = useState<TrainingGroup[]>(groups);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     hydrateTrainingPlansFromStorage().then((storedPlans) => {
       setPlans([...storedPlans]);
       setExpandedId(storedPlans[0]?.planId ?? null);
+    });
+    readClubCollection<Record<string, unknown>>('groups', []).then((rows) => {
+      const dynamicGroups = rows
+        .filter((row: Record<string, unknown>) => row.isActive !== false)
+        .map((row: Record<string, unknown>) => (typeof row.name === 'string' ? row.name : ''))
+        .filter(Boolean) as TrainingGroup[];
+      if (dynamicGroups.length) setAvailableGroups([...dynamicGroups, 'Belirli Sporcular']);
     });
   }, []);
 
@@ -142,6 +151,7 @@ export default function PlansScreen() {
             {showCreate ? (
               <CreatePlanForm
                 prefill={prefill}
+                groupOptions={availableGroups}
                 onCreate={(plan) => {
                   addPlanToTrainingLog(plan);
                   refresh();
@@ -190,7 +200,7 @@ export default function PlansScreen() {
   );
 }
 
-function CreatePlanForm({ onCreate, prefill }: { onCreate: (plan: TrainingPlan) => void; prefill: TrainingPlanInput | null }) {
+function CreatePlanForm({ onCreate, prefill, groupOptions }: { onCreate: (plan: TrainingPlan) => void; prefill: TrainingPlanInput | null; groupOptions: TrainingGroup[] }) {
   const [title, setTitle] = useState(prefill?.title ?? '');
   const [date, setDate] = useState(prefill?.date ?? formatDateInput(new Date()));
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -219,6 +229,22 @@ function CreatePlanForm({ onCreate, prefill }: { onCreate: (plan: TrainingPlan) 
   const upsertDryland = () => {
     if (!drylandDraft.movementName.trim()) {
       setError('Kara antrenmanı için hareket adı zorunludur.');
+      return;
+    }
+    if (!drylandDraft.sets.trim()) {
+      setError('Kara antrenmanı için set alanı zorunludur.');
+      return;
+    }
+    if (!drylandDraft.reps.trim() && !drylandDraft.duration.trim()) {
+      setError('Kara antrenmanı için tekrar veya süre alanından biri zorunludur.');
+      return;
+    }
+    if (!drylandDraft.rest.trim()) {
+      setError('Kara antrenmanı için dinlenme alanı zorunludur.');
+      return;
+    }
+    if (!drylandDraft.target.trim()) {
+      setError('Kara antrenmanı için hedef alanı zorunludur.');
       return;
     }
     const exercise: DrylandExercise = {
@@ -252,8 +278,8 @@ function CreatePlanForm({ onCreate, prefill }: { onCreate: (plan: TrainingPlan) 
 
   const upsertSet = () => {
     const set = makeSet(draft, editingId ?? `set-${Date.now()}`);
-    if (!set.repeat || !set.distance) {
-      setError('Set sayısı ve mesafe zorunludur.');
+    if (!set.repeat || !set.distance || !set.stroke || !set.interval.trim()) {
+      setError('Havuz antrenmanı için set sayısı, mesafe, stil ve çıkış aralığı zorunludur.');
       return;
     }
     setSets((current) => (editingId ? current.map((item) => (item.id === editingId ? set : item)) : [...current, set]));
@@ -283,8 +309,8 @@ function CreatePlanForm({ onCreate, prefill }: { onCreate: (plan: TrainingPlan) 
       setError('Plan adı ve tarih zorunludur.');
       return;
     }
-    if (!sets.length) {
-      setError('En az bir set eklemelisin.');
+    if (!sets.length && !drylandExercises.length) {
+      setError('En az bir havuz seti veya kara egzersizi eklemelisiniz.');
       return;
     }
     const assignedAthletes = athleteName.trim() ? [{ athleteId: `athlete-${athleteName.trim().toLowerCase().replace(/\s+/g, '-')}`, name: athleteName.trim(), group: assignedGroups[0] }] : [];
@@ -335,32 +361,47 @@ function CreatePlanForm({ onCreate, prefill }: { onCreate: (plan: TrainingPlan) 
       ) : null}
       <TextInput value={athleteName} onChangeText={setAthleteName} placeholder="Sporcu seçimi / adı" placeholderTextColor={colors.muted} style={styles.input} />
       <Text style={styles.smallLabel}>Grup seçimi</Text>
-      <MultiChipGroup options={groups} values={assignedGroups} onChange={setAssignedGroups} />
+      <MultiChipGroup options={groupOptions} values={assignedGroups} onChange={setAssignedGroups} />
       <Text style={styles.smallLabel}>Hedef</Text>
       <ChipGroup options={targets} value={target} onChange={(value) => setTarget(value as TrainingType)} />
-      <Text style={styles.smallLabel}>Havuz tipi</Text>
-      <ChipGroup options={['25m', '50m']} value={pool} onChange={(value) => setPool(value as '25m' | '50m')} />
 
       <View style={styles.totalBox}>
-        <Text style={styles.totalLabel}>Toplam</Text>
-        <Text style={styles.totalValue}>{summary.totalMeters}m</Text>
+        <View>
+          <Text style={styles.totalLabel}>Havuz</Text>
+          <Text style={styles.totalValue}>{summary.totalMeters}m</Text>
+        </View>
+        <View>
+          <Text style={styles.totalLabel}>Kara</Text>
+          <Text style={styles.totalValue}>{drylandExercises.length} egzersiz</Text>
+        </View>
       </View>
 
-      <Pressable style={styles.setToggle} onPress={() => setShowSetForm((value) => !value)}>
-        <Plus color={colors.cyan} size={18} />
-        <Text style={styles.setToggleText}>{showSetForm ? 'Set formunu kapat' : '+ Set Ekle'}</Text>
-      </Pressable>
-      {showSetForm ? <SetDraftForm draft={draft} onChange={setDraft} onSubmit={upsertSet} editing={Boolean(editingId)} /> : null}
-      {sets.map((set) => <SetCard key={set.id} set={set} onEdit={() => editSet(set)} onDelete={() => setSets((current) => current.filter((item) => item.id !== set.id))} />)}
-      <DrylandDraftForm draft={drylandDraft} onChange={setDrylandDraft} onSubmit={upsertDryland} editing={Boolean(editingDrylandId)} />
-      {drylandExercises.map((exercise) => (
-        <DrylandCard
-          key={exercise.id}
-          exercise={exercise}
-          onEdit={() => editDryland(exercise)}
-          onDelete={() => setDrylandExercises((current) => current.filter((item) => item.id !== exercise.id))}
-        />
-      ))}
+      <View style={styles.trainingSectionBlock}>
+        <Text style={styles.sectionTitle}>Havuz Antrenmanı</Text>
+        <Text style={styles.planMeta}>Set sayısı, mesafe, stil ve çıkış aralığı bu bölümde zorunludur.</Text>
+        <Text style={styles.smallLabel}>Havuz tipi</Text>
+        <ChipGroup options={['25m', '50m']} value={pool} onChange={(value) => setPool(value as '25m' | '50m')} />
+        <Pressable style={styles.setToggle} onPress={() => setShowSetForm((value) => !value)}>
+          <Plus color={colors.cyan} size={18} />
+          <Text style={styles.setToggleText}>{showSetForm ? 'Set formunu kapat' : '+ Set Ekle'}</Text>
+        </Pressable>
+        {showSetForm ? <SetDraftForm draft={draft} onChange={setDraft} onSubmit={upsertSet} editing={Boolean(editingId)} /> : null}
+        {sets.map((set) => <SetCard key={set.id} set={set} onEdit={() => editSet(set)} onDelete={() => setSets((current) => current.filter((item) => item.id !== set.id))} />)}
+      </View>
+
+      <View style={styles.trainingSectionBlock}>
+        <Text style={styles.sectionTitle}>Kara Antrenmanı</Text>
+        <Text style={styles.planMeta}>Hareket adı, set, tekrar veya süre, dinlenme ve hedef bu bölümde zorunludur. Havuz seti olmadan da plan kaydedilebilir.</Text>
+        <DrylandDraftForm draft={drylandDraft} onChange={setDrylandDraft} onSubmit={upsertDryland} editing={Boolean(editingDrylandId)} />
+        {drylandExercises.map((exercise) => (
+          <DrylandCard
+            key={exercise.id}
+            exercise={exercise}
+            onEdit={() => editDryland(exercise)}
+            onDelete={() => setDrylandExercises((current) => current.filter((item) => item.id !== exercise.id))}
+          />
+        ))}
+      </View>
       <SectionInput label="Antrenör notu" value={coachNote} onChange={setCoachNote} />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <AppButton title="Planı Kaydet" icon={Plus} onPress={create} />
@@ -376,6 +417,8 @@ function TrainingPlanCard({ plan, expanded, canEdit, isAthlete, onToggle, onRefr
   const safeSets = safePlan.sets ?? [];
   const safeDrylandExercises = safePlan.drylandExercises ?? [];
   const groupLabel = safePlan.athleteName || safeAssignedGroups.join(', ') || 'Tüm kulüp';
+  const poolMetersLabel = safePlan.totalMeters || '0m';
+  const drylandCountLabel = `${safeDrylandExercises.length} egzersiz`;
   const athleteId = safeAssignedAthletes[0]?.athleteId ?? 'a1';
   const athleteStatus = safePlan.statusByAthlete?.[athleteId]?.status ?? 'planned';
 
@@ -400,20 +443,28 @@ function TrainingPlanCard({ plan, expanded, canEdit, isAthlete, onToggle, onRefr
         <View style={styles.planBody}>
           <Text style={styles.planTitle}>{safePlan.title}</Text>
           <Text style={styles.planMeta}>{safePlan.date || '-'} • {groupLabel}</Text>
-          <Text style={styles.planMeta}>{safePlan.totalMeters || '0m'} • {safePlan.duration || '-'} • {safePlan.pool || '-'}</Text>
+          <Text style={styles.planMeta}>Havuz: {poolMetersLabel} • Kara: {drylandCountLabel} • Toplam süre: {safePlan.duration || '-'}</Text>
         </View>
         <StatusPill status={canEdit ? summary.completed === summary.total && summary.total > 0 ? 'completed' : 'planned' : athleteStatus} />
       </View>
 
       {expanded ? (
         <View style={styles.detail}>
-          {safeSets.length ? safeSets.map((set) => <SetReadOnly key={set.id} set={set} />) : <Text style={styles.planMeta}>Bu planda set yok.</Text>}
+          {safeSets.length ? (
+            <View style={styles.trainingSectionBlock}>
+              <Text style={styles.cardTitle}>Havuz Antrenmanı</Text>
+              <Text style={styles.planMeta}>Havuz: {poolMetersLabel}</Text>
+              {safeSets.map((set) => <SetReadOnly key={set.id} set={set} />)}
+            </View>
+          ) : null}
           {safeDrylandExercises.length ? (
-            <View style={styles.drylandList}>
+            <View style={styles.trainingSectionBlock}>
               <Text style={styles.cardTitle}>Kara Antrenmanı</Text>
+              <Text style={styles.planMeta}>Kara: {drylandCountLabel}</Text>
               {safeDrylandExercises.map((exercise) => <DrylandReadOnly key={exercise.id} exercise={exercise} />)}
             </View>
           ) : null}
+          {!safeSets.length && !safeDrylandExercises.length ? <Text style={styles.planMeta}>Bu planda havuz seti veya kara egzersizi yok.</Text> : null}
           {isAthlete ? <AppButton title="Tamamlandı İşaretle" icon={CheckCircle2} onPress={complete} /> : null}
           {canEdit ? (
             <PlanManagePanel
@@ -479,32 +530,25 @@ function PlanManagePanel({ plan, onSaveSets, onRefresh, onMessage, onRepeat }: {
 
 function SetDraftForm({ draft, onChange, onSubmit, editing }: { draft: DraftSet; onChange: (draft: DraftSet) => void; onSubmit: () => void; editing: boolean }) {
   const update = (patch: Partial<DraftSet>) => onChange({ ...draft, ...patch });
-  const isDryland = draft.section === 'Kara Antrenmanı';
   return (
     <View style={styles.setForm}>
       <Text style={styles.cardTitle}>Set Oluştur</Text>
       <Text style={styles.smallLabel}>Bölüm tipi</Text>
       <ChipGroup options={setSections} value={draft.section} onChange={(value) => update({ section: value as TrainingSection })} />
-      {isDryland ? (
-        <Text style={styles.planMeta}>Kara antrenmanı için mesafe, stil, havuz tipi ve çıkış aralığı kullanılmaz. Aşağıdaki Kara Antrenmanı bölümünden hareket ekleyin.</Text>
-      ) : (
-        <>
-          <View style={styles.inputRow}>
-            <TextInput value={draft.repeat} onChangeText={(value) => update({ repeat: value.replace(/\D/g, '') })} placeholder="Set sayısı" placeholderTextColor={colors.muted} keyboardType="number-pad" style={styles.input} />
-            <TextInput value={draft.distance} onChangeText={(value) => update({ distance: value.replace(/\D/g, '') })} placeholder="Mesafe" placeholderTextColor={colors.muted} keyboardType="number-pad" style={styles.input} />
-          </View>
-          <Text style={styles.smallLabel}>Stil</Text>
-          <ChipGroup options={strokes} value={draft.stroke} onChange={(value) => update({ stroke: value })} />
-          <SectionInput label="Drill / Açıklama" value={draft.drillDescription} onChange={(value) => update({ drillDescription: value })} />
-          <TextInput value={draft.interval} onChangeText={(value) => update({ interval: value })} placeholder="Çıkış aralığı / dinlenme" placeholderTextColor={colors.muted} style={styles.input} />
-          <TextInput value={draft.equipment} onChangeText={(value) => update({ equipment: value })} placeholder="Ekipman" placeholderTextColor={colors.muted} style={styles.input} />
-          <TextInput value={draft.note} onChangeText={(value) => update({ note: value })} placeholder="Not" placeholderTextColor={colors.muted} style={styles.input} />
-          <Pressable style={styles.addSetButton} onPress={onSubmit}>
-            <Plus color={colors.background} size={18} />
-            <Text style={styles.addSetText}>{editing ? 'Seti Güncelle' : 'Set Ekle'}</Text>
-          </Pressable>
-        </>
-      )}
+      <View style={styles.inputRow}>
+        <TextInput value={draft.repeat} onChangeText={(value) => update({ repeat: value.replace(/\D/g, '') })} placeholder="Set sayısı" placeholderTextColor={colors.muted} keyboardType="number-pad" style={styles.input} />
+        <TextInput value={draft.distance} onChangeText={(value) => update({ distance: value.replace(/\D/g, '') })} placeholder="Mesafe" placeholderTextColor={colors.muted} keyboardType="number-pad" style={styles.input} />
+      </View>
+      <Text style={styles.smallLabel}>Stil</Text>
+      <ChipGroup options={strokes} value={draft.stroke} onChange={(value) => update({ stroke: value })} />
+      <SectionInput label="Drill / Açıklama" value={draft.drillDescription} onChange={(value) => update({ drillDescription: value })} />
+      <TextInput value={draft.interval} onChangeText={(value) => update({ interval: value })} placeholder="Çıkış aralığı / dinlenme" placeholderTextColor={colors.muted} style={styles.input} />
+      <TextInput value={draft.equipment} onChangeText={(value) => update({ equipment: value })} placeholder="Ekipman" placeholderTextColor={colors.muted} style={styles.input} />
+      <TextInput value={draft.note} onChangeText={(value) => update({ note: value })} placeholder="Not" placeholderTextColor={colors.muted} style={styles.input} />
+      <Pressable style={styles.addSetButton} onPress={onSubmit}>
+        <Plus color={colors.background} size={18} />
+        <Text style={styles.addSetText}>{editing ? 'Seti Güncelle' : 'Set Ekle'}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -712,6 +756,7 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: 'row', gap: spacing.sm },
   smallLabel: { color: colors.mutedStrong, fontWeight: '900', fontSize: 12 },
   sectionTitle: { color: colors.text, fontWeight: '900', fontSize: 19 },
+  trainingSectionBlock: { borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md, gap: spacing.sm },
   totalBox: { borderRadius: 18, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, padding: spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { color: colors.mutedStrong, fontWeight: '900' },
   totalValue: { color: colors.cyan, fontWeight: '900', fontSize: 24 },

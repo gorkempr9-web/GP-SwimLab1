@@ -1,5 +1,5 @@
 import { PropsWithChildren, createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { writeRootDocument } from '@/services/firestoreData';
+import { ensurePilotClubDocuments, writeRootDocument } from '@/services/firestoreData';
 import { resolveClubIdFromCode, resolveClubIdFromName, setActiveClubContext } from '@/services/localStore';
 
 export type UserRole = 'athlete' | 'parent' | 'coach' | 'club_admin' | 'super_admin';
@@ -179,6 +179,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
           ]),
         )
         .catch(() => {});
+      void ensurePilotClubDocuments();
       void writeRootDocument('users', normalizedUser.id, normalizedUser as unknown as Record<string, unknown>);
     };
 

@@ -16,7 +16,15 @@ export type ClubAthlete = {
   status: 'Aktif' | 'Pasif';
   phone?: string;
   email?: string;
+  birthDate?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  guardianEmail?: string;
+  parentName?: string;
+  parentPhone?: string;
+  parentEmail?: string;
   coachNote?: string;
+  notes?: string;
 };
 
 let clubAthletes: ClubAthlete[] = [];
@@ -34,6 +42,16 @@ export function addClubAthlete(input: Omit<ClubAthlete, 'id' | 'bestTime' | 'imp
   const athlete: ClubAthlete = {
     ...input,
     id: `athlete-${Date.now()}`,
+    email: input.email ?? '',
+    phone: input.phone ?? '',
+    guardianName: input.guardianName ?? '',
+    guardianPhone: input.guardianPhone ?? '',
+    guardianEmail: input.guardianEmail ?? '',
+    parentName: input.parentName ?? input.guardianName ?? '',
+    parentPhone: input.parentPhone ?? input.guardianPhone ?? '',
+    parentEmail: input.parentEmail ?? input.guardianEmail ?? '',
+    notes: input.notes ?? input.coachNote ?? '',
+    coachNote: input.coachNote ?? '',
     bestTime: input.bestTime ?? '-',
     improvement: input.improvement ?? 0,
     attendance: input.attendance ?? 0,

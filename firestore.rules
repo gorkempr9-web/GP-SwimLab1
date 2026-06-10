@@ -6,71 +6,108 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function role() {
+      return signedIn() ? request.auth.token.role : null;
+    }
+
+    function clubId() {
+      return signedIn() ? request.auth.token.clubId : null;
+    }
+
+    function athleteId() {
+      return signedIn() ? request.auth.token.athleteId : null;
+    }
+
+    function childAthleteId() {
+      return signedIn() ? request.auth.token.childAthleteId : null;
+    }
+
+    function coachGroupIds() {
+      return signedIn() && request.auth.token.groupIds is list ? request.auth.token.groupIds : [];
+    }
+
     function isSuperAdmin() {
-      return signedIn() && request.auth.token.role == 'super_admin';
+      return role() == 'super_admin';
     }
 
-    function hasClubAccess(clubId) {
-      return isSuperAdmin() || (signedIn() && request.auth.token.clubId == clubId);
+    function isClubAdmin(targetClubId) {
+      return role() == 'club_admin' && clubId() == targetClubId;
     }
 
-    function canManageClub(clubId) {
-      return isSuperAdmin() || (
-        signedIn() &&
-        request.auth.token.clubId == clubId &&
-        request.auth.token.role in ['coach', 'club_admin']
-      );
+    function isCoach(targetClubId) {
+      return role() == 'coach' && clubId() == targetClubId;
     }
 
-    match /clubs/{clubId} {
-      allow read: if hasClubAccess(clubId);
-      allow create, update, delete: if isSuperAdmin() || (
-        signedIn() &&
-        request.auth.token.clubId == clubId &&
-        request.auth.token.role == 'club_admin'
-      );
+    function isAthleteSelf(targetAthleteId) {
+      return role() == 'athlete' && athleteId() == targetAthleteId;
+    }
 
-      match /athletes/{athleteId} {
-        allow read: if hasClubAccess(clubId);
-        allow create, update, delete: if canManageClub(clubId);
+    function isParentOf(targetAthleteId) {
+      return role() == 'parent' && childAthleteId() == targetAthleteId;
+    }
+
+    function hasClubRead(targetClubId) {
+      return isSuperAdmin() || isClubAdmin(targetClubId) || isCoach(targetClubId) || clubId() == targetClubId;
+    }
+
+    function canManageClub(targetClubId) {
+      return isSuperAdmin() || isClubAdmin(targetClubId) || isCoach(targetClubId);
+    }
+
+    function canReadGroup(resourceData) {
+      return isSuperAdmin() ||
+        isClubAdmin(resourceData.clubId) ||
+        (role() == 'coach' && resourceData.clubId == clubId() && resourceData.groupId in coachGroupIds()) ||
+        (role() in ['athlete', 'parent'] && resourceData.clubId == clubId());
+    }
+
+    match /clubs/{targetClubId} {
+      allow read: if hasClubRead(targetClubId);
+      allow create, update, delete: if isSuperAdmin() || isClubAdmin(targetClubId);
+
+      match /athletes/{targetAthleteId} {
+        allow read: if isSuperAdmin() ||
+          isClubAdmin(targetClubId) ||
+          isCoach(targetClubId) ||
+          isAthleteSelf(targetAthleteId) ||
+          isParentOf(targetAthleteId);
+        allow create, update, delete: if canManageClub(targetClubId);
       }
 
       match /coaches/{coachId} {
-        allow read: if hasClubAccess(clubId);
-        allow create, update, delete: if isSuperAdmin() || (
-          signedIn() &&
-          request.auth.token.clubId == clubId &&
-          request.auth.token.role == 'club_admin'
-        );
+        allow read: if hasClubRead(targetClubId);
+        allow create, update, delete: if isSuperAdmin() || isClubAdmin(targetClubId);
       }
 
       match /parents/{parentId} {
-        allow read: if hasClubAccess(clubId);
-        allow create, update, delete: if canManageClub(clubId);
+        allow read: if isSuperAdmin() || isClubAdmin(targetClubId) || isCoach(targetClubId) || request.auth.uid == parentId;
+        allow create, update, delete: if isSuperAdmin() || isClubAdmin(targetClubId);
+      }
+
+      match /groups/{groupId} {
+        allow read: if hasClubRead(targetClubId);
+        allow create, update, delete: if isSuperAdmin() || isClubAdmin(targetClubId);
       }
 
       match /trainingPlans/{planId} {
-        allow read: if hasClubAccess(clubId);
-        allow create, update, delete: if canManageClub(clubId);
+        allow read: if hasClubRead(targetClubId);
+        allow create, update, delete: if canManageClub(targetClubId);
       }
 
       match /trainingLog/{entryId} {
-        allow read: if hasClubAccess(clubId);
-        allow create, update, delete: if canManageClub(clubId);
+        allow read: if hasClubRead(targetClubId);
+        allow create, update: if canManageClub(targetClubId) || (role() == 'athlete' && clubId() == targetClubId);
+        allow delete: if canManageClub(targetClubId);
       }
 
       match /raceResults/{resultId} {
-        allow read: if hasClubAccess(clubId);
-        allow create, update, delete: if canManageClub(clubId);
+        allow read: if hasClubRead(targetClubId);
+        allow create, update, delete: if canManageClub(targetClubId);
       }
 
       match /notifications/{notificationId} {
-        allow read: if hasClubAccess(clubId);
-        allow create, update, delete: if isSuperAdmin() || (
-          signedIn() &&
-          request.auth.token.clubId == clubId &&
-          request.auth.token.role == 'club_admin'
-        );
+        allow read: if hasClubRead(targetClubId);
+        allow create, update, delete: if isSuperAdmin() || isClubAdmin(targetClubId);
       }
     }
 
@@ -81,10 +118,13 @@ service cloud.firestore {
     }
 
     match /inviteCodes/{code} {
-      allow read: if signedIn();
-      allow create, update, delete: if isSuperAdmin() || (
-        signedIn() && request.auth.token.role == 'club_admin'
-      );
+      allow get: if true;
+      allow list, create, update, delete: if isSuperAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read, create: if isSuperAdmin();
+      allow update, delete: if false;
     }
   }
 }

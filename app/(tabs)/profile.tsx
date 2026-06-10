@@ -3,6 +3,7 @@ import { Award, Building2, CheckCircle2, LogOut, Settings, ShieldCheck, Trash2, 
 import { useMemo, useState } from 'react';
 import { Alert, DimensionValue, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppLogo } from '@/components/AppLogo';
 import { ClubLogo } from '@/components/ClubLogo';
 import { GlassCard } from '@/components/GlassCard';
 import { useLocale } from '@/locales';
@@ -43,8 +44,24 @@ export default function ProfileScreen() {
   const [message, setMessage] = useState('');
   const cardWidth: DimensionValue = width < 390 ? '100%' : '48%';
   const fullName = getFullName(currentUser);
+  const avatarInitials = getInitials(fullName);
 
   const fields = useMemo(() => buildProfileFields(draft), [draft]);
+
+  if (currentUser.role === 'super_admin') {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.adminNotice}>
+          <ShieldCheck color={colors.cyan} size={44} />
+          <Text style={styles.title}>Admin</Text>
+          <Text style={styles.subtitle}>Admin profil sayfası yerine Sistem ekranını kullanın.</Text>
+          <Pressable style={styles.saveButton} onPress={() => router.replace('/(tabs)/races')}>
+            <Text style={styles.saveText}>Sistem ekranına git</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleEdit = () => {
     setDraft(currentUser);
@@ -90,9 +107,12 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.brandHeader}>
+          <AppLogo compact={true} size={34} showSlogan={false} />
+        </View>
         <GlassCard style={styles.heroCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>SL</Text>
+            <Text style={styles.avatarText}>{avatarInitials}</Text>
           </View>
           <View style={styles.heroCopy}>
             <Text style={styles.title}>{fullName}</Text>
@@ -233,6 +253,17 @@ function getFullName(user: CurrentUser) {
   return `${user.firstName} ${user.lastName}`.trim();
 }
 
+function getInitials(name: string) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+  return initials || 'S';
+}
+
 function calculateAge(birthYear: string) {
   const year = Number(birthYear);
   if (!year || year < 1900) return '';
@@ -247,6 +278,8 @@ function getGuardianDetail(user: CurrentUser) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: 110, gap: spacing.md },
+  adminNotice: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.md },
+  brandHeader: { alignItems: 'center', justifyContent: 'center' },
   heroCard: { alignItems: 'center', gap: spacing.sm, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSolid },
   avatar: { width: 82, height: 82, borderRadius: 28, backgroundColor: colors.violetSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.24)', shadowColor: colors.violet, shadowOpacity: 0.12, shadowRadius: 18 },
   avatarText: { color: colors.violet, fontWeight: '900', fontSize: 26 },

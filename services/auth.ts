@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
-import { writeRootDocument } from '@/services/firestoreData';
-import { joinClubByCode } from '@/services/invitations';
-import { resolveClubIdFromCode, resolveClubIdFromName } from '@/services/localStore';
+import { ensurePilotClubDocuments, writeRootDocument } from '@/services/firestoreData';
+import { InviteCodeRecord, redeemInviteCode, validateInviteCodeForUse } from '@/services/invitations';
+import { resolveClubIdFromCode, resolveClubIdFromName, resolveClubNameFromCode } from '@/services/localStore';
 import { CurrentUser } from '@/services/session';
 
 export type MockLoginResult = { success: true; user: CurrentUser } | { success: false; message: string };
@@ -129,52 +129,85 @@ export function validateDemoAccessCode(code: string, role?: DemoLoginRole) {
   };
 }
 
-export function createDemoUser(role: DemoLoginRole): CurrentUser {
+export async function validateDemoAccessCodeAsync(code: string, role?: DemoLoginRole) {
+  const invite = await validateInviteCodeForUse(code, role);
+  if (invite.valid) {
+    return {
+      valid: true as const,
+      unlockedRole: invite.record.role as DemoLoginRole,
+      roleMismatch: false,
+      record: invite.record,
+    };
+  }
+
+  const fallback = validateDemoAccessCode(code, role);
+  return { ...fallback, record: undefined as InviteCodeRecord | undefined };
+}
+
+export function validateDemoClubCode(code: string) {
+  const normalized = code.trim().toUpperCase();
+  const clubId = resolveClubIdFromCode(normalized);
+  const clubName = resolveClubNameFromCode(normalized);
+  const valid = Boolean(clubId && clubName && ['MEV26', 'BASKENT26', 'PILOT26'].includes(normalized));
+  return valid
+    ? { valid: true as const, code: normalized, clubId: clubId!, clubName: clubName! }
+    : { valid: false as const, message: 'Kulüp kodu hatalı.' };
+}
+
+export function createDemoUser(role: DemoLoginRole, clubCode?: string, invite?: InviteCodeRecord): CurrentUser {
+  const club = validateDemoClubCode(clubCode ?? '');
+  const clubId = role === 'super_admin' ? 'all-clubs' : invite?.clubId ?? (club.valid ? club.clubId : 'pilot-club');
+  const clubName = role === 'super_admin' ? 'Tüm kulüpler' : invite?.clubName ?? (club.valid ? club.clubName : 'SwimLab Pilot Kulüp');
+  const inviteCode = invite?.code ?? (club.valid ? club.code : undefined);
   const demoUsers: Record<DemoLoginRole, CurrentUser> = {
     athlete: {
-      id: 'demo-athlete',
+      id: `demo-athlete-${Date.now()}`,
       firstName: 'Demo',
       lastName: 'Sporcu',
       role: 'athlete',
-      club: 'SwimLab Pilot',
-      clubId: 'pilot-club',
-      specialty: 'Demo profil',
+      club: clubName,
+      clubId,
+      inviteCode,
+      specialty: 'Profil oluşturulacak',
       hasSeenAppGuide: true,
-      profileCreated: true,
+      profileCreated: false,
     },
     parent: {
-      id: 'demo-parent',
+      id: `demo-parent-${Date.now()}`,
       firstName: 'Demo',
       lastName: 'Veli',
       role: 'parent',
-      club: 'SwimLab Pilot',
-      clubId: 'pilot-club',
+      club: clubName,
+      clubId,
+      inviteCode,
       childAthleteId: 'demo-athlete',
-      childName: 'Demo Sporcu',
+      childName: 'Profil oluşturulacak',
       hasSeenAppGuide: true,
-      profileCreated: true,
+      profileCreated: false,
     },
     coach: {
-      id: 'demo-coach',
+      id: `demo-coach-${Date.now()}`,
       firstName: 'Demo',
       lastName: 'Antrenör',
       role: 'coach',
-      club: 'SwimLab Pilot',
-      clubId: 'pilot-club',
-      specialty: 'Demo antrenör hesabı',
+      club: clubName,
+      clubId,
+      inviteCode,
+      specialty: 'Profil oluşturulacak',
       hasSeenAppGuide: true,
-      profileCreated: true,
+      profileCreated: false,
     },
     club_admin: {
-      id: 'demo-club-admin',
+      id: `demo-club-admin-${Date.now()}`,
       firstName: 'Demo',
       lastName: 'Kulüp Yöneticisi',
       role: 'club_admin',
-      club: 'SwimLab Pilot',
-      clubId: 'pilot-club',
-      specialty: 'Demo yönetici hesabı',
+      club: clubName,
+      clubId,
+      inviteCode,
+      specialty: 'Profil oluşturulacak',
       hasSeenAppGuide: true,
-      profileCreated: true,
+      profileCreated: false,
     },
     super_admin: {
       id: 'demo-super-admin',
@@ -193,9 +226,9 @@ export function createDemoUser(role: DemoLoginRole): CurrentUser {
 }
 
 export async function registerWithInviteCode(userData: RegisterUserData, inviteCode: string): Promise<MockLoginResult> {
-  const invite = joinClubByCode(inviteCode);
+  const invite = await redeemInviteCode(inviteCode, userData.role);
   if (!invite.valid) {
-    return { success: false, message: 'Geçersiz davet kodu' };
+    return { success: false, message: invite.message };
   }
 
   const [firstName, ...restName] = userData.fullName.trim().split(/\s+/);
@@ -205,7 +238,7 @@ export async function registerWithInviteCode(userData: RegisterUserData, inviteC
     lastName: restName.join(' '),
     role: invite.role,
     club: invite.clubName,
-    clubId: resolveClubIdFromCode(invite.code) ?? resolveClubIdFromName(invite.clubName),
+    clubId: invite.clubId ?? resolveClubIdFromCode(invite.code) ?? resolveClubIdFromName(invite.clubName),
     groupName: invite.groupName,
     inviteCode: invite.code,
     email: userData.email?.trim() || undefined,
@@ -222,6 +255,7 @@ export async function registerWithInviteCode(userData: RegisterUserData, inviteC
     consentAcceptedAt: new Date().toISOString(),
   };
 
+  void ensurePilotClubDocuments();
   void writeRootDocument('users', user.id, user as unknown as Record<string, unknown>);
   return { success: true, user };
 }
@@ -238,6 +272,7 @@ export async function getCurrentUser() {
 
 export async function setCurrentUser(user: CurrentUser) {
   const AsyncStorage = await getAsyncStorage();
+  void ensurePilotClubDocuments();
   void writeRootDocument('users', user.id, user as unknown as Record<string, unknown>);
   await Promise.all([AsyncStorage.setItem(roleStorageKey, user.role), AsyncStorage.setItem(userStorageKey, JSON.stringify(user))]);
 }

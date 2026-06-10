@@ -44,7 +44,7 @@ export const mockClubProfiles: ClubProfile[] = [
 export const defaultClubProfile: ClubProfile = {
   id: 'swimlab-pilot',
   name: 'SwimLab Pilot',
-  logoLabel: 'SL',
+  logoLabel: 'K',
   clubCode: 'GP-MEV001',
   totalAthletes: 0,
   totalCoaches: 0,

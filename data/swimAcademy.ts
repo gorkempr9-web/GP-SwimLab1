@@ -18,6 +18,35 @@ export type SwimAcademyCard = {
   coachTip: string;
 };
 
+export type AcademyAnimationType = 'vector-placeholder' | 'svg-sequence' | 'lottie' | 'frame-sequence';
+
+export type AcademyMovementArrow = {
+  label: string;
+  direction: string;
+  description: string;
+};
+
+export type AcademyKeyPoint = {
+  label: string;
+  description: string;
+};
+
+export type SwimAcademyAnimation = {
+  animationType: AcademyAnimationType;
+  animationAsset: string;
+  viewAngle: string;
+  movementArrows: AcademyMovementArrow[];
+  keyPoints: AcademyKeyPoint[];
+  commonMistakes: string[];
+  relatedDrylandAnimations: string[];
+  correctCue: string;
+  incorrectCue: string;
+};
+
+export type DrylandAnimationPlaceholder = SwimAcademyAnimation & {
+  name: string;
+};
+
 export const swimStyles: Array<{ id: SwimStyle; label: string; color: string }> = [
   { id: 'freestyle', label: 'Serbest', color: '#38BDF8' },
   { id: 'breaststroke', label: 'Kurbağalama', color: '#F97316' },
@@ -306,7 +335,243 @@ export type SwimAcademyDrillDetail = {
   recommendedPractice: string;
   level: string;
   commonMistake: string;
+  animation?: SwimAcademyAnimation;
 };
+
+function animation(input: {
+  style: SwimStyle | 'dryland';
+  slug: string;
+  viewAngle: string;
+  movementArrows: AcademyMovementArrow[];
+  keyPoints: AcademyKeyPoint[];
+  commonMistakes: string[];
+  relatedDrylandAnimations?: string[];
+  correctCue: string;
+  incorrectCue: string;
+}): SwimAcademyAnimation {
+  return {
+    animationType: 'vector-placeholder',
+    animationAsset: `assets/academy/animations/${input.style}/${input.slug}.placeholder.json`,
+    viewAngle: input.viewAngle,
+    movementArrows: input.movementArrows,
+    keyPoints: input.keyPoints,
+    commonMistakes: input.commonMistakes,
+    relatedDrylandAnimations: input.relatedDrylandAnimations ?? [],
+    correctCue: input.correctCue,
+    incorrectCue: input.incorrectCue,
+  };
+}
+
+const animationMap: Record<string, SwimAcademyAnimation> = {
+  'Catch-Up Drill': animation({
+    style: 'freestyle',
+    slug: 'catch-up-drill',
+    viewAngle: 'Yan profil / su seviyesi',
+    movementArrows: [
+      { label: 'Uzama', direction: 'ileri', description: 'Öndeki kol sabit kalır ve vücut uzun hattı korur.' },
+      { label: 'Çekiş', direction: 'geriye', description: 'Aktif kol suyu kalçaya doğru taşır.' },
+    ],
+    keyPoints: [
+      { label: 'Öndeki el', description: 'Kollar önde buluşmadan değişim yapılmaz.' },
+      { label: 'Kalça hattı', description: 'Kalça su yüzeyine yakın tutulur.' },
+    ],
+    commonMistakes: ['Kolları erken değiştirmek', 'Baş pozisyonunu kaldırmak'],
+    relatedDrylandAnimations: ['Plank Reach', 'Band External Rotation'],
+    correctCue: 'Kol değişimi önde tamamlanır, vücut çizgisi uzun kalır.',
+    incorrectCue: 'Kollar erken değişirse kulaç kısalır ve denge bozulur.',
+  }),
+  'Fist Drill': animation({
+    style: 'freestyle',
+    slug: 'fist-drill',
+    viewAngle: 'Ön-yan profil',
+    movementArrows: [
+      { label: 'Ön kol', direction: 'aşağı-geriye', description: 'Yumruk kapalıyken su tutuş ön kolla hissedilir.' },
+      { label: 'Rotasyon', direction: 'sağ-sol', description: 'Gövde rotasyonu çekişi destekler.' },
+    ],
+    keyPoints: [
+      { label: 'Yumruk', description: 'El kapalı, bilek kontrollü kalır.' },
+      { label: 'Dirsek', description: 'Dirsek düşmeden çekiş yolu korunur.' },
+    ],
+    commonMistakes: ['Yumrukla hız zorlamak', 'Ön kolu suya bastırmak'],
+    relatedDrylandAnimations: ['Band External Rotation'],
+    correctCue: 'Sporcu suyu avuçla değil ön kolla hissetmeye odaklanır.',
+    incorrectCue: 'Hız zorlandığında vücut pozisyonu ve catch hissi kaybolur.',
+  }),
+  'Single Arm': animation({
+    style: 'freestyle',
+    slug: 'single-arm',
+    viewAngle: 'Yan profil',
+    movementArrows: [
+      { label: 'Tek kol çekiş', direction: 'dairesel ileri-geriye', description: 'Aktif kol tam kulaç yapar.' },
+      { label: 'Gövde rotasyonu', direction: 'yan dönüş', description: 'Omuz ve kalça birlikte döner.' },
+    ],
+    keyPoints: [
+      { label: 'Sabit kol', description: 'Önde veya yanda sabit kalır.' },
+      { label: 'Nefes', description: 'Rotasyonla birlikte sakin alınır.' },
+    ],
+    commonMistakes: ['Sabit kolu düşürmek', 'Gövdeyi fazla döndürmek'],
+    relatedDrylandAnimations: ['Plank Reach'],
+    correctCue: 'Aktif kolun yolu net, sabit kol kontrollüdür.',
+    incorrectCue: 'Sabit kol düşerse denge ve çekiş hattı bozulur.',
+  }),
+  'Tek Kol Serbest': animation({
+    style: 'freestyle',
+    slug: 'single-arm',
+    viewAngle: 'Yan profil',
+    movementArrows: [
+      { label: 'Tek kol çekiş', direction: 'dairesel ileri-geriye', description: 'Aktif kol tam kulaç yapar.' },
+      { label: 'Gövde rotasyonu', direction: 'yan dönüş', description: 'Omuz ve kalça birlikte döner.' },
+    ],
+    keyPoints: [
+      { label: 'Sabit kol', description: 'Önde veya yanda sabit kalır.' },
+      { label: 'Nefes', description: 'Rotasyonla birlikte sakin alınır.' },
+    ],
+    commonMistakes: ['Sabit kolu düşürmek', 'Gövdeyi fazla döndürmek'],
+    relatedDrylandAnimations: ['Plank Reach'],
+    correctCue: 'Aktif kolun yolu net, sabit kol kontrollüdür.',
+    incorrectCue: 'Sabit kol düşerse denge ve çekiş hattı bozulur.',
+  }),
+  '6 Kick Switch': animation({
+    style: 'freestyle',
+    slug: 'six-kick-switch',
+    viewAngle: 'Üst-yan profil',
+    movementArrows: [
+      { label: '6 ayak', direction: 'ritmik küçük vuruş', description: 'Yan pozisyonda altı kontrollü ayak vuruşu yapılır.' },
+      { label: 'Switch', direction: 'karşı yana dönüş', description: 'Kulaçla diğer yana geçilir.' },
+    ],
+    keyPoints: [
+      { label: 'Yan denge', description: 'Omuz çizgisi su yüzeyine yakın kalır.' },
+      { label: 'Geçiş', description: 'Baş sabit, dönüş gövdeden gelir.' },
+    ],
+    commonMistakes: ['Geçişte başı kaldırmak', 'Ayak ritmini büyütmek'],
+    relatedDrylandAnimations: ['Plank Reach'],
+    correctCue: 'Altı ayak sonrası kontrollü geçiş ve stabil baş pozisyonu korunur.',
+    incorrectCue: 'Baş kalkarsa kalça düşer ve switch gecikir.',
+  }),
+  'Frog Mobility': animation({
+    style: 'breaststroke',
+    slug: 'frog-mobility',
+    viewAngle: 'Ön profil',
+    movementArrows: [
+      { label: 'Dış rotasyon', direction: 'dışa açılma', description: 'Kalça ve ayak bileği kontrollü açılır.' },
+      { label: 'Toparlanma', direction: 'merkeze dönüş', description: 'Hareket ağrısız aralıkta geri alınır.' },
+    ],
+    keyPoints: [
+      { label: 'Diz hattı', description: 'Diz zorlanmadan kontrollü kalır.' },
+      { label: 'Ayak tabanı', description: 'İtiş yönü için dışa dönük farkındalık kurulur.' },
+    ],
+    commonMistakes: ['Ağrıya rağmen zorlamak', 'Dizi çok açmak'],
+    relatedDrylandAnimations: ['Wall Slide', 'Squat Jump'],
+    correctCue: 'Mobilite ağrısız, kontrollü ve simetrik uygulanır.',
+    incorrectCue: 'Dizden zorlamak hareket kalitesini ve güvenliği bozar.',
+  }),
+  'Frog Hold': animation({
+    style: 'breaststroke',
+    slug: 'frog-hold',
+    viewAngle: 'Ön profil',
+    movementArrows: [
+      { label: 'Tut', direction: 'sabit pozisyon', description: 'Ayaklar dışa dönük kısa süre bekler.' },
+      { label: 'Nefes', direction: 'sakin ritim', description: 'Pozisyon nefesle kontrollü tutulur.' },
+    ],
+    keyPoints: [
+      { label: 'Bel', description: 'Bel boşluğu artırılmaz.' },
+      { label: 'Ayak açısı', description: 'Ayak tabanı suyu yakalayacak açıdadır.' },
+    ],
+    commonMistakes: ['Bel boşluğunu artırmak', 'Pozisyonu kasarak tutmak'],
+    relatedDrylandAnimations: ['Wall Slide'],
+    correctCue: 'Pozisyon kısa, kontrollü ve rahat tutulur.',
+    incorrectCue: 'Bel ve diz gerilimi artıyorsa pozisyon bozulmuştur.',
+  }),
+  'Body Dolphin': animation({
+    style: 'butterfly',
+    slug: 'body-dolphin',
+    viewAngle: 'Yan profil',
+    movementArrows: [
+      { label: 'Göğüs baskısı', direction: 'aşağı-ileri', description: 'Dalga gövdeden başlar.' },
+      { label: 'Kalça-ayak', direction: 'akış devamı', description: 'Hareket kalçadan ayağa aktarılır.' },
+    ],
+    keyPoints: [
+      { label: 'Core', description: 'Dalga belden kırılmadan taşınır.' },
+      { label: 'Ayak', description: 'Dizden tekme yerine vücut dalgası takip edilir.' },
+    ],
+    commonMistakes: ['Sadece dizden ayak vurmak', 'Dalgayı fazla büyütmek'],
+    relatedDrylandAnimations: ['Plank Reach', 'Squat Jump'],
+    correctCue: 'Dalga gövdeden başlar, ayakta tamamlanır.',
+    incorrectCue: 'Dizden tekme atmak kelebek ritmini koparır.',
+  }),
+  'Body Rotation': animation({
+    style: 'backstroke',
+    slug: 'body-rotation',
+    viewAngle: 'Üst-yan profil',
+    movementArrows: [
+      { label: 'Omuz-kalça', direction: 'sağ-sol rotasyon', description: 'Omuz ve kalça aynı ritimde döner.' },
+      { label: 'Çekiş', direction: 'kalçaya doğru', description: 'Rotasyon çekiş yolunu uzatır.' },
+    ],
+    keyPoints: [
+      { label: 'Baş', description: 'Baş sabit ve yukarı bakar.' },
+      { label: 'Gövde', description: 'Rotasyon gövdeden gelir, sadece omuzdan değil.' },
+    ],
+    commonMistakes: ['Sadece omuzla dönmek', 'Başı oynatmak'],
+    relatedDrylandAnimations: ['Band External Rotation', 'Wall Slide'],
+    correctCue: 'Baş sabit, omuz-kalça birlikte döner.',
+    incorrectCue: 'Baş oynarsa yön ve rotasyon kontrolü bozulur.',
+  }),
+};
+
+export const drylandAnimationPlaceholders: DrylandAnimationPlaceholder[] = [
+  {
+    name: 'Band External Rotation',
+    ...animation({
+      style: 'dryland',
+      slug: 'band-external-rotation',
+      viewAngle: 'Ön profil',
+      movementArrows: [{ label: 'Dış rotasyon', direction: 'dışa', description: 'Dirsek sabitken ön kol dışa açılır.' }],
+      keyPoints: [{ label: 'Dirsek', description: 'Gövdeye yakın ve sabit kalır.' }],
+      commonMistakes: ['Dirseği gövdeden uzaklaştırmak', 'Omzu yukarı çekmek'],
+      correctCue: 'Küçük aralıkta kontrollü omuz rotasyonu.',
+      incorrectCue: 'Hareket omuzdan değil koldan savrularak yapılır.',
+    }),
+  },
+  {
+    name: 'Plank Reach',
+    ...animation({
+      style: 'dryland',
+      slug: 'plank-reach',
+      viewAngle: 'Yan-üst profil',
+      movementArrows: [{ label: 'Uzan', direction: 'ileri', description: 'Plank pozisyonunda kol kontrollü uzanır.' }],
+      keyPoints: [{ label: 'Kalça', description: 'Kalça sallanmadan sabit tutulur.' }],
+      commonMistakes: ['Kalçayı düşürmek', 'Gövdeyi çevirmek'],
+      correctCue: 'Core sabit, kol uzun ve kontrollü.',
+      incorrectCue: 'Kalça sallanırsa yüzme hattına aktarım azalır.',
+    }),
+  },
+  {
+    name: 'Wall Slide',
+    ...animation({
+      style: 'dryland',
+      slug: 'wall-slide',
+      viewAngle: 'Ön profil',
+      movementArrows: [{ label: 'Yukarı kaydır', direction: 'yukarı', description: 'Kollar duvar temasını koruyarak yukarı kayar.' }],
+      keyPoints: [{ label: 'Kaburga', description: 'Kaburga dışarı taşmadan nötr kalır.' }],
+      commonMistakes: ['Bel boşluğunu artırmak', 'Bileği duvardan koparmak'],
+      correctCue: 'Omuz hareketi kontrollü ve uzun uygulanır.',
+      incorrectCue: 'Belden telafi etmek omuz mobilitesini gizler.',
+    }),
+  },
+  {
+    name: 'Squat Jump',
+    ...animation({
+      style: 'dryland',
+      slug: 'squat-jump',
+      viewAngle: 'Yan profil',
+      movementArrows: [{ label: 'Patla', direction: 'yukarı', description: 'Çöküş sonrası dikey patlayıcı sıçrama yapılır.' }],
+      keyPoints: [{ label: 'Diz', description: 'Dizler içe kapanmadan takip eder.' }],
+      commonMistakes: ['Dizleri içe düşürmek', 'Yumuşak inişi kaçırmak'],
+      correctCue: 'Patlayıcı çıkış ve kontrollü yumuşak iniş.',
+      incorrectCue: 'Sert iniş ve diz kapanması sakatlık riskini artırır.',
+    }),
+  },
+];
 
 const drillDetailMap: Record<string, SwimAcademyDrillDetail> = {
   'Catch-Up Drill': detail('Catch-Up Drill', 'Kula? uzunlu?unu ve ?ndeki kol stabilitesini geli?tirmek.', 'Bir kol ?nde beklerken di?er kol tam kula? yapar. Kollar sadece ?nde bulu?unca de?i?ir.', ['Daha uzun kula?', 'Daha iyi denge', 'Daha verimli ?eki?'], '4 x 50m d???k-orta tempo', 'Ba?lang?? / Orta', 'Kollar? ?nde bulu?turmadan erken de?i?tirmek.'),
@@ -333,7 +598,7 @@ const drillDetailMap: Record<string, SwimAcademyDrillDetail> = {
 };
 
 function detail(name: string, purpose: string, howTo: string, technicalGain: string[], recommendedPractice: string, level: string, commonMistake: string): SwimAcademyDrillDetail {
-  return { name, purpose, howTo, technicalGain, recommendedPractice, level, commonMistake };
+  return { name, purpose, howTo, technicalGain, recommendedPractice, level, commonMistake, animation: animationMap[name] };
 }
 
 export function getSwimAcademyDrillDetail(name: string): SwimAcademyDrillDetail {

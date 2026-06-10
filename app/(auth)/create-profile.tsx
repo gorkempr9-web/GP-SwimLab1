@@ -74,6 +74,8 @@ export default function CreateProfileScreen() {
       kvkkAccepted: true,
       explicitConsentAccepted: true,
       consentAcceptedAt: currentUser.consentAcceptedAt ?? new Date().toISOString(),
+      inviteCode: inviteCode.trim() || currentUser.inviteCode,
+      clubId: currentUser.clubId,
     };
     const profile = currentUser.profileCreated ? await updateProfile(currentUser, payload) : await createProfile(currentUser, payload);
     setCurrentUserProfile(profile);
@@ -244,5 +246,4 @@ const styles = StyleSheet.create({
   saveButton: { minHeight: 52, borderRadius: 18, backgroundColor: colors.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   saveText: { color: colors.background, fontWeight: '900', fontSize: 16 },
 });
-
 

@@ -11,7 +11,6 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { UserType } from '@/data/mockUser';
 import { useLocale } from '@/locales';
 import { registerWithInviteCode } from '@/services/auth';
-import { validateInviteCode } from '@/services/invitations';
 import { startEmailVerification } from '@/services/emailAuth';
 import { startPhoneVerification } from '@/services/phoneAuth';
 import { roleFromUserType, useSession } from '@/services/session';
@@ -46,8 +45,7 @@ export default function RegisterScreen() {
   const isUnder18Athlete = userType === 'Sporcu' && age.trim() !== '' && !Number.isNaN(athleteAge) && athleteAge < 18;
 
   const validateBase = () => {
-    const invite = validateInviteCode(inviteCode);
-    if (!invite.valid) return invite.message;
+    if (!inviteCode.trim()) return 'Davet kodu zorunludur.';
     if (!fullName.trim()) return t('fullNameRequired');
     if (!email.trim() && !phoneNumber.trim()) return t('emailOrPhoneRequired');
     if (!password.trim()) return t('passwordRequired');

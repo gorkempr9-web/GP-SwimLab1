@@ -37,6 +37,12 @@ const clubCodeMap: Record<string, string> = {
   'PAR-BCSK': 'baskent-cankaya',
 };
 
+const clubNameById: Record<string, string> = {
+  'mev-koleji': 'MEV Koleji',
+  'baskent-cankaya': 'Başkent Çankaya Spor Kulübü',
+  'pilot-club': 'SwimLab Pilot Kulüp',
+};
+
 const pilotClubIds = ['mev-koleji', 'baskent-cankaya', 'pilot-club'];
 const clubScopedPrefixes = ['athletes', 'coaches', 'trainingPlans', 'trainingLog', 'notifications', 'raceResults', 'privateLessons', 'clubBoard', 'calendar'];
 
@@ -56,6 +62,15 @@ export function resolveClubIdFromCode(code?: string) {
   const normalized = code?.trim().toUpperCase() ?? '';
   if (!normalized) return undefined;
   return clubCodeMap[normalized] ?? normalizeClubId(normalized);
+}
+
+export function resolveClubNameFromCode(code?: string) {
+  const clubId = resolveClubIdFromCode(code);
+  return clubId ? clubNameById[clubId] : undefined;
+}
+
+export function resolveClubNameFromId(clubId?: string) {
+  return clubNameById[normalizeClubId(clubId)];
 }
 
 export function resolveClubIdFromName(name?: string) {

@@ -1,8 +1,8 @@
-import { router, useFocusEffect } from 'expo-router';
+﻿import { router, useFocusEffect } from 'expo-router';
 import { BellRing, CheckCircle2, LucideIcon, ShieldCheck } from 'lucide-react-native';
 import { ReactNode, useCallback } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClubLogo } from '@/components/ClubLogo';
 import { EmptyState } from '@/components/EmptyState';
@@ -16,6 +16,7 @@ import { getAvailableQuickActions, getQuickActions, QuickAction, resetQuickActio
 import { colors, spacing, typography } from '@/theme/tokens';
 
 const pbs: Array<{ event: string; time: string; pool: string; date: string; isNew?: boolean }> = [];
+const appIcon = require('@/assets/branding/app-icon.png');
 
 export default function DashboardScreen() {
   const { currentUser } = useSession();
@@ -78,13 +79,13 @@ export default function DashboardScreen() {
               <View style={styles.identity}>
                 <View style={styles.brandLockup}>
                   <View style={styles.monogramBadge}>
-                    <Text style={styles.monogramText}>SL</Text>
+                    <Image source={appIcon} resizeMode="contain" style={styles.brandIcon} />
                   </View>
                   <Text style={styles.brandText}>SwimLab</Text>
                 </View>
                 <View style={styles.headerCopy}>
                   <Text style={styles.greeting} numberOfLines={1}>Merhaba, {currentUser.firstName}</Text>
-                  <Text style={styles.roleLine} numberOfLines={1}>{panelLabel(currentUser.role)} • {currentUser.club ?? 'SwimLab'}</Text>
+                  <Text style={styles.roleLine} numberOfLines={1}>{panelLabel(currentUser.role)} â€¢ {currentUser.club ?? 'SwimLab'}</Text>
                 </View>
               </View>
               <Pressable style={styles.bellButton} onPress={() => router.push('/features/notifications')}>
@@ -97,14 +98,14 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          <RoleSummary role={currentUser.role} trainingSummary={trainingSummary} upcomingTitle={upcomingEntry?.competitionName || nextRace.name || 'Yaklaşan yarış yok'} />
+          <RoleSummary role={currentUser.role} trainingSummary={trainingSummary} upcomingTitle={upcomingEntry?.competitionName || nextRace.name || 'YaklaÅŸan yarÄ±ÅŸ yok'} />
 
           {currentUser.id.startsWith('demo-') ? (
             <GlassPanel>
               <Text style={styles.sectionTitle}>Demo Veri</Text>
-              <Text style={styles.noticeLine}>Varsayılan demo girişte veriler boş gelir. İstersen pilot test için örnek veri yükleyebilirsin.</Text>
-              <Pressable style={styles.sampleButton} onPress={() => setDemoDataMessage('Örnek veri yükleme akışı hazır. Varsayılan demo verileri boş bırakıldı.')}>
-                <Text style={styles.sampleButtonText}>Örnek Veri Yükle</Text>
+              <Text style={styles.noticeLine}>VarsayÄ±lan demo giriÅŸte veriler boÅŸ gelir. Ä°stersen pilot test iÃ§in Ã¶rnek veri yÃ¼kleyebilirsin.</Text>
+              <Pressable style={styles.sampleButton} onPress={() => setDemoDataMessage('Ã–rnek veri yÃ¼kleme akÄ±ÅŸÄ± hazÄ±r. VarsayÄ±lan demo verileri boÅŸ bÄ±rakÄ±ldÄ±.')}>
+                <Text style={styles.sampleButtonText}>Ã–rnek Veri YÃ¼kle</Text>
               </Pressable>
               {demoDataMessage ? <Text style={styles.noticeLine}>{demoDataMessage}</Text> : null}
             </GlassPanel>
@@ -114,9 +115,9 @@ export default function DashboardScreen() {
 
           {currentUser.role !== 'super_admin' ? (
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
+              <Text style={styles.sectionTitle}>HÄ±zlÄ± Ä°ÅŸlemler</Text>
               <Pressable style={styles.editButton} onPress={() => setEditing((value) => !value)}>
-                <Text style={styles.editText}>{editing ? 'Tamam' : 'Hızlı İşlemleri Düzenle'}</Text>
+                <Text style={styles.editText}>{editing ? 'Tamam' : 'HÄ±zlÄ± Ä°ÅŸlemleri DÃ¼zenle'}</Text>
               </Pressable>
             </View>
           ) : null}
@@ -124,9 +125,9 @@ export default function DashboardScreen() {
           {editing && currentUser.role !== 'super_admin' ? (
             <GlassPanel>
               <View style={styles.editorHeader}>
-                <Text style={styles.editorTitle}>İşlem ekle / çıkar</Text>
+                <Text style={styles.editorTitle}>Ä°ÅŸlem ekle / Ã§Ä±kar</Text>
                 <Pressable onPress={() => setQuickActions(resetQuickActions(currentUser.role))}>
-                  <Text style={styles.resetText}>Sıfırla</Text>
+                  <Text style={styles.resetText}>SÄ±fÄ±rla</Text>
                 </Pressable>
               </View>
               <View style={styles.editorList}>
@@ -138,8 +139,8 @@ export default function DashboardScreen() {
                       <Text style={[styles.editorChipText, active && styles.editorChipTextActive]}>{action.title}</Text>
                       {active ? (
                         <View style={styles.moveActions}>
-                          <Pressable onPress={() => moveAction(action.id, -1)}><Text style={styles.moveText}>↑</Text></Pressable>
-                          <Pressable onPress={() => moveAction(action.id, 1)}><Text style={styles.moveText}>↓</Text></Pressable>
+                          <Pressable onPress={() => moveAction(action.id, -1)}><Text style={styles.moveText}>â†‘</Text></Pressable>
+                          <Pressable onPress={() => moveAction(action.id, 1)}><Text style={styles.moveText}>â†“</Text></Pressable>
                         </View>
                       ) : null}
                     </Pressable>
@@ -157,8 +158,8 @@ export default function DashboardScreen() {
 
           <GlassPanel>
             <Text style={styles.sectionTitle}>Mini Bildirimler</Text>
-            <Text style={styles.noticeLine}>Bugünkü antrenman planını kontrol et.</Text>
-            <Text style={styles.noticeLine}>Yarış merkezi üzerinden tüm yarış işlemlerine ulaşabilirsin.</Text>
+            <Text style={styles.noticeLine}>BugÃ¼nkÃ¼ antrenman planÄ±nÄ± kontrol et.</Text>
+            <Text style={styles.noticeLine}>YarÄ±ÅŸ merkezi Ã¼zerinden tÃ¼m yarÄ±ÅŸ iÅŸlemlerine ulaÅŸabilirsin.</Text>
           </GlassPanel>
         </ScrollView>
       </Animated.View>
@@ -170,39 +171,39 @@ function RoleSummary({ role, trainingSummary, upcomingTitle }: { role: UserRole;
   if (role === 'super_admin') {
     return (
       <SummaryCard title="Admin Özeti">
-        <MiniInfo label="Toplam Kulüp" value="3" />
-        <MiniInfo label="Pilot Veri" value="Local" />
-        <MiniInfo label="Sistem Durumu" value="Hazır" />
-        <MiniInfo label="Admin Yetkisi" value="Aktif" />
+        <MiniLink label="Toplam Kulüp" value="Yönet" route="/features/admin-panel" />
+        <MiniLink label="Toplam Kullanıcı" value="Yönet" route="/features/admin-panel" />
+        <MiniLink label="Demo Verileri" value="Yönet" route="/features/admin-panel" />
+        <MiniLink label="Sistem Durumu" value="Aç" route="/(tabs)/races" />
       </SummaryCard>
     );
   }
   if (role === 'coach') {
     return (
-      <SummaryCard title="Antrenör Özeti">
-        <MiniLink label="Bugünkü Antrenman" value="-" route="/(tabs)/plans" />
-        <MiniLink label="Bekleyen Sonuç Girişi" value="0" route="/features/live-race" />
-        <MiniLink label="Takım Listesi" value="0" route="/features/competition-roster" />
-        <MiniLink label="Yaklaşan Yarış" value="Yok" route="/(tabs)/races" />
+      <SummaryCard title="AntrenÃ¶r Ã–zeti">
+        <MiniLink label="BugÃ¼nkÃ¼ Antrenman" value="-" route="/(tabs)/plans" />
+        <MiniLink label="Bekleyen SonuÃ§ GiriÅŸi" value="0" route="/features/live-race" />
+        <MiniLink label="TakÄ±m Listesi" value="0" route="/features/competition-roster" />
+        <MiniLink label="YaklaÅŸan YarÄ±ÅŸ" value="Yok" route="/(tabs)/races" />
       </SummaryCard>
     );
   }
   if (role === 'club_admin') {
     return (
-      <SummaryCard title="Kulüp Özeti">
-        <MiniLink label="Bugünkü Antrenman" value="-" route="/(tabs)/plans" />
-        <MiniLink label="Bekleyen Sonuç Girişi" value="0" route="/features/live-race" />
-        <MiniLink label="Takım Listesi" value="0" route="/features/competition-roster" />
-        <MiniLink label="Yaklaşan Yarış" value="Yok" route="/(tabs)/races" />
+      <SummaryCard title="KulÃ¼p Ã–zeti">
+        <MiniLink label="BugÃ¼nkÃ¼ Antrenman" value="-" route="/(tabs)/plans" />
+        <MiniLink label="Bekleyen SonuÃ§ GiriÅŸi" value="0" route="/features/live-race" />
+        <MiniLink label="TakÄ±m Listesi" value="0" route="/features/competition-roster" />
+        <MiniLink label="YaklaÅŸan YarÄ±ÅŸ" value="Yok" route="/(tabs)/races" />
       </SummaryCard>
     );
   }
   return (
-    <SummaryCard title="Sporcu Özeti">
-      <MiniLink label="Yaklaşan Yarış" value={upcomingTitle} route="/(tabs)/races" />
+    <SummaryCard title="Sporcu Ã–zeti">
+      <MiniLink label="YaklaÅŸan YarÄ±ÅŸ" value={upcomingTitle} route="/(tabs)/races" />
       <MiniLink label="Son PB" value={swimmerStats.personalBest} route="/(tabs)/races" />
-      <MiniLink label="Haftalık Antrenman" value={trainingSummary} route="/(tabs)/plans" />
-      <MiniInfo label="Kısa Gelişim" value="Henüz veri yok" />
+      <MiniLink label="HaftalÄ±k Antrenman" value={trainingSummary} route="/(tabs)/plans" />
+      <MiniInfo label="KÄ±sa GeliÅŸim" value="HenÃ¼z veri yok" />
     </SummaryCard>
   );
 }
@@ -236,7 +237,7 @@ function MiniInfo({ label, value }: { label: string; value: string }) {
 
 function PbCarousel() {
   if (!pbs.length) {
-    return <EmptyState title="Henüz gelişim verisi yok" detail="İlk yarış sonucu eklendiğinde PB ve gelişim kartları burada görünecek." icon={ShieldCheck} tone={colors.gold} />;
+    return <EmptyState title="HenÃ¼z geliÅŸim verisi yok" detail="Ä°lk yarÄ±ÅŸ sonucu eklendiÄŸinde PB ve geliÅŸim kartlarÄ± burada gÃ¶rÃ¼necek." icon={ShieldCheck} tone={colors.gold} />;
   }
 
   return (
@@ -244,7 +245,7 @@ function PbCarousel() {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>PB'lerim</Text>
         <Pressable onPress={() => router.push('/(tabs)/races')}>
-          <Text style={styles.editText}>Tüm PB'ler</Text>
+          <Text style={styles.editText}>TÃ¼m PB'ler</Text>
         </Pressable>
       </View>
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pbList}>
@@ -252,7 +253,7 @@ function PbCarousel() {
           <Pressable key={pb.event} style={styles.pbCard} onPress={() => router.push('/(tabs)/races')}>
             <Text style={styles.pbEvent}>{pb.event}</Text>
             <Text style={styles.pbTime}>{pb.time}</Text>
-            <Text style={styles.pbMeta}>{pb.pool} • {pb.date}</Text>
+            <Text style={styles.pbMeta}>{pb.pool} â€¢ {pb.date}</Text>
             {pb.isNew ? <Text style={styles.newPb}>Yeni PB</Text> : null}
           </Pressable>
         ))}
@@ -297,8 +298,8 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   identity: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   brandLockup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  monogramBadge: { width: 34, height: 34, borderRadius: 14, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.cyanSoft, alignItems: 'center', justifyContent: 'center' },
-  monogramText: { color: colors.cyan, fontWeight: '900', fontSize: 13 },
+  monogramBadge: { width: 34, height: 34, borderRadius: 14, borderWidth: 1, borderColor: colors.cyan, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 3 },
+  brandIcon: { width: 28, height: 28 },
   brandText: { color: colors.text, fontWeight: '900', fontSize: 16 },
   headerCopy: { flex: 1, minWidth: 0 },
   greeting: { ...typography.h2, color: colors.text },

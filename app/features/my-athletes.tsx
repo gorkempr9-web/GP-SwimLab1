@@ -1,5 +1,5 @@
 ﻿import { Award, ChevronDown, ChevronRight, ClipboardList, LucideIcon, Search, ShieldAlert, TrendingUp, Trophy, Users } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/AppButton';
@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
 import { GradientBadge } from '@/components/GradientBadge';
 import { generateAthleteListPdf } from '@/services/pdfReports';
+import { addClubAthlete, hydrateClubAthletes } from '@/services/clubAthletes';
 import { canManageClub, roleLabel, useSession } from '@/services/session';
 import { colors, spacing, typography } from '@/theme/tokens';
 
@@ -28,6 +29,29 @@ type ManagedAthlete = {
   attendance: number;
   score: number;
   status: AthleteStatus;
+  phone?: string;
+  email?: string;
+  targetEvent?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  guardianEmail?: string;
+  coachNote?: string;
+};
+
+type AddAthleteDraft = {
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  gender: Gender;
+  phone: string;
+  email: string;
+  group: ClubGroup;
+  mainStroke: string;
+  targetEvent: string;
+  guardianName: string;
+  guardianPhone: string;
+  guardianEmail: string;
+  coachNote: string;
 };
 
 const currentYear = new Date().getFullYear();
@@ -36,10 +60,27 @@ const genders: Array<Gender | 'Tümü'> = ['Tümü', 'Kadın', 'Erkek'];
 const sortModes: SortMode[] = ['Kulüp puanı', 'Ada göre', 'PB gelişimi', 'Katılım'];
 
 const initialAthletes: ManagedAthlete[] = [];
+const emptyAthleteDraft: AddAthleteDraft = {
+  firstName: '',
+  lastName: '',
+  birthDate: '',
+  gender: 'Kadın',
+  phone: '',
+  email: '',
+  group: 'Performans',
+  mainStroke: '',
+  targetEvent: '',
+  guardianName: '',
+  guardianPhone: '',
+  guardianEmail: '',
+  coachNote: '',
+};
 
 export default function MyAthletesScreen() {
   const { currentUser } = useSession();
-  const [athletes] = useState(initialAthletes);
+  const [athletes, setAthletes] = useState<ManagedAthlete[]>(initialAthletes);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [draft, setDraft] = useState<AddAthleteDraft>(emptyAthleteDraft);
   const [query, setQuery] = useState('');
   const [ageFilter, setAgeFilter] = useState<string>('Tümü');
   const [groupFilter, setGroupFilter] = useState<ClubGroup | 'Tümü'>('Tümü');
@@ -48,6 +89,11 @@ export default function MyAthletesScreen() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [message, setMessage] = useState('');
   const canView = canManageClub(currentUser.role);
+
+  useEffect(() => {
+    if (!canView) return;
+    hydrateClubAthletes().then((items) => setAthletes(items as ManagedAthlete[]));
+  }, [canView]);
 
   const filteredAthletes = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('tr');
@@ -83,6 +129,34 @@ export default function MyAthletesScreen() {
     setMessage(report.message);
   };
 
+  const saveAthlete = () => {
+    if (!draft.firstName.trim() || !draft.lastName.trim() || !draft.birthDate.trim()) {
+      setMessage('Ad, soyad ve doğum tarihi zorunludur.');
+      return;
+    }
+    const birthYear = Number((draft.birthDate.match(/\d{4}/) ?? [String(currentYear)])[0]);
+    const athlete = addClubAthlete({
+      name: `${draft.firstName.trim()} ${draft.lastName.trim()}`,
+      birthYear,
+      birthDate: draft.birthDate.trim(),
+      gender: draft.gender,
+      club: currentUser.club ?? 'SwimLab Pilot Kulüp',
+      group: draft.group,
+      mainStroke: draft.mainStroke.trim() || '-',
+      targetEvent: draft.targetEvent.trim() || '-',
+      phone: draft.phone.trim() || undefined,
+      email: draft.email.trim() || undefined,
+      guardianName: draft.guardianName.trim() || undefined,
+      guardianPhone: draft.guardianPhone.trim() || undefined,
+      guardianEmail: draft.guardianEmail.trim() || undefined,
+      coachNote: draft.coachNote.trim() || undefined,
+    });
+    setAthletes((current) => [athlete as ManagedAthlete, ...current.filter((item) => item.id !== athlete.id)]);
+    setDraft(emptyAthleteDraft);
+    setShowAddForm(false);
+    setMessage('Sporcu kaydedildi.');
+  };
+
   if (!canView) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -108,8 +182,30 @@ export default function MyAthletesScreen() {
 
         <View style={styles.actionRow}>
           <AppButton title="Sporcu Davet Kodu Oluştur" icon={ClipboardList} variant="secondary" onPress={() => setMessage('Sporcu davet kodu oluşturma akışı hazır.')} />
-          <AppButton title="Sporcu Ekle" icon={Users} variant="secondary" onPress={() => setMessage('Sporcu ekleme akışı mock olarak hazır.')} />
+          <AppButton title="Sporcu Ekle" icon={Users} variant="secondary" onPress={() => setShowAddForm((value) => !value)} />
         </View>
+        {showAddForm ? (
+          <GlassCard style={styles.formCard} tone={colors.coral}>
+            <Text style={styles.sectionTitle}>Sporcu Ekle</Text>
+            <SmallInput label="Ad" value={draft.firstName} onChangeText={(value) => setDraft((current) => ({ ...current, firstName: value }))} />
+            <SmallInput label="Soyad" value={draft.lastName} onChangeText={(value) => setDraft((current) => ({ ...current, lastName: value }))} />
+            <SmallInput label="Doğum tarihi" value={draft.birthDate} onChangeText={(value) => setDraft((current) => ({ ...current, birthDate: value }))} />
+            <FilterStrip title="Cinsiyet" options={['Kadın', 'Erkek']} value={draft.gender} onChange={(value) => setDraft((current) => ({ ...current, gender: value as Gender }))} />
+            <SmallInput label="Telefon" value={draft.phone} onChangeText={(value) => setDraft((current) => ({ ...current, phone: value }))} />
+            <SmallInput label="E-posta" value={draft.email} onChangeText={(value) => setDraft((current) => ({ ...current, email: value }))} />
+            <FilterStrip title="Grup" options={groups} value={draft.group} onChange={(value) => setDraft((current) => ({ ...current, group: value as ClubGroup }))} />
+            <SmallInput label="Ana stil" value={draft.mainStroke} onChangeText={(value) => setDraft((current) => ({ ...current, mainStroke: value }))} />
+            <SmallInput label="Hedef branş" value={draft.targetEvent} onChangeText={(value) => setDraft((current) => ({ ...current, targetEvent: value }))} />
+            <SmallInput label="Veli adı" value={draft.guardianName} onChangeText={(value) => setDraft((current) => ({ ...current, guardianName: value }))} />
+            <SmallInput label="Veli telefon" value={draft.guardianPhone} onChangeText={(value) => setDraft((current) => ({ ...current, guardianPhone: value }))} />
+            <SmallInput label="Veli e-posta" value={draft.guardianEmail} onChangeText={(value) => setDraft((current) => ({ ...current, guardianEmail: value }))} />
+            <SmallInput label="Antrenör notu" value={draft.coachNote} onChangeText={(value) => setDraft((current) => ({ ...current, coachNote: value }))} />
+            <View style={styles.actionRow}>
+              <AppButton title="Kaydet" icon={Users} onPress={saveAthlete} />
+              <AppButton title="Vazgeç" icon={ChevronDown} variant="secondary" onPress={() => setShowAddForm(false)} />
+            </View>
+          </GlassCard>
+        ) : null}
         <AppButton title="Sporcu Listesi PDF" icon={ClipboardList} onPress={handlePdf} />
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
@@ -175,6 +271,10 @@ export default function MyAthletesScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function SmallInput({ label, value, onChangeText }: { label: string; value: string; onChangeText: (value: string) => void }) {
+  return <TextInput placeholder={label} placeholderTextColor={colors.muted} value={value} onChangeText={onChangeText} style={styles.formInput} />;
 }
 
 function FilterStrip<T extends string>({ title, options, value, onChange }: { title: string; options: T[]; value: T; onChange: (value: T) => void }) {
@@ -271,6 +371,8 @@ const styles = StyleSheet.create({
   title: { ...typography.h1, color: colors.text },
   subtitle: { color: colors.mutedStrong, lineHeight: 21, fontWeight: '700', marginTop: 4 },
   message: { color: colors.text, fontWeight: '900', backgroundColor: colors.goldSoft, borderRadius: 14, padding: spacing.md },
+  formCard: { gap: spacing.sm },
+  formInput: { minHeight: 46, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, color: colors.text, paddingHorizontal: spacing.md, fontWeight: '800' },
   searchBox: { minHeight: 50, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSolid, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
   searchInput: { flex: 1, color: colors.text, fontWeight: '800' },
   filterBlock: { gap: spacing.sm },

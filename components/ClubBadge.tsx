@@ -17,10 +17,10 @@ export function ClubBadge({ club, city, compact = false }: { club?: string; city
 }
 
 function getClubInitials(club?: string) {
-  if (!club?.trim()) return 'SL';
+  if (!club?.trim()) return 'K';
   const parts = club.trim().split(/\s+/).filter(Boolean);
   const initials = parts.slice(0, 3).map((part) => part[0]?.toLocaleUpperCase('tr-TR')).join('');
-  return initials || 'SL';
+  return initials || 'K';
 }
 
 const styles = StyleSheet.create({

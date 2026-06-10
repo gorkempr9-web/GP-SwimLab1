@@ -80,3 +80,45 @@ Bu liste APK/Expo Go pilot kontrol turunda temel akışların hızlıca doğrula
 - [ ] Antrenör yarış listesi, canlı giriş ve antrenman planı oluşturabiliyor.
 - [ ] Kulüp yöneticisi kulüp sporcuları, antrenörler ve rapor merkezine erişebiliyor.
 - [ ] Admin günlük kullanıcı modülleri yerine sadece yönetim ekranlarını görüyor.
+
+## Security Rules
+
+- [ ] `firestore.rules` dosyası projede mevcut.
+- [ ] Test mode uzun süre açık bırakılmıyor.
+- [ ] Athlete sadece kendi verisini okuyabiliyor.
+- [ ] Parent sadece kendi çocuğunun verisini okuyabiliyor.
+- [ ] Coach yalnızca kendi kulübü ve yetkili grupları için işlem yapabiliyor.
+- [ ] Club admin yalnızca kendi kulübünü yönetebiliyor.
+- [ ] Super admin tüm sistemi yönetebiliyor.
+
+## Davet Kodu
+
+- [ ] Admin davet kodu oluşturabiliyor.
+- [ ] Kod Firestore `inviteCodes/{code}` içine düşüyor.
+- [ ] Kod listesinde aktif/pasif, kullanım limiti, usedCount, kulüp ve rol görünüyor.
+- [ ] Pasif, süresi geçmiş veya limiti dolmuş kod girişe izin vermiyor.
+- [ ] Geçerli kod kullanıcıyı doğru kulüp ve role bağlıyor.
+
+## Grup Yönetimi
+
+- [ ] Admin veya kulüp yöneticisi grup oluşturabiliyor.
+- [ ] Grup Firestore `clubs/{clubId}/groups/{groupId}` içine yazılıyor.
+- [ ] Grup listesinde açıklama, seviye, antrenör ve sporcu sayıları görünüyor.
+- [ ] Sporcu ve antrenör IDleri gruba atanabiliyor.
+- [ ] Antrenman planı atama alanı Firestore grupları varsa bu grupları gösteriyor.
+
+## Audit Log
+
+- [ ] Sporcu ekleme işleminden sonra `auditLogs` kaydı oluşuyor.
+- [ ] Antrenör ekleme işleminden sonra `auditLogs` kaydı oluşuyor.
+- [ ] Kulüp ekleme işleminden sonra `auditLogs` kaydı oluşuyor.
+- [ ] Davet kodu oluşturma işleminden sonra `auditLogs` kaydı oluşuyor.
+- [ ] Demo veri temizleme işleminden sonra `auditLogs` kaydı oluşuyor.
+- [ ] Admin Panel > İşlem Geçmişi sekmesi logları listeliyor.
+
+## Firestore Kayıt Doğrulama
+
+- [ ] Firestore payloadlarında `undefined` alan gitmiyor.
+- [ ] Tüm yeni kayıtlar `createdAt` ve/veya `updatedAt` alanı içeriyor.
+- [ ] Firebase kapalıysa local fallback akışı çalışmaya devam ediyor.
+- [ ] Firebase açıkken sporcu, antrenör, grup, davet kodu ve audit log kayıtları buluta yazılıyor.
